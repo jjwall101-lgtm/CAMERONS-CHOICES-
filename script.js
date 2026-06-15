@@ -1,18 +1,18 @@
 const messages = {
   red: {
     emoji: "🔴",
-    main: "Red: Tricky choices",
-    sub: "Today was hard. No treat today, but we can repair it and try again tomorrow."
+    main: "RED: OOPS DAY",
+    sub: "Today was hard. No treat today, but tomorrow is a brand new level."
   },
   amber: {
     emoji: "🟠",
-    main: "Amber: Okay day",
-    sub: "Today was a normal day. Some good choices, some tricky moments. Keep trying."
+    main: "AMBER: TRYING DAY",
+    sub: "Today had some good moments and some tricky moments. Keep going!"
   },
   green: {
     emoji: "🟢",
-    main: "Green: Great choices",
-    sub: "Amazing effort today. Treat earned!"
+    main: "GREEN: SUPER DAY",
+    sub: "Super job today. Treat earned!"
   }
 };
 
@@ -81,8 +81,8 @@ function updateDisplay() {
     document.getElementById("message").textContent = messages[todayEntry.colour].main;
     document.getElementById("subMessage").textContent = messages[todayEntry.colour].sub;
   } else {
-    document.getElementById("message").textContent = "Tap a colour for today";
-    document.getElementById("subMessage").textContent = "Red, amber, or green. Tomorrow is always a fresh start.";
+    document.getElementById("message").textContent = "TAP A LIGHT TO CHOOSE TODAY";
+    document.getElementById("subMessage").textContent = "Every day is a new level. Pick red, amber, or green.";
   }
 
   updateHistoryList(history);

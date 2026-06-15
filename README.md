@@ -1,12 +1,6 @@
-# Camerons Behaviour - Child Friendly Local Version
+# Camerons Behaviour - Mario Inspired Local Version
 
-This version saves only on the phone or browser that is using it.
-
-It has:
-- A more child-friendly design
-- Softer wording
-- Red / amber / green traffic light
-- Local save history
+This version keeps the same local-save behaviour tracker but uses a retro platform-game theme.
 
 ## Files to upload to GitHub
 
@@ -30,7 +24,7 @@ Open `script.js` and edit this section:
 
 const messages = {
   red: {
-    main: "Red: Tricky choices",
-    sub: "Today was hard. No treat today, but we can repair it and try again tomorrow."
+    main: "RED: OOPS DAY",
+    sub: "Today was hard. No treat today, but tomorrow is a brand new level."
   }
 }

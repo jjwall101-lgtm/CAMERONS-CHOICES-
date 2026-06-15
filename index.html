@@ -9,51 +9,66 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json" />
 
-  <meta name="theme-color" content="#7cc7ff" />
+  <meta name="theme-color" content="#5cc7ff" />
 </head>
 
 <body>
   <main class="app">
     <section class="top-card">
-      <div class="emoji-row">⭐ 🌈 🚦 🌈 ⭐</div>
+      <div class="game-icons">⭐ 🪙 🍄 🧱 ⭐</div>
       <h1>Camerons Behaviour</h1>
-      <p class="subtitle">Choose Cameron's colour for today</p>
+      <p class="subtitle">Choose Cameron's level for today</p>
       <p class="save-status">Saved on this phone only</p>
     </section>
 
+    <section class="world-strip">
+      <div class="cloud">☁️</div>
+      <div class="cloud">☁️</div>
+      <div class="question-block">?</div>
+      <div class="coin">🪙</div>
+      <div class="question-block">?</div>
+    </section>
+
     <section class="traffic-light-card">
+      <div class="level-title">WORLD 1-1</div>
+
       <section class="traffic-light" aria-label="Behaviour traffic light">
         <button class="light red" id="redLight" aria-label="Red: tricky choices">
-          <span>😟</span>
+          <span>🔴</span>
         </button>
 
         <button class="light amber" id="amberLight" aria-label="Amber: okay day">
-          <span>😐</span>
+          <span>🟠</span>
         </button>
 
         <button class="light green" id="greenLight" aria-label="Green: great choices">
-          <span>😄</span>
+          <span>🟢</span>
         </button>
       </section>
 
       <div class="colour-labels">
-        <div><strong>Red</strong><br />Tricky choices</div>
-        <div><strong>Amber</strong><br />Okay day</div>
-        <div><strong>Green</strong><br />Great choices</div>
+        <div><strong>RED</strong><br />Oops day</div>
+        <div><strong>AMBER</strong><br />Trying day</div>
+        <div><strong>GREEN</strong><br />Super day</div>
       </div>
     </section>
 
     <section class="today-card">
-      <div class="today-title">Today</div>
-      <div class="message" id="message">Tap a colour for today</div>
+      <div class="today-title">TODAY'S RESULT</div>
+      <div class="message" id="message">Tap a light to choose today</div>
       <div class="sub-message" id="subMessage"></div>
 
-      <button class="reset-button" id="resetButton">Reset Today</button>
+      <button class="reset-button" id="resetButton">RESET TODAY</button>
     </section>
 
     <section class="history">
-      <h2>Day History</h2>
+      <h2>DAY HISTORY</h2>
       <div id="historyList"></div>
+    </section>
+
+    <section class="ground-strip" aria-hidden="true">
+      <div class="ground-top"></div>
+      <div class="ground-bottom"></div>
     </section>
   </main>
 
