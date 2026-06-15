@@ -110,8 +110,15 @@
       </div>
 
       <div class="pin-controls">
-        <button type="button" id="changePinButton">Parent PIN</button>
-        <p>Manual coin changes need the parent PIN.</p>
+        <div class="lock-status" id="lockStatus">Parent controls locked</div>
+
+        <div class="lock-buttons">
+          <button type="button" id="unlockControlsButton">Unlock</button>
+          <button type="button" id="lockControlsButton">Lock</button>
+          <button type="button" id="changePinButton">Parent PIN</button>
+        </div>
+
+        <p>Unlock parent controls before changing coins.</p>
       </div>
     </section>
 
@@ -208,7 +215,7 @@
     </footer>
   </main>
 
-  <script src="script.js?v=13" type="module"></script>
+  <script src="script.js?v=15" type="module"></script>
   <script src="theme.js?v=3"></script>
 </body>
 </html>

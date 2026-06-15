@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let appDoc = null;
   let isFirebaseReady = false;
   let currentData = getLocalData();
+  let parentUnlocked = false;
 
   const messages = {
     red: {
@@ -83,6 +84,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const add10Button = document.getElementById("add10Button");
   const add50Button = document.getElementById("add50Button");
   const resetCoinsButton = document.getElementById("resetCoinsButton");
+  const unlockControlsButton = document.getElementById("unlockControlsButton");
+  const lockControlsButton = document.getElementById("lockControlsButton");
   const changePinButton = document.getElementById("changePinButton");
   const resetTodayButton = document.getElementById("resetTodayButton");
   const clearHistoryButton = document.getElementById("clearHistoryButton");
@@ -273,7 +276,34 @@ document.addEventListener("DOMContentLoaded", () => {
     return localStorage.getItem(PARENT_PIN_KEY) || DEFAULT_PARENT_PIN;
   }
 
-  function verifyParentPin(actionText) {
+  function updateLockDisplay() {
+    const lockStatus = document.getElementById("lockStatus");
+    const unlockControlsButton = document.getElementById("unlockControlsButton");
+    const lockControlsButton = document.getElementById("lockControlsButton");
+
+    if (lockStatus) {
+      lockStatus.textContent = parentUnlocked
+        ? "Parent controls unlocked"
+        : "Parent controls locked";
+
+      lockStatus.classList.toggle("unlocked", parentUnlocked);
+      lockStatus.classList.toggle("locked", !parentUnlocked);
+    }
+
+    if (unlockControlsButton) {
+      unlockControlsButton.disabled = parentUnlocked;
+    }
+
+    if (lockControlsButton) {
+      lockControlsButton.disabled = !parentUnlocked;
+    }
+  }
+
+  function unlockParentControls(actionText = "use parent controls") {
+    if (parentUnlocked) {
+      return true;
+    }
+
     const typedPin = prompt(`Parent PIN needed to ${actionText}.`);
 
     if (typedPin === null) {
@@ -281,10 +311,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (typedPin === getParentPin()) {
+      parentUnlocked = true;
+      updateLockDisplay();
       return true;
     }
 
-    alert("Wrong PIN. No changes were made.");
+    alert("Wrong PIN. Parent controls stayed locked.");
+    updateLockDisplay();
+    return false;
+  }
+
+  function lockParentControls() {
+    parentUnlocked = false;
+    updateLockDisplay();
+  }
+
+  function manualUnlockParentControls() {
+    unlockParentControls("unlock parent controls");
+  }
+
+  function verifyParentPin(actionText) {
+    if (parentUnlocked) {
+      return true;
+    }
+
+    alert("Parent controls are locked. Press Unlock first.");
     return false;
   }
 
@@ -299,6 +350,8 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Wrong PIN. The PIN was not changed.");
       return;
     }
+
+    parentUnlocked = true;
 
     const newPin = prompt("Enter a new parent PIN. Use 4 to 8 numbers.");
 
@@ -319,6 +372,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     localStorage.setItem(PARENT_PIN_KEY, newPin);
+    parentUnlocked = true;
+    updateLockDisplay();
     alert("Parent PIN changed on this phone.");
   }
 
@@ -763,6 +818,15 @@ document.addEventListener("DOMContentLoaded", () => {
     add10Button.addEventListener("click", () => adjustCoins(10, "10 coins added manually"));
     add50Button.addEventListener("click", () => adjustCoins(50, "50 coins added manually"));
     resetCoinsButton.addEventListener("click", resetCoins);
+
+    if (unlockControlsButton) {
+      unlockControlsButton.addEventListener("click", manualUnlockParentControls);
+    }
+
+    if (lockControlsButton) {
+      lockControlsButton.addEventListener("click", lockParentControls);
+    }
+
     changePinButton.addEventListener("click", changeParentPin);
 
     resetTodayButton.addEventListener("click", resetToday);
@@ -825,8 +889,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   try {
-    connectButtons();
+    parentUnlocked = false;
     updateDisplay();
+    updateLockDisplay();
+    connectButtons();
     startFirebaseSync();
     scheduleMidnightAmberReset();
   } catch (error) {
