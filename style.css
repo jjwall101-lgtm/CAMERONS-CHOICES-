@@ -727,3 +727,27 @@ h1 {
     font-size: 19px;
   }
 }
+
+
+.sync-status {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  background: #dff3ff;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.sync-status.online {
+  background: #a9f5b7;
+}
+
+.sync-status.offline {
+  background: #fff18a;
+}
+
+.sync-status.error {
+  background: #ffb2b0;
+}

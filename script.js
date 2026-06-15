@@ -1,6 +1,35 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
 document.addEventListener("DOMContentLoaded", () => {
-  const STORAGE_KEY = "cameronCoinsAppDataV4";
+  /*
+    FIREBASE SETUP NEEDED
+
+    Replace the values below with your Firebase web app config.
+
+    Firebase Console > Project settings > General > Your apps > Web app
+  */
+  const firebaseConfig = {
+    apiKey: "PASTE_YOUR_API_KEY_HERE",
+    authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
+    projectId: "PASTE_YOUR_PROJECT_ID_HERE",
+    storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
+    messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
+    appId: "PASTE_YOUR_APP_ID_HERE"
+  };
+
+  const FAMILY_RECORD_ID = "cameron-shared-family-app";
+
+  const LOCAL_STORAGE_KEY = "cameronCoinsAppDataV5SyncBackup";
   const OLD_STORAGE_KEYS = [
+    "cameronCoinsAppDataV4",
     "cameronCoinsAppDataV3",
     "cameronCoinsAppDataV2",
     "cameronCoinsAppDataV1"
@@ -9,6 +38,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const RED_PENALTY = -50;
   const GREEN_REWARD = 50;
   const GOAL = 1000;
+
+  let db = null;
+  let appDoc = null;
+  let isFirebaseReady = false;
+  let currentData = getLocalData();
 
   const messages = {
     red: {
@@ -28,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  const syncStatus = document.getElementById("syncStatus");
   const coinTotalTop = document.getElementById("coinTotalTop");
   const coinTotalMain = document.getElementById("coinTotalMain");
   const coinProgress = document.getElementById("coinProgress");
@@ -47,41 +82,92 @@ document.addEventListener("DOMContentLoaded", () => {
   const resetTodayButton = document.getElementById("resetTodayButton");
   const clearHistoryButton = document.getElementById("clearHistoryButton");
 
+  function firebaseIsConfigured() {
+    return !Object.values(firebaseConfig).some(value => String(value).includes("PASTE_YOUR"));
+  }
+
+  function setSyncStatus(text, statusClass) {
+    syncStatus.textContent = text;
+    syncStatus.className = `sync-status ${statusClass}`;
+  }
+
   function getToday() {
     return new Date().toLocaleDateString("en-GB");
   }
 
-  function getData() {
+  function getLocalData() {
     try {
-      let saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      let saved = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));
 
-      // Bring older saved data over once, so you don't lose existing coins/history.
       if (!saved) {
         for (const oldKey of OLD_STORAGE_KEYS) {
           const oldSaved = JSON.parse(localStorage.getItem(oldKey));
 
           if (oldSaved) {
             saved = oldSaved;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(saved));
             break;
           }
         }
       }
 
-      return {
-        coinTotal: Number(saved?.coinTotal) || 0,
-        history: Array.isArray(saved?.history) ? saved.history : []
-      };
+      return normalizeData(saved);
     } catch {
-      return {
-        coinTotal: 0,
-        history: []
-      };
+      return normalizeData(null);
     }
   }
 
-  function saveData(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  function saveLocalData(data) {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalizeData(data)));
+  }
+
+  function normalizeData(data) {
+    return {
+      coinTotal: Math.max(0, Number(data?.coinTotal) || 0),
+      history: Array.isArray(data?.history) ? data.history : []
+    };
+  }
+
+  async function getLatestData() {
+    if (!isFirebaseReady || !appDoc) {
+      return normalizeData(currentData);
+    }
+
+    try {
+      const snapshot = await getDoc(appDoc);
+
+      if (snapshot.exists()) {
+        return normalizeData(snapshot.data());
+      }
+
+      return normalizeData(currentData);
+    } catch (error) {
+      console.error(error);
+      setSyncStatus("Sync read failed - using this phone", "error");
+      return normalizeData(currentData);
+    }
+  }
+
+  async function saveData(data) {
+    const cleanData = normalizeData(data);
+    currentData = cleanData;
+    saveLocalData(cleanData);
+    updateDisplay();
+
+    if (!isFirebaseReady || !appDoc) {
+      return;
+    }
+
+    try {
+      await setDoc(appDoc, {
+        ...cleanData,
+        lastUpdatedAt: new Date().toISOString(),
+        serverUpdatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (error) {
+      console.error(error);
+      setSyncStatus("Sync write failed - saved on this phone", "error");
+    }
   }
 
   function clampCoins(amount) {
@@ -103,13 +189,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return true;
     }
 
-    // Cameron must go amber before green.
     if (newColour === "green" && currentColour !== "amber") {
       return false;
     }
 
-    // Green can go straight to red.
-    // Amber is always allowed and does not remove coins.
     return true;
   }
 
@@ -119,25 +202,23 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getCoinChangeForMove(currentColour, newColour) {
-    // Only add coins when he actually changes from amber to green.
     if (currentColour === "amber" && newColour === "green") {
       return GREEN_REWARD;
     }
 
-    // Only remove coins when he actually changes onto red.
-    // Pressing red repeatedly does not keep removing coins.
     if (currentColour !== "red" && newColour === "red") {
       return RED_PENALTY;
     }
 
-    // Amber is neutral. Green to amber is neutral.
-    // Green to green is neutral.
     return 0;
   }
 
-  function setDay(colour, options = {}) {
+  async function setDay(colour, options = {}) {
     const today = getToday();
-    const data = getData();
+    const data = await getLatestData();
+
+    ensureTodayStartsAmberInData(data);
+
     const existingToday = getTodayEntry(data);
     const currentColour = existingToday?.colour || null;
 
@@ -174,17 +255,15 @@ document.addEventListener("DOMContentLoaded", () => {
       savedAt: new Date().toISOString()
     });
 
-    saveData(data);
-    updateDisplay();
+    await saveData(data);
   }
 
-  function ensureTodayStartsAmber() {
-    const data = getData();
+  function ensureTodayStartsAmberInData(data) {
     const today = getToday();
     const existingToday = data.history.find(item => item.type === "day" && item.date === today);
 
     if (existingToday) {
-      return;
+      return false;
     }
 
     addHistoryEntry(data, {
@@ -208,7 +287,20 @@ document.addEventListener("DOMContentLoaded", () => {
       savedAt: new Date().toISOString()
     });
 
-    saveData(data);
+    return true;
+  }
+
+  async function ensureTodayStartsAmber() {
+    const data = await getLatestData();
+    const changed = ensureTodayStartsAmberInData(data);
+
+    if (changed) {
+      await saveData(data);
+    } else {
+      currentData = data;
+      saveLocalData(data);
+      updateDisplay();
+    }
   }
 
   function scheduleMidnightAmberReset() {
@@ -219,23 +311,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const msUntilMidnight = midnight.getTime() - now.getTime();
 
-    setTimeout(() => {
-      ensureTodayStartsAmber();
-      updateDisplay();
+    setTimeout(async () => {
+      await ensureTodayStartsAmber();
       scheduleMidnightAmberReset();
     }, msUntilMidnight + 1000);
   }
 
-  function resetToday() {
+  async function resetToday() {
     const today = getToday();
-    const data = getData();
+    const data = await getLatestData();
 
     const existingToday = getTodayEntry(data);
     const oldNetCoinChange = Number(existingToday?.coinChange) || 0;
 
-    // Reset today back to amber and undo today's traffic-light coin movement.
     data.coinTotal = clampCoins(data.coinTotal - oldNetCoinChange);
-
     data.history = data.history.filter(item => !(item.type === "day" && item.date === today));
 
     addHistoryEntry(data, {
@@ -259,12 +348,11 @@ document.addEventListener("DOMContentLoaded", () => {
       savedAt: new Date().toISOString()
     });
 
-    saveData(data);
-    updateDisplay();
+    await saveData(data);
   }
 
-  function adjustCoins(amount, reason) {
-    const data = getData();
+  async function adjustCoins(amount, reason) {
+    const data = await getLatestData();
 
     const oldTotal = data.coinTotal;
     data.coinTotal = clampCoins(data.coinTotal + amount);
@@ -281,12 +369,11 @@ document.addEventListener("DOMContentLoaded", () => {
       savedAt: new Date().toISOString()
     });
 
-    saveData(data);
-    updateDisplay();
+    await saveData(data);
   }
 
-  function resetCoins() {
-    const data = getData();
+  async function resetCoins() {
+    const data = await getLatestData();
 
     const oldTotal = data.coinTotal;
     data.coinTotal = 0;
@@ -302,29 +389,25 @@ document.addEventListener("DOMContentLoaded", () => {
       savedAt: new Date().toISOString()
     });
 
-    saveData(data);
-    updateDisplay();
+    await saveData(data);
   }
 
-  function clearHistory() {
+  async function clearHistory() {
     const confirmed = confirm("Clear the saved history? Coin total will stay the same.");
 
     if (!confirmed) {
       return;
     }
 
-    const data = getData();
+    const data = await getLatestData();
     data.history = [];
 
-    saveData(data);
-
-    // After clearing history, put today back to amber.
-    ensureTodayStartsAmber();
-    updateDisplay();
+    ensureTodayStartsAmberInData(data);
+    await saveData(data);
   }
 
   function updateDisplay() {
-    const data = getData();
+    const data = normalizeData(currentData);
     const todayEntry = getTodayEntry(data);
 
     document.querySelectorAll(".light").forEach(light => {
@@ -418,10 +501,65 @@ document.addEventListener("DOMContentLoaded", () => {
     clearHistoryButton.addEventListener("click", clearHistory);
   }
 
+  async function startFirebaseSync() {
+    if (!firebaseIsConfigured()) {
+      isFirebaseReady = false;
+      setSyncStatus("Set up Firebase to sync phones", "offline");
+      await ensureTodayStartsAmber();
+      return;
+    }
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      appDoc = doc(db, "families", FAMILY_RECORD_ID);
+      isFirebaseReady = true;
+
+      setSyncStatus("Sync connected", "online");
+
+      const snapshot = await getDoc(appDoc);
+
+      if (!snapshot.exists()) {
+        const data = getLocalData();
+        ensureTodayStartsAmberInData(data);
+        await setDoc(appDoc, {
+          ...data,
+          lastUpdatedAt: new Date().toISOString(),
+          serverUpdatedAt: serverTimestamp()
+        }, { merge: true });
+      }
+
+      onSnapshot(
+        appDoc,
+        snapshot => {
+          if (snapshot.exists()) {
+            currentData = normalizeData(snapshot.data());
+            saveLocalData(currentData);
+            updateDisplay();
+            setSyncStatus("Sync connected", "online");
+          }
+        },
+        error => {
+          console.error(error);
+          setSyncStatus("Sync error - using this phone", "error");
+          currentData = getLocalData();
+          updateDisplay();
+        }
+      );
+
+      await ensureTodayStartsAmber();
+    } catch (error) {
+      console.error(error);
+      isFirebaseReady = false;
+      setSyncStatus("Sync failed - check Firebase config", "error");
+      await ensureTodayStartsAmber();
+    }
+  }
+
   try {
     connectButtons();
-    ensureTodayStartsAmber();
     updateDisplay();
+    startFirebaseSync();
     scheduleMidnightAmberReset();
   } catch (error) {
     console.error(error);

@@ -1,6 +1,6 @@
-# Cameron
+# Cameron sync version
 
-This version rewards transitions instead of repeated green taps.
+This version keeps the latest rules and adds Firebase syncing.
 
 ## Rules
 
@@ -14,22 +14,11 @@ This version rewards transitions instead of repeated green taps.
 - Moving onto red removes 50 coins
 - Pressing red again while already red removes 0 coins
 - 1000 coins unlocks the special treat message
-
-## Upload to GitHub
-
-Upload all files to the root of the repo:
-
-- index.html
-- style.css
-- script.js
-- manifest.json
-- icon.png
-- icon-192.png
-- README.md
+- Changes can sync between phones after Firebase config is added
 
 ## Refresh note
 
 This version uses:
 
-style.css?v=9
-script.js?v=9
+style.css?v=10
+script.js?v=10
