@@ -1,24 +1,51 @@
-# Camerons Behaviour - Retro Platform Version
+# Cameron
 
-This is a local-save behaviour traffic-light app with a retro platform-game look.
+A local-save reward traffic light app.
 
-It saves only on the phone/browser using localStorage.
+## What it does
+
+- App name changed to Cameron
+- Saves history on this phone/browser
+- Green light adds 50 coins
+- 1000 coins unlocks a special treat message
+- "SPECIAL TREAT!" comes out of a question box at 1000 coins
+- You can deduct 10 or 50 coins
+- You can manually add 50 coins
+- You can reset the coin total
+- You can reset today's light
+- You can clear history without resetting coins
 
 ## Upload to GitHub
 
-Upload these files to the root of your repo:
+Upload all of these files to the root of your GitHub repo:
 
 - index.html
 - style.css
 - script.js
 - manifest.json
-- icon.svg
+- icon.png
+- icon-192.png
 - README.md
+
+The repo should look like this:
+
+index.html
+style.css
+script.js
+manifest.json
+icon.png
+icon-192.png
+README.md
 
 ## GitHub Pages
 
 Settings > Pages > Deploy from branch > main > /root
 
-## To change the words
+## Important refresh note
 
-Edit the `messages` section inside `script.js`.
+This version uses:
+
+style.css?v=5
+script.js?v=5
+
+If your phone still shows the old app, refresh the page fully.

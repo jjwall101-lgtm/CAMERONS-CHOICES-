@@ -1,20 +1,20 @@
 {
-  "name": "Camerons Behaviour",
-  "short_name": "Behaviour",
+  "name": "Cameron",
+  "short_name": "Cameron",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#4ab7ff",
   "theme_color": "#4ab7ff",
   "icons": [
     {
-      "src": "icon.svg",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png"
     },
     {
-      "src": "icon.svg",
+      "src": "icon.png",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/png"
     }
   ]
 }

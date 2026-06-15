@@ -4,10 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Camerons Behaviour</title>
+  <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=5" />
   <link rel="manifest" href="manifest.json" />
+
+  <link rel="icon" href="icon.png" />
+  <link rel="apple-touch-icon" href="icon.png" />
 
   <meta name="theme-color" content="#4ab7ff" />
 </head>
@@ -20,12 +23,15 @@
 
       <div class="score-bar">
         <span>⭐ CAMERON</span>
-        <span>🪙 <span id="coinScore">000</span></span>
-        <span>WORLD 1-1</span>
+        <span>🪙 <span id="coinTotalTop">0</span></span>
+        <span>GOAL 1000</span>
       </div>
 
-      <h1>Camerons Behaviour</h1>
-      <p class="subtitle">Pick today’s power level</p>
+      <img class="app-icon-preview" src="icon.png" alt="Cameron app logo" />
+
+      <h1>Cameron</h1>
+      <p class="subtitle">Pick today's power level</p>
+      <p class="save-status" id="appStatus">Loading buttons...</p>
 
       <div class="power-row">
         <div class="question-block">?</div>
@@ -39,19 +45,45 @@
       </div>
     </header>
 
+    <section class="coin-card">
+      <div class="coin-title">COIN BANK</div>
+      <div class="coin-count"><span id="coinTotalMain">0</span> / 1000</div>
+
+      <div class="progress-outer" aria-label="Coin progress to special treat">
+        <div class="progress-inner" id="coinProgress"></div>
+      </div>
+
+      <p class="coin-help">Green light adds 50 coins. Reach 1000 coins for a special treat.</p>
+
+      <div class="coin-controls">
+        <button type="button" id="deduct10Button">-10</button>
+        <button type="button" id="deduct50Button">-50</button>
+        <button type="button" id="add50Button">+50</button>
+        <button type="button" id="resetCoinsButton">Reset Coins</button>
+      </div>
+    </section>
+
+    <section class="treat-card" id="treatCard">
+      <div class="treat-box" id="treatBox">
+        <div class="box-lid">?</div>
+        <div class="special-treat-text" id="specialTreatText">SPECIAL TREAT!</div>
+      </div>
+      <p class="treat-subtitle">1000 coins reached!</p>
+    </section>
+
     <section class="traffic-section">
       <div class="pipe-top"></div>
 
       <section class="traffic-light" aria-label="Behaviour traffic light">
-        <button class="light red" id="redLight" aria-label="Red: oops day">
+        <button type="button" class="light red" id="redLight" aria-label="Red: oops level">
           <span>!</span>
         </button>
 
-        <button class="light amber" id="amberLight" aria-label="Amber: trying day">
+        <button type="button" class="light amber" id="amberLight" aria-label="Amber: trying level">
           <span>?</span>
         </button>
 
-        <button class="light green" id="greenLight" aria-label="Green: super day">
+        <button type="button" class="light green" id="greenLight" aria-label="Green: super level">
           <span>★</span>
         </button>
       </section>
@@ -59,33 +91,36 @@
       <div class="pipe-stem"></div>
 
       <div class="level-labels">
-        <button class="level-card red-card" id="redLabel">
+        <button type="button" class="level-card red-card" id="redLabel">
           <strong>RED</strong>
           <span>Oops level</span>
         </button>
 
-        <button class="level-card amber-card" id="amberLabel">
+        <button type="button" class="level-card amber-card" id="amberLabel">
           <strong>AMBER</strong>
           <span>Trying level</span>
         </button>
 
-        <button class="level-card green-card" id="greenLabel">
+        <button type="button" class="level-card green-card" id="greenLabel">
           <strong>GREEN</strong>
-          <span>Super level</span>
+          <span>+50 coins</span>
         </button>
       </div>
     </section>
 
     <section class="today-card">
-      <div class="today-title">TODAY’S LEVEL</div>
+      <div class="today-title">TODAY'S LEVEL</div>
       <div class="message" id="message">Tap a light to choose today</div>
       <div class="sub-message" id="subMessage">Every day is a new level.</div>
 
-      <button class="reset-button" id="resetButton">RESET TODAY</button>
+      <button type="button" class="reset-button" id="resetTodayButton">RESET TODAY</button>
     </section>
 
     <section class="history">
-      <h2>LEVEL HISTORY</h2>
+      <div class="history-header">
+        <h2>LEVEL HISTORY</h2>
+        <button type="button" id="clearHistoryButton">Clear History</button>
+      </div>
       <div id="historyList"></div>
     </section>
 
@@ -95,6 +130,6 @@
     </footer>
   </main>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=5" defer></script>
 </body>
 </html>
