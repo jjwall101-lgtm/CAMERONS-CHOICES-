@@ -9,28 +9,50 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json" />
 
-  <meta name="theme-color" content="#222222" />
+  <meta name="theme-color" content="#7cc7ff" />
 </head>
 
 <body>
   <main class="app">
-    <h1>Camerons Behaviour</h1>
+    <section class="top-card">
+      <div class="emoji-row">⭐ 🌈 🚦 🌈 ⭐</div>
+      <h1>Camerons Behaviour</h1>
+      <p class="subtitle">Choose Cameron's colour for today</p>
+      <p class="save-status">Saved on this phone only</p>
+    </section>
 
-    <section class="traffic-light" aria-label="Behaviour traffic light">
-      <button class="light red" onclick="setDay('red')" aria-label="Red: bad choices"></button>
-      <button class="light amber" onclick="setDay('amber')" aria-label="Amber: normal day"></button>
-      <button class="light green" onclick="setDay('green')" aria-label="Green: good choices"></button>
+    <section class="traffic-light-card">
+      <section class="traffic-light" aria-label="Behaviour traffic light">
+        <button class="light red" id="redLight" aria-label="Red: tricky choices">
+          <span>😟</span>
+        </button>
+
+        <button class="light amber" id="amberLight" aria-label="Amber: okay day">
+          <span>😐</span>
+        </button>
+
+        <button class="light green" id="greenLight" aria-label="Green: great choices">
+          <span>😄</span>
+        </button>
+      </section>
+
+      <div class="colour-labels">
+        <div><strong>Red</strong><br />Tricky choices</div>
+        <div><strong>Amber</strong><br />Okay day</div>
+        <div><strong>Green</strong><br />Great choices</div>
+      </div>
     </section>
 
     <section class="today-card">
+      <div class="today-title">Today</div>
       <div class="message" id="message">Tap a colour for today</div>
       <div class="sub-message" id="subMessage"></div>
 
-      <button class="reset-button" onclick="resetToday()">Reset Today</button>
+      <button class="reset-button" id="resetButton">Reset Today</button>
     </section>
 
     <section class="history">
-      <h2>History</h2>
+      <h2>Day History</h2>
       <div id="historyList"></div>
     </section>
   </main>

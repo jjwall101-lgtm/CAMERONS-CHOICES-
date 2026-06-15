@@ -1,6 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="100" fill="#222222"/>
-  <circle cx="256" cy="140" r="70" fill="red"/>
-  <circle cx="256" cy="256" r="70" fill="orange"/>
-  <circle cx="256" cy="372" r="70" fill="limegreen"/>
+  <rect width="512" height="512" rx="110" fill="#7cc7ff"/>
+  <rect x="156" y="66" width="200" height="380" rx="70" fill="#263238"/>
+  <circle cx="256" cy="150" r="58" fill="#ff4d4d"/>
+  <circle cx="256" cy="256" r="58" fill="#ffbf3f"/>
+  <circle cx="256" cy="362" r="58" fill="#49d66d"/>
+  <text x="256" y="382" text-anchor="middle" font-size="46" font-family="Arial">★</text>
 </svg>

@@ -1,17 +1,30 @@
 const messages = {
   red: {
-    main: "Red: Bad choices",
-    sub: "Today has been difficult. A consequence is needed."
+    emoji: "🔴",
+    main: "Red: Tricky choices",
+    sub: "Today was hard. No treat today, but we can repair it and try again tomorrow."
   },
   amber: {
-    main: "Amber: Normal day",
-    sub: "Today was okay. We try again tomorrow."
+    emoji: "🟠",
+    main: "Amber: Okay day",
+    sub: "Today was a normal day. Some good choices, some tricky moments. Keep trying."
   },
   green: {
-    main: "Green: Good choices",
-    sub: "Great day. Treat earned."
+    emoji: "🟢",
+    main: "Green: Great choices",
+    sub: "Amazing effort today. Treat earned!"
   }
 };
+
+const redLight = document.getElementById("redLight");
+const amberLight = document.getElementById("amberLight");
+const greenLight = document.getElementById("greenLight");
+const resetButton = document.getElementById("resetButton");
+
+redLight.addEventListener("click", () => setDay("red"));
+amberLight.addEventListener("click", () => setDay("amber"));
+greenLight.addEventListener("click", () => setDay("green"));
+resetButton.addEventListener("click", resetToday);
 
 function getToday() {
   return new Date().toLocaleDateString("en-GB");
@@ -34,8 +47,11 @@ function setDay(colour) {
   history.unshift({
     date: today,
     colour: colour,
-    text: messages[colour].main
+    text: messages[colour].main,
+    emoji: messages[colour].emoji
   });
+
+  history = history.slice(0, 60);
 
   saveHistory(history);
   updateDisplay();
@@ -66,7 +82,7 @@ function updateDisplay() {
     document.getElementById("subMessage").textContent = messages[todayEntry.colour].sub;
   } else {
     document.getElementById("message").textContent = "Tap a colour for today";
-    document.getElementById("subMessage").textContent = "";
+    document.getElementById("subMessage").textContent = "Red, amber, or green. Tomorrow is always a fresh start.";
   }
 
   updateHistoryList(history);
@@ -84,7 +100,10 @@ function updateHistoryList(history) {
   history.forEach(item => {
     const div = document.createElement("div");
     div.className = "history-item";
-    div.textContent = `${item.date} - ${item.text}`;
+
+    const emoji = item.emoji || messages[item.colour]?.emoji || "";
+    div.textContent = `${emoji} ${item.date} - ${item.text}`;
+
     historyList.appendChild(div);
   });
 }

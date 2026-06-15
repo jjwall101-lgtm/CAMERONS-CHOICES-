@@ -3,8 +3,8 @@
   "short_name": "Behaviour",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f2f2f2",
-  "theme_color": "#222222",
+  "background_color": "#7cc7ff",
+  "theme_color": "#7cc7ff",
   "icons": [
     {
       "src": "icon.svg",
