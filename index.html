@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=32" />
+  <link rel="stylesheet" href="style.css?v=33" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -75,6 +75,7 @@
 
     <nav class="app-nav" aria-label="App pages">
       <button type="button" class="nav-button active" data-page="home">Home</button>
+      <button type="button" class="nav-button" data-page="feelings">Feelings</button>
       <button type="button" class="nav-button" data-page="rewards">Rewards</button>
       <button type="button" class="nav-button" data-page="parent">Parent</button>
       <button type="button" class="nav-button" data-page="history">History</button>
@@ -216,6 +217,20 @@
       </section>
     </section>
 
+
+    <section class="page" id="page-feelings">
+      <section class="feelings-card">
+        <div class="section-title">HOW DO YOU FEEL?</div>
+        <p class="feelings-subtitle">Tap a face. You do not have to talk.</p>
+
+        <div class="latest-feeling-child" id="latestFeelingChild">
+          No feeling chosen yet today.
+        </div>
+
+        <div class="feelings-grid" id="feelingsGrid"></div>
+      </section>
+    </section>
+
     <section class="page" id="page-rewards">
       <section class="rewards-shop-card">
         <div class="section-title">REWARDS SHOP</div>
@@ -244,6 +259,13 @@
             <div class="panel-title">Reward Requests</div>
             <div class="reward-request-list" id="rewardRequestList">
               <p class="empty-notes">No reward requests yet.</p>
+            </div>
+          </section>
+
+          <section class="parent-panel feelings-parent-panel">
+            <div class="panel-title">Recent Feelings</div>
+            <div class="parent-feelings-list" id="parentFeelingsList">
+              <p class="empty-notes">No feelings logged yet.</p>
             </div>
           </section>
 
@@ -336,6 +358,7 @@
           <option value="coin">Coin changes</option>
           <option value="level">Levels</option>
           <option value="reward">Rewards</option>
+          <option value="feeling">Feelings</option>
           <option value="note">Notes</option>
         </select>
 
@@ -473,6 +496,6 @@
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=32" type="module"></script>
+  <script src="script.js?v=33" type="module"></script>
 </body>
 </html>

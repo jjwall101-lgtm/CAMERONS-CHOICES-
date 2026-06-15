@@ -58,6 +58,19 @@ document.addEventListener("DOMContentLoaded", () => {
     { id: "reward-1000-prize", icon: "🎁", name: "Big prize", cost: 1000 }
   ];
 
+  const FEELINGS = [
+    { id: "happy", label: "Happy", emoji: "😊", colour: "yellow" },
+    { id: "sad", label: "Sad", emoji: "😢", colour: "blue" },
+    { id: "angry", label: "Angry", emoji: "😠", colour: "red" },
+    { id: "worried", label: "Worried", emoji: "😟", colour: "purple" },
+    { id: "scared", label: "Scared", emoji: "😨", colour: "grey" },
+    { id: "tired", label: "Tired", emoji: "😴", colour: "navy" },
+    { id: "excited", label: "Excited", emoji: "🤩", colour: "orange" },
+    { id: "calm", label: "Calm", emoji: "😌", colour: "green" },
+    { id: "confused", label: "Confused", emoji: "😕", colour: "teal" },
+    { id: "overwhelmed", label: "Overwhelmed", emoji: "🥴", colour: "pink" }
+  ];
+
   let app = null;
   let db = null;
   let auth = null;
@@ -81,7 +94,10 @@ document.addEventListener("DOMContentLoaded", () => {
     childNextReward: $("childNextReward"),
     childTodayLevel: $("childTodayLevel"),
     childStreakCount: $("childStreakCount"),
+    feelingsGrid: $("feelingsGrid"),
+    latestFeelingChild: $("latestFeelingChild"),
     parentDashboardGrid: $("parentDashboardGrid"),
+    parentFeelingsList: $("parentFeelingsList"),
     rewardRequestList: $("rewardRequestList"),
     quickLogLevelSelect: $("quickLogLevelSelect"),
     quickLogCategorySelect: $("quickLogCategorySelect"),
@@ -221,6 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
       parentNotes: [],
       rewards: DEFAULT_REWARDS,
       rewardRequests: [],
+      feelingLogs: [],
       categories: DEFAULT_CATEGORIES,
       streak: {
         current: 0,
@@ -286,6 +303,27 @@ document.addEventListener("DOMContentLoaded", () => {
         resolvedBy: request.resolvedBy || ""
       }))
       .slice(0, 100);
+  }
+
+  function normalizeFeelingLogs(feelingLogs) {
+    if (!Array.isArray(feelingLogs)) {
+      return [];
+    }
+
+    return feelingLogs
+      .filter(log => log && typeof log === "object")
+      .map(log => ({
+        id: log.id || `feeling-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        feelingId: log.feelingId || "",
+        label: String(log.label || "Feeling").slice(0, 40),
+        emoji: String(log.emoji || "🙂").slice(0, 4),
+        colour: String(log.colour || "yellow").slice(0, 20),
+        dateISO: log.dateISO || "",
+        dateText: log.dateText || "",
+        savedAt: log.savedAt || ""
+      }))
+      .filter(log => log.feelingId && log.label)
+      .slice(0, 250);
   }
 
   function normalizeCategories(categories) {
@@ -357,6 +395,7 @@ document.addEventListener("DOMContentLoaded", () => {
       parentNotes: normalizeNotes(data?.parentNotes),
       rewards: normalizeRewards(data?.rewards),
       rewardRequests: normalizeRewardRequests(data?.rewardRequests),
+      feelingLogs: normalizeFeelingLogs(data?.feelingLogs),
       categories: normalizeCategories(data?.categories),
       streak: {
         current: Math.max(0, Number(data?.streak?.current) || 0),
@@ -775,6 +814,116 @@ document.addEventListener("DOMContentLoaded", () => {
     await saveData(data);
   }
 
+  async function logFeeling(feelingId) {
+    const feeling = FEELINGS.find(item => item.id === feelingId);
+
+    if (!feeling) {
+      return;
+    }
+
+    const data = await getLatestData();
+    const now = new Date();
+
+    data.feelingLogs = normalizeFeelingLogs(data.feelingLogs);
+
+    data.feelingLogs.unshift({
+      id: `feeling-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      feelingId: feeling.id,
+      label: feeling.label,
+      emoji: feeling.emoji,
+      colour: feeling.colour,
+      dateISO: getDateISO(now),
+      dateText: formatDateTime(now),
+      savedAt: now.toISOString()
+    });
+
+    addHistoryEntry(data, {
+      type: "feeling",
+      level: "feeling",
+      category: "Feeling",
+      text: `Cameron tapped: ${feeling.emoji} ${feeling.label}`,
+      coinChange: 0,
+      coinsAfter: data.coinTotal
+    });
+
+    await saveData(data);
+
+    await showPhoneNotification("Cameron shared a feeling", {
+      body: `Cameron feels ${feeling.emoji} ${feeling.label}`,
+      tag: `feeling-${feeling.id}-${getDateISO(now)}`
+    });
+
+    alert(`You chose: ${feeling.emoji} ${feeling.label}`);
+  }
+
+  function updateFeelingsPage() {
+    const grid = elements.feelingsGrid;
+
+    if (!grid) {
+      return;
+    }
+
+    const latest = normalizeFeelingLogs(currentData.feelingLogs)[0];
+
+    if (elements.latestFeelingChild) {
+      if (latest && latest.dateISO === getDateISO()) {
+        elements.latestFeelingChild.textContent = `Today: ${latest.emoji} ${latest.label}`;
+      } else {
+        elements.latestFeelingChild.textContent = "No feeling chosen yet today.";
+      }
+    }
+
+    grid.innerHTML = "";
+
+    FEELINGS.forEach(feeling => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `feeling-face feeling-${feeling.colour}`;
+      button.setAttribute("aria-label", feeling.label);
+      button.innerHTML = `
+        <span class="feeling-emoji">${feeling.emoji}</span>
+        <strong>${feeling.label}</strong>
+      `;
+      button.addEventListener("click", () => logFeeling(feeling.id));
+      grid.appendChild(button);
+    });
+  }
+
+  function updateParentFeelings() {
+    const list = elements.parentFeelingsList;
+
+    if (!list) {
+      return;
+    }
+
+    if (!parentUnlocked) {
+      list.innerHTML = "<p class='empty-notes'>Unlock Parent Mode to view feelings.</p>";
+      return;
+    }
+
+    const logs = normalizeFeelingLogs(currentData.feelingLogs).slice(0, 20);
+
+    list.innerHTML = "";
+
+    if (!logs.length) {
+      list.innerHTML = "<p class='empty-notes'>No feelings logged yet.</p>";
+      return;
+    }
+
+    logs.forEach(log => {
+      const item = document.createElement("article");
+      item.className = "parent-feeling-item";
+      item.innerHTML = `
+        <div class="parent-feeling-icon">${log.emoji}</div>
+        <div>
+          <strong>${log.label}</strong>
+          <span>${log.dateText || "No date"}</span>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+  }
+
   async function requestReward(rewardId) {
     const data = await getLatestData();
     data.rewardRequests = normalizeRewardRequests(data.rewardRequests);
@@ -997,6 +1146,13 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.childTodayLevel.textContent = currentData.today.level.toUpperCase();
     elements.childStreakCount.textContent = currentData.streak.current;
 
+    const latestFeeling = normalizeFeelingLogs(currentData.feelingLogs)[0];
+
+    if (latestFeeling && latestFeeling.dateISO === getDateISO()) {
+      elements.childNextReward.textContent = `Today you feel ${latestFeeling.emoji} ${latestFeeling.label}`;
+      return;
+    }
+
     if (!next) {
       elements.childNextReward.textContent = "No rewards yet.";
       return;
@@ -1085,12 +1241,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const notesToday = normalizeNotes(currentData.parentNotes)
       .filter(note => note.dateISO === getDateISO()).length;
 
+    const latestFeeling = normalizeFeelingLogs(currentData.feelingLogs)[0];
+    const latestFeelingText = latestFeeling
+      ? `${latestFeeling.emoji} ${latestFeeling.label}`
+      : "None";
+
     grid.innerHTML = "";
 
     [
       ["Coins", currentData.coinTotal],
       ["Today", currentData.today.level.toUpperCase()],
       ["Pending rewards", pendingRequests],
+      ["Latest feeling", latestFeelingText],
       ["Notes today", notesToday],
       ["Green logs", greenLogs],
       ["Red logs", redLogs]
@@ -1123,6 +1285,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const dayItems = history.filter(item => item.dateISO === dateISO);
       const dayNotes = notes.filter(note => note.dateISO === dateISO);
+      const dayFeelings = normalizeFeelingLogs(currentData.feelingLogs).filter(log => log.dateISO === dateISO);
 
       let level = "blank";
 
@@ -1139,13 +1302,16 @@ document.addEventListener("DOMContentLoaded", () => {
       button.className = `calendar-day calendar-${level}`;
       button.innerHTML = `<strong>${date.getDate()}</strong><span>${date.toLocaleDateString("en-GB", { weekday: "short" })}</span>`;
 
-      if (dayNotes.length) {
+      if (dayNotes.length || dayFeelings.length) {
         button.classList.add("has-note");
       }
 
       button.addEventListener("click", () => {
         const lines = [
           `<strong>${date.toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "short", year: "numeric" })}</strong>`,
+          "",
+          dayFeelings.length ? "<b>Feelings</b>" : "<b>No feelings logged</b>",
+          ...dayFeelings.slice(0, 6).map(log => `• ${log.emoji} ${log.label}`),
           "",
           dayItems.length ? "<b>History</b>" : "<b>No history</b>",
           ...dayItems.slice(0, 6).map(item => `• ${item.text}`),
@@ -1490,7 +1656,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function switchPage(page) {
-    if (childMode && !["home", "rewards"].includes(page)) {
+    if (childMode && !["home", "feelings", "rewards"].includes(page)) {
       page = "home";
     }
 
@@ -1516,7 +1682,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     document.querySelectorAll(".nav-button").forEach(button => {
-      const parentOnlyPage = !["home", "rewards"].includes(button.dataset.page);
+      const parentOnlyPage = !["home", "feelings", "rewards"].includes(button.dataset.page);
       button.hidden = childMode && parentOnlyPage;
     });
 
@@ -1582,7 +1748,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateDisplay() {
     if (childMode) {
       const activePage = document.querySelector(".page.active");
-      if (activePage && !["page-home", "page-rewards"].includes(activePage.id)) {
+      if (activePage && !["page-home", "page-feelings", "page-rewards"].includes(activePage.id)) {
         switchPage("home");
       }
     }
@@ -1595,6 +1761,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updateLevelDisplay();
     updateStreakDisplay();
     updateChildDashboard();
+    updateFeelingsPage();
+    updateParentFeelings();
     updateRewardsShop();
     updateRewardRequests();
     updateParentDashboard();
