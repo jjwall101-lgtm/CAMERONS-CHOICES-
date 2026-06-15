@@ -2023,673 +2023,73 @@ html[data-theme="minecraft"] .delete-note-button {
 }
 
 
-/* =========================
-   FULL VISUAL UPGRADE PACK
-   ========================= */
-
-body {
-  min-height: 100vh;
-  background-attachment: fixed;
-}
-
-.app {
-  position: relative;
-  max-width: 540px;
-  margin: 0 auto;
-  padding: 12px 12px 72px;
-}
-
-.hero,
-.coin-card,
-.parent-notes-card,
-.streak-card,
-.treat-card,
-.traffic-section,
-.today-card,
-.history {
-  position: relative;
-  overflow: hidden;
-  border-radius: 26px;
-  border-width: 5px;
-  box-shadow: 0 14px 0 rgba(0,0,0,0.18), 0 22px 38px rgba(0,0,0,0.18), 6px 6px 0 var(--outline);
-}
-
-.hero::before,
-.coin-card::before,
-.parent-notes-card::before,
-.streak-card::before,
-.treat-card::before,
-.traffic-section::before,
-.today-card::before,
-.history::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(255,255,255,0.20), transparent 28%);
-}
-
-.score-bar {
-  width: min(100%, 400px);
-  display: grid;
-  grid-template-columns: 1.35fr 1fr 1fr;
-  gap: 8px;
-  align-items: center;
-  padding: 8px;
-  border-radius: 999px;
-}
-
-.score-bar span {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  border-radius: 999px;
-  padding: 0 12px;
-  white-space: nowrap;
-}
-
-.app-icon-preview {
-  width: 118px;
-  height: 118px;
-  border-radius: 30px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.16), 5px 5px 0 var(--outline);
-}
-
-h1 {
-  letter-spacing: 1px;
-  text-shadow: 0 3px 0 rgba(255,255,255,0.35);
-}
-
-.theme-switcher {
-  border-radius: 999px;
-  padding: 10px 14px;
-}
-
-.theme-switcher select {
-  border-radius: 999px;
-  padding-inline: 12px;
-}
-
-.power-row {
-  min-height: 92px;
-  gap: 12px;
-}
-
-.coin-title,
-.today-title,
-.streak-title,
-.parent-notes-title {
-  border-radius: 999px;
-  padding-inline: 16px;
-}
-
-.sync-status,
-.lock-status,
-.streak-best,
-.history-header button,
-.coin-controls button,
-.lock-buttons button,
-.pin-controls button,
-.notification-controls button,
-.note-form button,
-.delete-note-button,
-.collect-prize-button,
-.reset-button,
-.level-card,
-.theme-switcher,
-.theme-switcher select,
-.parent-note-item,
-.note-form input,
-.note-form textarea,
-.score-bar span {
-  border-radius: 18px;
-}
-
-.coin-card,
-.parent-notes-card,
-.streak-card,
-.treat-card,
-.today-card,
-.history,
-.traffic-section {
-  backdrop-filter: blur(3px);
-}
-
-.coin-count {
-  font-size: 52px;
-  line-height: 1.05;
-  letter-spacing: 1px;
-}
-
-.progress-outer {
-  height: 26px;
-  border-radius: 999px;
-  overflow: hidden;
-  box-shadow: inset 0 2px 7px rgba(0,0,0,0.18);
-}
-
-.progress-inner {
-  border-radius: 999px;
-}
-
-.journey-track {
-  border-radius: 22px;
-  overflow: hidden;
-  box-shadow: inset 0 3px 10px rgba(0,0,0,0.18);
-}
-
-.journey-character {
-  top: 10px;
-  font-size: 34px;
-  transition: left 0.35s ease, transform 0.35s ease;
-}
-
-.finish-line {
-  width: 64px;
-}
-
-.coin-controls {
-  grid-template-columns: repeat(5, 1fr);
-}
-
-.coin-controls button,
-.lock-buttons button,
-.notification-controls button,
-.note-form button,
-.delete-note-button,
-.collect-prize-button,
-.reset-button,
-.history-header button {
-  transition: transform .12s ease, box-shadow .12s ease, filter .18s ease;
-}
-
-.coin-controls button:hover,
-.lock-buttons button:hover,
-.notification-controls button:hover,
-.note-form button:hover,
-.delete-note-button:hover,
-.collect-prize-button:hover,
-.reset-button:hover,
-.history-header button:hover,
-.level-card:hover {
-  filter: brightness(1.04);
-}
-
-.lock-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.parent-note-item {
-  border-radius: 20px;
-}
-
-.note-form textarea {
-  min-height: 110px;
-}
-
-.treat-box {
-  width: 220px;
-  height: 160px;
-}
-
-.box-lid {
-  width: 100px;
-  height: 100px;
-  border-radius: 24px;
-}
-
-.special-treat-text {
-  font-size: 26px;
-  border-radius: 16px;
-}
-
-.prize-drop {
-  border-radius: 22px;
-}
-
-.prize-drop-name {
-  font-size: 26px;
-}
-
-.collect-prize-button {
-  border-radius: 999px;
-}
-
-.traffic-section {
-  padding-top: 24px;
-}
-
-.traffic-light {
-  position: relative;
-  overflow: visible;
-}
-
-.light {
-  width: 132px;
-  height: 132px;
-  border-width: 8px;
-  transition: transform .16s ease, opacity .16s ease, box-shadow .2s ease;
-}
-
-.level-card {
-  border-radius: 20px;
-  padding: 12px 8px;
-}
-
-.message {
-  font-size: 30px;
-  line-height: 1.1;
-}
-
-.sub-message {
-  font-size: 16px;
-}
-
-.history-item {
-  padding: 12px 14px;
-  margin-top: 8px;
-  border: 4px solid var(--outline);
-  border-radius: 18px;
-  box-shadow: 3px 3px 0 var(--outline);
-  font-weight: bold;
-  line-height: 1.35;
-}
-
-.ground {
-  border-radius: 24px;
-  overflow: hidden;
-}
+/* JAY SIGNATURE */
 
 .jay-signature {
   position: fixed;
   right: 8px;
   bottom: 8px;
   z-index: 999;
-  padding: 6px 9px;
+  padding: 6px 8px;
   border: 3px solid var(--outline);
   box-shadow: 2px 2px 0 var(--outline);
   font-size: 10px;
   font-weight: bold;
   line-height: 1.1;
-  opacity: .88;
+  opacity: 0.82;
   pointer-events: none;
-  border-radius: 12px;
 }
 
-/* ---------- MARIO VISUAL UPGRADE ---------- */
-html[data-theme="mario"] body {
-  background:
-    radial-gradient(circle at 16% 18%, rgba(255,255,255,.9) 0 24px, transparent 25px),
-    radial-gradient(circle at 22% 18%, rgba(255,255,255,.9) 0 20px, transparent 21px),
-    radial-gradient(circle at 28% 18%, rgba(255,255,255,.9) 0 18px, transparent 19px),
-    radial-gradient(circle at 78% 14%, rgba(255,255,255,.9) 0 22px, transparent 23px),
-    radial-gradient(circle at 84% 14%, rgba(255,255,255,.9) 0 18px, transparent 19px),
-    linear-gradient(180deg, #7fd9ff 0%, #8ee7ff 46%, #7fdc75 47%, #43b047 100%);
+html[data-theme="mario"] .jay-signature {
+  background: #fff8d6;
+  color: #8a4a00;
 }
 
-html[data-theme="mario"] .hero {
-  background: linear-gradient(180deg, #7cd8ff 0%, #b5f0ff 54%, #eafaff 100%);
+html[data-theme="space"] .jay-signature {
+  background: #10103e;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(69,216,255,0.45), 2px 2px 0 var(--outline);
 }
 
-html[data-theme="mario"] .score-bar {
-  background: rgba(255,255,255,.35);
-}
-
-html[data-theme="mario"] .score-bar span,
-html[data-theme="mario"] .theme-switcher,
-html[data-theme="mario"] .sync-status,
-html[data-theme="mario"] .lock-status,
-html[data-theme="mario"] .history-item,
-html[data-theme="mario"] .parent-note-item {
-  background: #fff9de;
-}
-
-html[data-theme="mario"] .coin-card,
-html[data-theme="mario"] .parent-notes-card,
-html[data-theme="mario"] .streak-card,
-html[data-theme="mario"] .treat-card,
-html[data-theme="mario"] .today-card,
-html[data-theme="mario"] .history {
-  background: linear-gradient(180deg, #fffef0 0%, #fff6c8 100%);
-}
-
-html[data-theme="mario"] .progress-inner {
-  background: linear-gradient(90deg, #ff5c3b 0%, #ffc93c 50%, #79db43 100%);
-}
-
-html[data-theme="mario"] .journey-track {
-  background: linear-gradient(180deg, #87dcff 0 58%, #58bf4c 59% 76%, #8f5731 77% 100%);
-}
-
-html[data-theme="mario"] .finish-line {
-  background: repeating-conic-gradient(#fff 0 25%, #1b1b1b 0 50%) 50% / 18px 18px;
+html[data-theme="minecraft"] .jay-signature {
+  background: #d8c08a;
   color: #1b1b1b;
 }
 
-html[data-theme="mario"] .traffic-section {
-  background: linear-gradient(180deg, #a8ecff 0%, #eeffff 56%, #8ce680 57%, #4eb64e 100%);
-}
-
-html[data-theme="mario"] .pipe-top,
-html[data-theme="mario"] .pipe-stem {
-  background: linear-gradient(90deg, #006b31 0%, #00a84f 22%, #84ff85 48%, #00a84f 78%, #006b31 100%);
-  border-radius: 28px;
-}
-
-html[data-theme="mario"] .pipe-top {
-  width: 268px;
-  height: 60px;
-  box-shadow: inset 0 8px 0 rgba(255,255,255,.32), inset 0 -8px 0 rgba(0,0,0,.12), 6px 6px 0 var(--outline);
-}
-
-html[data-theme="mario"] .pipe-stem {
-  width: 220px;
-  height: 42px;
-  border-radius: 0 0 24px 24px;
-  box-shadow: inset 0 -8px 0 rgba(0,0,0,.12), 6px 6px 0 var(--outline);
-}
-
-html[data-theme="mario"] .traffic-light {
-  width: 240px;
-  padding: 18px 14px 14px;
-  margin-top: 2px;
-  border-radius: 0 0 28px 28px;
-  background: linear-gradient(180deg, #242424 0%, #0e0e0e 100%);
-  box-shadow: inset 0 0 0 4px #4c4c4c, 6px 6px 0 var(--outline);
-}
-
-html[data-theme="mario"] .traffic-light::before {
-  content: "";
-  position: absolute;
-  top: -18px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 252px;
-  height: 24px;
-  border: 5px solid var(--outline);
-  border-radius: 20px;
-  background: linear-gradient(90deg, #006b31 0%, #00a84f 22%, #84ff85 48%, #00a84f 78%, #006b31 100%);
-}
-
-html[data-theme="mario"] .red-card { background: #ffb2b0; }
-html[data-theme="mario"] .amber-card { background: #ffe58d; }
-html[data-theme="mario"] .green-card { background: #bdf3ad; }
-html[data-theme="mario"] .jay-signature { background: #fff8d6; color: #8a4a00; }
-
-/* ---------- SPACE VISUAL UPGRADE ---------- */
-html[data-theme="space"] body {
-  background:
-    radial-gradient(circle at 15% 20%, rgba(255,255,255,.95) 0 1.8px, transparent 2px),
-    radial-gradient(circle at 35% 32%, rgba(255,255,255,.8) 0 1.6px, transparent 2px),
-    radial-gradient(circle at 82% 14%, rgba(255,255,255,.9) 0 1.6px, transparent 2px),
-    radial-gradient(circle at 73% 42%, rgba(255,255,255,.75) 0 1.4px, transparent 2px),
-    radial-gradient(circle at 58% 10%, rgba(255,255,255,.7) 0 1.3px, transparent 2px),
-    linear-gradient(180deg, #0e1244 0%, #090b2f 48%, #151b62 100%);
-}
-
-html[data-theme="space"] .hero {
-  background: linear-gradient(180deg, rgba(17,25,90,.96) 0%, rgba(8,11,47,.98) 100%);
-  color: #f8fbff;
-}
-
-html[data-theme="space"] h1 { text-shadow: 0 0 18px rgba(69,216,255,.42); }
-
-html[data-theme="space"] .score-bar {
-  background: rgba(255,255,255,.08);
-}
-
-html[data-theme="space"] .score-bar span,
-html[data-theme="space"] .theme-switcher,
-html[data-theme="space"] .sync-status,
-html[data-theme="space"] .lock-status,
-html[data-theme="space"] .history-item,
-html[data-theme="space"] .parent-note-item,
-html[data-theme="space"] .note-form input,
-html[data-theme="space"] .note-form textarea {
-  background: rgba(12,16,62,.96);
-  color: white;
-}
-
-html[data-theme="space"] .coin-card,
-html[data-theme="space"] .parent-notes-card,
-html[data-theme="space"] .streak-card,
-html[data-theme="space"] .treat-card,
-html[data-theme="space"] .today-card,
-html[data-theme="space"] .history {
-  background: linear-gradient(180deg, rgba(20,29,102,.94) 0%, rgba(9,16,50,.98) 100%);
-  color: white;
-  box-shadow: 0 14px 0 rgba(0,0,0,.32), 0 22px 40px rgba(0,0,0,.36), 6px 6px 0 var(--outline);
-}
-
-html[data-theme="space"] .progress-inner {
-  background: linear-gradient(90deg, #45d8ff 0%, #7ab5ff 50%, #d68dff 100%);
-}
-
-html[data-theme="space"] .journey-track {
-  background:
-    radial-gradient(circle at 12% 20%, rgba(255,255,255,.9) 0 1px, transparent 2px),
-    radial-gradient(circle at 42% 36%, rgba(255,255,255,.85) 0 1px, transparent 2px),
-    radial-gradient(circle at 74% 16%, rgba(255,255,255,.85) 0 1px, transparent 2px),
-    linear-gradient(180deg, #0b0f3e 0%, #1a2271 100%);
-}
-
-html[data-theme="space"] .finish-line {
-  background: linear-gradient(180deg, #d7def1 0%, #9aa9d2 100%);
-  color: #020316;
-}
-
-html[data-theme="space"] .traffic-section {
-  background:
-    radial-gradient(circle at 14% 14%, rgba(255,255,255,.9) 0 1.5px, transparent 2px),
-    radial-gradient(circle at 82% 22%, rgba(255,255,255,.9) 0 1.5px, transparent 2px),
-    linear-gradient(180deg, #11195a 0%, #090b2f 100%);
-  color: white;
-}
-
-html[data-theme="space"] .traffic-light {
-  width: 242px;
-  padding: 48px 16px 64px;
-  margin: 60px auto 32px;
-  border-radius: 100px 100px 36px 36px;
-  background: linear-gradient(180deg, #ffffff 0%, #e7edf8 48%, #bcc6dd 100%);
-  box-shadow: inset 0 0 0 4px #fff, 0 0 26px rgba(69,216,255,.35), 6px 6px 0 var(--outline);
-}
-
-html[data-theme="space"] .traffic-light::before {
-  content: "";
-  position: absolute;
-  top: -72px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 116px;
-  height: 92px;
-  background: linear-gradient(180deg, #ff4b64 0%, #ffffff 58%, #e7edf8 100%);
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
-  border: 6px solid var(--outline);
-  filter: drop-shadow(5px 5px 0 var(--outline));
-}
-
-html[data-theme="space"] .traffic-light::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -74px;
-  transform: translateX(-50%);
-  width: 84px;
-  height: 84px;
-  background: radial-gradient(circle at 50% 26%, #fff5a2 0 18%, transparent 19%), linear-gradient(180deg, #ffd447 0%, #ff8b2b 38%, #ff3b4f 74%, transparent 100%);
-  clip-path: polygon(50% 100%, 0 0, 24% 18%, 50% 0, 76% 18%, 100% 0);
-  filter: drop-shadow(0 0 16px rgba(255,139,43,.95));
-}
-
-html[data-theme="space"] .traffic-section::after,
-html[data-theme="space"] .traffic-section::before {
-  content: "";
-  position: absolute;
-  top: 455px;
-  width: 58px;
-  height: 108px;
-  background: #ff4b64;
-  border: 6px solid var(--outline);
-}
-
-html[data-theme="space"] .traffic-section::before {
-  left: calc(50% - 168px);
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
-}
-
-html[data-theme="space"] .traffic-section::after {
-  right: calc(50% - 168px);
-  clip-path: polygon(0 0, 100% 100%, 0 100%);
-}
-
-html[data-theme="space"] .light.active {
-  box-shadow: 0 0 30px currentColor, 0 0 60px currentColor, inset 8px 8px 0 rgba(255,255,255,.28);
-}
-
-html[data-theme="space"] .red-card { background: #4d1730; color: white; }
-html[data-theme="space"] .amber-card { background: #53431a; color: white; }
-html[data-theme="space"] .green-card { background: #174d39; color: white; }
-html[data-theme="space"] .jay-signature { background: #10103e; color: #fff; box-shadow: 0 0 12px rgba(69,216,255,.45), 2px 2px 0 var(--outline); }
-
-/* ---------- MINECRAFT VISUAL UPGRADE ---------- */
-html[data-theme="minecraft"] body {
-  background: linear-gradient(180deg, #7fd4ff 0 30%, #8eea7e 31% 66%, #8b5b38 67% 100%);
-}
-
-html[data-theme="minecraft"] .hero,
-html[data-theme="minecraft"] .coin-card,
-html[data-theme="minecraft"] .parent-notes-card,
-html[data-theme="minecraft"] .streak-card,
-html[data-theme="minecraft"] .treat-card,
-html[data-theme="minecraft"] .today-card,
-html[data-theme="minecraft"] .history,
-html[data-theme="minecraft"] .traffic-section {
-  border-radius: 10px;
-}
-
-html[data-theme="minecraft"] .hero {
-  background: linear-gradient(180deg, #7dcfff 0%, #d7f4ff 55%, #bceea8 100%);
-}
-
-html[data-theme="minecraft"] .score-bar {
-  background: rgba(0,0,0,.1);
-}
-
-html[data-theme="minecraft"] .score-bar span,
-html[data-theme="minecraft"] .theme-switcher,
-html[data-theme="minecraft"] .sync-status,
-html[data-theme="minecraft"] .lock-status,
-html[data-theme="minecraft"] .history-item,
-html[data-theme="minecraft"] .parent-note-item {
-  background: #f1dfad;
-}
-
-html[data-theme="minecraft"] .coin-card,
-html[data-theme="minecraft"] .parent-notes-card,
-html[data-theme="minecraft"] .streak-card,
-html[data-theme="minecraft"] .treat-card,
-html[data-theme="minecraft"] .today-card,
-html[data-theme="minecraft"] .history {
-  background: linear-gradient(180deg, #e8d4a7 0%, #d7b87f 100%);
-}
-
-html[data-theme="minecraft"] .progress-inner {
-  background: linear-gradient(90deg, #62b847 0%, #30d5c8 55%, #48a8ff 100%);
-}
-
-html[data-theme="minecraft"] .journey-track {
-  background: linear-gradient(180deg, #73c7ff 0 46%, #5cae40 47% 72%, #7b4a2a 73% 100%);
-}
-
-html[data-theme="minecraft"] .finish-line {
-  background: repeating-linear-gradient(45deg, #30d5c8 0 10px, #1aa39b 10px 20px);
-  color: #1b1b1b;
-}
-
-html[data-theme="minecraft"] .minecraft-topper,
-html[data-theme="minecraft"] .minecraft-stem {
-  background: repeating-linear-gradient(90deg, #5cae40 0 22px, #4b9636 22px 44px), linear-gradient(180deg, #5cae40 0 34%, #7b4a2a 35% 100%);
-}
-
-html[data-theme="minecraft"] .minecraft-topper {
-  width: 240px;
-  height: 42px;
-}
-
-html[data-theme="minecraft"] .minecraft-stem {
-  width: 188px;
-  height: 38px;
-  background: repeating-linear-gradient(90deg, #7b4a2a 0 22px, #5d351e 22px 44px);
-}
-
-html[data-theme="minecraft"] .traffic-light {
-  width: 242px;
-  padding: 16px 14px 18px;
-  border-radius: 0;
-  background: repeating-linear-gradient(90deg, #686868 0 26px, #525252 26px 52px), repeating-linear-gradient(180deg, #7a7a7a 0 26px, #575757 26px 52px);
-  box-shadow: inset 0 0 0 4px #8a8a8a, 6px 6px 0 var(--outline);
-}
-
-html[data-theme="minecraft"] .traffic-light::before,
-html[data-theme="minecraft"] .traffic-light::after {
-  content: "";
-  position: absolute;
-  left: -16px;
-  width: calc(100% + 32px);
-  height: 16px;
-  background: repeating-linear-gradient(90deg, #999 0 20px, #6b6b6b 20px 40px);
-  border: 4px solid var(--outline);
-}
-
-html[data-theme="minecraft"] .traffic-light::before { top: -16px; }
-html[data-theme="minecraft"] .traffic-light::after { bottom: -16px; }
-html[data-theme="minecraft"] .light,
-html[data-theme="minecraft"] .level-card,
-html[data-theme="minecraft"] .note-form input,
-html[data-theme="minecraft"] .note-form textarea,
-html[data-theme="minecraft"] .score-bar span,
-html[data-theme="minecraft"] .theme-switcher,
-html[data-theme="minecraft"] .theme-switcher select,
-html[data-theme="minecraft"] .parent-note-item,
-html[data-theme="minecraft"] .history-item,
-html[data-theme="minecraft"] .sync-status,
-html[data-theme="minecraft"] .lock-status,
-html[data-theme="minecraft"] .coin-controls button,
-html[data-theme="minecraft"] .lock-buttons button,
-html[data-theme="minecraft"] .notification-controls button,
-html[data-theme="minecraft"] .note-form button,
-html[data-theme="minecraft"] .delete-note-button,
-html[data-theme="minecraft"] .collect-prize-button,
-html[data-theme="minecraft"] .history-header button,
-html[data-theme="minecraft"] .reset-button {
-  border-radius: 6px;
-}
-
-html[data-theme="minecraft"] .red-card { background: #d95b43; color: white; }
-html[data-theme="minecraft"] .amber-card { background: #d9a843; color: white; }
-html[data-theme="minecraft"] .green-card { background: #5cae40; color: white; }
-html[data-theme="minecraft"] .jay-signature { background: #d8c08a; color: #1b1b1b; }
-
-/* ---------- MOBILE POLISH ---------- */
 @media (max-width: 420px) {
-  .app { padding-inline: 8px; }
-  h1 { font-size: 36px; }
-  .score-bar { grid-template-columns: 1fr; }
-  .score-bar span { min-height: 38px; }
-  .power-row { gap: 10px; }
-  .coin-count { font-size: 46px; }
-  .light { width: 118px; height: 118px; font-size: 50px; }
-  .traffic-light { width: 222px !important; }
-  html[data-theme="mario"] .pipe-top { width: 242px; }
-  html[data-theme="mario"] .pipe-stem { width: 198px; }
-  html[data-theme="space"] .traffic-light { margin-top: 56px; }
-  html[data-theme="space"] .traffic-section::before { left: calc(50% - 150px); top: 438px; width: 46px; height: 90px; }
-  html[data-theme="space"] .traffic-section::after { right: calc(50% - 150px); top: 438px; width: 46px; height: 90px; }
-  html[data-theme="minecraft"] .minecraft-topper { width: 220px; }
-  html[data-theme="minecraft"] .minecraft-stem { width: 176px; }
+  .jay-signature {
+    font-size: 9px;
+    right: 6px;
+    bottom: 6px;
+    padding: 5px 7px;
+  }
+}
+
+
+/* REMOVE TOP SCORE BAR / SCRIPT HOOKS */
+
+.hidden-script-hook {
+  display: none !important;
+}
+
+/* PROGRESS CHARACTER FIX */
+
+.journey-track {
+  position: relative;
+}
+
+.journey-character {
+  position: absolute !important;
+  left: 0%;
+  z-index: 5;
+  transition: left 0.35s ease, transform 0.35s ease;
+  will-change: left, transform;
+}
+
+/* Keep the signature out of the progress bar area */
+.jay-signature {
+  bottom: 4px;
+  right: 4px;
+  transform: scale(0.88);
+  transform-origin: bottom right;
 }
