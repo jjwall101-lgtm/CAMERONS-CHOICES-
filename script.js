@@ -5,7 +5,8 @@ import {
   getDoc,
   setDoc,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -42,6 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let isFirebaseReady = false;
   let currentData = getLocalData();
   let parentUnlocked = false;
+  let currentCelebrationId = "";
+  let celebrationTimer = null;
 
   const messages = {
     red: {
@@ -67,6 +70,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const coinProgress = document.getElementById("coinProgress");
   const progressCharacter = document.getElementById("progressCharacter");
   const treatCard = document.getElementById("treatCard");
+  const treatBoxIcon = document.getElementById("treatBoxIcon");
+  const specialTreatText = document.getElementById("specialTreatText");
+  const treatSubtitle = document.getElementById("treatSubtitle");
+  const treatResetNote = document.getElementById("treatResetNote");
+  const prizeDrop = document.getElementById("prizeDrop");
+  const prizeDropIcon = document.getElementById("prizeDropIcon");
+  const prizeDropName = document.getElementById("prizeDropName");
+  const collectPrizeButton = document.getElementById("collectPrizeButton");
 
   const streakCount = document.getElementById("streakCount");
   const bestStreak = document.getElementById("bestStreak");
@@ -166,7 +177,21 @@ document.addEventListener("DOMContentLoaded", () => {
     return {
       coinTotal: Math.max(0, Number(data?.coinTotal) || 0),
       history,
-      streak: normalizeStreak(data?.streak, history)
+      streak: normalizeStreak(data?.streak, history),
+      celebration: normalizeCelebration(data?.celebration)
+    };
+  }
+
+  function normalizeCelebration(celebration) {
+    return {
+      active: Boolean(celebration?.active),
+      id: celebration?.id || "",
+      theme: celebration?.theme || "",
+      prizeName: celebration?.prizeName || "",
+      prizeEmoji: celebration?.prizeEmoji || "",
+      boxIcon: celebration?.boxIcon || "",
+      triggeredAt: celebration?.triggeredAt || "",
+      completedAt: celebration?.completedAt || ""
     };
   }
 
@@ -270,6 +295,217 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function recalculateStreak(data) {
     data.streak = buildStreakFromHistory(data.history || []);
+  }
+
+  function getCurrentTheme() {
+    return document.documentElement.getAttribute("data-theme") || "mario";
+  }
+
+  function getPrizeDetails(themeName = "mario") {
+    const prizes = {
+      mario: {
+        boxIcon: "?",
+        prizeEmoji: "🌟",
+        prizeName: "SUPER STAR PRIZE!",
+        subtitle: "Goal reached! A Super Star drops in!",
+        resetNote: "Press collect to reset coins back to 0 for the next run."
+      },
+      space: {
+        boxIcon: "🚀",
+        prizeEmoji: "🪐",
+        prizeName: "SPACE TROPHY!",
+        subtitle: "Mission complete! A space prize drops in!",
+        resetNote: "Press collect to reset coins back to 0 for the next mission."
+      },
+      minecraft: {
+        boxIcon: "💎",
+        prizeEmoji: "💎",
+        prizeName: "DIAMOND PRIZE!",
+        subtitle: "Build complete! A diamond prize drops in!",
+        resetNote: "Press collect to reset coins back to 0 for the next build."
+      }
+    };
+
+    return prizes[themeName] || prizes.mario;
+  }
+
+  function setTreatTheme(themeName) {
+    if (!treatCard) return;
+
+    const prize = getPrizeDetails(themeName);
+    treatCard.setAttribute("data-prize-theme", themeName);
+
+    if (treatBoxIcon) treatBoxIcon.textContent = prize.boxIcon;
+    if (specialTreatText) specialTreatText.textContent = prize.prizeName;
+    if (treatSubtitle) treatSubtitle.textContent = prize.subtitle;
+    if (treatResetNote) treatResetNote.textContent = prize.resetNote;
+    if (prizeDropIcon) prizeDropIcon.textContent = prize.prizeEmoji;
+    if (prizeDropName) prizeDropName.textContent = prize.prizeName;
+  }
+
+  function activateCelebration(data, themeName = getCurrentTheme()) {
+    if (data.coinTotal < GOAL) {
+      return false;
+    }
+
+    const prize = getPrizeDetails(themeName);
+
+    data.coinTotal = GOAL;
+    data.celebration = {
+      active: true,
+      id: `celebration-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      theme: themeName,
+      prizeName: prize.prizeName,
+      prizeEmoji: prize.prizeEmoji,
+      boxIcon: prize.boxIcon,
+      triggeredAt: new Date().toISOString(),
+      completedAt: ""
+    };
+
+    addHistoryEntry(data, {
+      type: "prize",
+      date: getToday(),
+      dateISO: getDateISO(),
+      text: prize.prizeName + " unlocked",
+      emoji: prize.prizeEmoji,
+      coinChange: 0,
+      lastMoveCoinChange: 0,
+      coinsAfter: data.coinTotal,
+      savedAt: new Date().toISOString()
+    });
+
+    return true;
+  }
+
+  async function finishCelebration(celebrationId) {
+    if (!celebrationId) return;
+
+    if (celebrationTimer) {
+      clearTimeout(celebrationTimer);
+      celebrationTimer = null;
+    }
+
+    if (!isFirebaseReady || !appDoc) {
+      if (currentData.celebration?.active && currentData.celebration.id === celebrationId) {
+        const data = normalizeData(currentData);
+        const themeName = data.celebration.theme || getCurrentTheme();
+        data.coinTotal = 0;
+        data.celebration = {
+          active: false,
+          id: celebrationId,
+          theme: themeName,
+          prizeName: data.celebration.prizeName || getPrizeDetails(themeName).prizeName,
+          prizeEmoji: data.celebration.prizeEmoji || getPrizeDetails(themeName).prizeEmoji,
+          boxIcon: data.celebration.boxIcon || getPrizeDetails(themeName).boxIcon,
+          triggeredAt: data.celebration.triggeredAt || new Date().toISOString(),
+          completedAt: new Date().toISOString()
+        };
+
+        addHistoryEntry(data, {
+          type: "prize-reset",
+          date: getToday(),
+          dateISO: getDateISO(),
+          text: "Prize collected. Coins reset to 0",
+          emoji: "🎁",
+          coinChange: -GOAL,
+          lastMoveCoinChange: -GOAL,
+          coinsAfter: 0,
+          savedAt: new Date().toISOString()
+        });
+
+        currentCelebrationId = "";
+        await saveData(data);
+      }
+
+      return;
+    }
+
+    try {
+      await runTransaction(db, async transaction => {
+        const snapshot = await transaction.get(appDoc);
+
+        if (!snapshot.exists()) {
+          return;
+        }
+
+        const data = normalizeData(snapshot.data());
+
+        if (!data.celebration?.active || data.celebration.id !== celebrationId) {
+          return;
+        }
+
+        const themeName = data.celebration.theme || getCurrentTheme();
+        data.coinTotal = 0;
+        data.celebration = {
+          active: false,
+          id: celebrationId,
+          theme: themeName,
+          prizeName: data.celebration.prizeName || getPrizeDetails(themeName).prizeName,
+          prizeEmoji: data.celebration.prizeEmoji || getPrizeDetails(themeName).prizeEmoji,
+          boxIcon: data.celebration.boxIcon || getPrizeDetails(themeName).boxIcon,
+          triggeredAt: data.celebration.triggeredAt || new Date().toISOString(),
+          completedAt: new Date().toISOString()
+        };
+
+        addHistoryEntry(data, {
+          type: "prize-reset",
+          date: getToday(),
+          dateISO: getDateISO(),
+          text: "Prize collected. Coins reset to 0",
+          emoji: "🎁",
+          coinChange: -GOAL,
+          lastMoveCoinChange: -GOAL,
+          coinsAfter: 0,
+          savedAt: new Date().toISOString()
+        });
+
+        transaction.set(appDoc, {
+          ...data,
+          lastUpdatedAt: new Date().toISOString(),
+          serverUpdatedAt: serverTimestamp()
+        }, { merge: true });
+      });
+    } catch (error) {
+      console.error(error);
+      setSyncStatus("Prize reset failed - try again", "error");
+    }
+  }
+
+  function maybeStartCelebration(data) {
+    const celebration = data.celebration || {};
+
+    if (!celebration.active || !celebration.id) {
+      if (celebrationTimer) {
+        clearTimeout(celebrationTimer);
+        celebrationTimer = null;
+      }
+
+      currentCelebrationId = "";
+      if (prizeDrop) prizeDrop.classList.remove("animate");
+      if (treatCard) treatCard.classList.remove("show");
+      return;
+    }
+
+    const themeName = celebration.theme || getCurrentTheme();
+    setTreatTheme(themeName);
+    if (treatCard) treatCard.classList.add("show");
+
+    if (currentCelebrationId === celebration.id) {
+      return;
+    }
+
+    currentCelebrationId = celebration.id;
+
+    if (prizeDrop) {
+      prizeDrop.classList.remove("animate");
+      void prizeDrop.offsetWidth;
+      prizeDrop.classList.add("animate");
+    }
+
+    if (celebrationTimer) {
+      clearTimeout(celebrationTimer);
+      celebrationTimer = null;
+    }
   }
 
   function getParentPin() {
@@ -518,6 +754,10 @@ document.addEventListener("DOMContentLoaded", () => {
       savedAt: new Date().toISOString()
     });
 
+    if (data.coinTotal >= GOAL) {
+      activateCelebration(data);
+    }
+
     await saveData(data);
   }
 
@@ -646,6 +886,10 @@ document.addEventListener("DOMContentLoaded", () => {
       savedAt: new Date().toISOString()
     });
 
+    if (data.coinTotal >= GOAL) {
+      activateCelebration(data);
+    }
+
     await saveData(data);
   }
 
@@ -742,11 +986,7 @@ document.addEventListener("DOMContentLoaded", () => {
       progressCharacter.style.left = `${characterProgress}%`;
     }
 
-    if (data.coinTotal >= GOAL) {
-      treatCard.classList.add("show");
-    } else {
-      treatCard.classList.remove("show");
-    }
+    maybeStartCelebration(data);
 
     updateStreakDisplay(data);
     updateHistoryList(data.history);
@@ -829,6 +1069,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     changePinButton.addEventListener("click", changeParentPin);
 
+    if (collectPrizeButton) {
+      collectPrizeButton.addEventListener("click", () => {
+        const celebrationId = currentData?.celebration?.id || currentCelebrationId;
+
+        if (!celebrationId) {
+          return;
+        }
+
+        finishCelebration(celebrationId);
+      });
+    }
+
     resetTodayButton.addEventListener("click", resetToday);
     clearHistoryButton.addEventListener("click", clearHistory);
   }
@@ -890,6 +1142,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   try {
     parentUnlocked = false;
+    setTreatTheme(getCurrentTheme());
     updateDisplay();
     updateLockDisplay();
     connectButtons();

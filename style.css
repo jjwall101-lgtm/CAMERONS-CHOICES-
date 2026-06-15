@@ -1678,3 +1678,115 @@ html[data-theme="minecraft"] .lock-status.unlocked {
   background: #5cae40;
   color: white;
 }
+
+
+.treat-reset-note {
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.prize-drop {
+  position: relative;
+  width: min(92%, 280px);
+  margin: 14px auto 10px;
+  padding: 18px 14px;
+  border: 5px solid var(--outline);
+  box-shadow: 5px 5px 0 var(--outline);
+  opacity: 0;
+  transform: translateY(-120px) scale(0.7);
+}
+
+.prize-drop-icon {
+  font-size: 58px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.prize-drop-name {
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.treat-card.show .prize-drop.animate {
+  animation: prizeFall 1.2s cubic-bezier(.22,1.25,.35,1) forwards;
+}
+
+@keyframes prizeFall {
+  0% { opacity: 0; transform: translateY(-140px) scale(0.65) rotate(-8deg); }
+  60% { opacity: 1; transform: translateY(12px) scale(1.06) rotate(4deg); }
+  80% { opacity: 1; transform: translateY(-6px) scale(0.98) rotate(-2deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+.treat-card[data-prize-theme="mario"] .box-lid {
+  background: linear-gradient(180deg, #ffd84a 0%, #ffb700 100%);
+  color: #8a4a00;
+}
+
+.treat-card[data-prize-theme="mario"] .special-treat-text,
+.treat-card[data-prize-theme="mario"] .prize-drop {
+  background: linear-gradient(180deg, #ff4c4c 0%, #ff8f1f 100%);
+}
+
+.treat-card[data-prize-theme="space"] .box-lid {
+  background: linear-gradient(180deg, #1f2d7a 0%, #090b2f 100%);
+  color: #fff;
+}
+
+.treat-card[data-prize-theme="space"] .special-treat-text,
+.treat-card[data-prize-theme="space"] .prize-drop {
+  background: linear-gradient(180deg, #101c66 0%, #091032 100%);
+  color: white;
+}
+
+.treat-card[data-prize-theme="minecraft"] .box-lid {
+  background: linear-gradient(180deg, #6bd04c 0 34%, #8a5a32 35% 100%);
+  color: #fff;
+}
+
+.treat-card[data-prize-theme="minecraft"] .special-treat-text,
+.treat-card[data-prize-theme="minecraft"] .prize-drop {
+  background: linear-gradient(180deg, #58b83f 0%, #3d7d2c 100%);
+  color: white;
+}
+
+
+.collect-prize-button {
+  display: inline-block;
+  margin: 12px auto 0;
+  padding: 14px 20px;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: bold;
+  border: 5px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.collect-prize-button:active {
+  transform: translateY(4px);
+  box-shadow: 1px 1px 0 var(--outline);
+}
+
+html[data-theme="mario"] .collect-prize-button {
+  background: var(--coin);
+  color: #8a4a00;
+}
+
+html[data-theme="space"] .collect-prize-button {
+  background: var(--cyan);
+  color: #020316;
+}
+
+html[data-theme="minecraft"] .collect-prize-button {
+  background: #30d5c8;
+  color: #1b1b1b;
+}
+
+.treat-card:not(.show) .collect-prize-button {
+  display: none;
+}
