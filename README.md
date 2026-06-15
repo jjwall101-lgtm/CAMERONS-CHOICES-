@@ -49,3 +49,15 @@ style.css?v=5
 script.js?v=5
 
 If your phone still shows the old app, refresh the page fully.
+
+
+## Clean screen update
+
+Removed the two top status boxes:
+- "Pick today's power level"
+- "Buttons ready - saved on this phone"
+
+This version uses:
+
+style.css?v=6
+script.js?v=6

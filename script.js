@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  const appStatus = document.getElementById("appStatus");
   const coinTotalTop = document.getElementById("coinTotalTop");
   const coinTotalMain = document.getElementById("coinTotalMain");
   const coinProgress = document.getElementById("coinProgress");
@@ -281,11 +280,8 @@ document.addEventListener("DOMContentLoaded", () => {
     connectButtons();
     updateDisplay();
 
-    appStatus.textContent = "Buttons ready - saved on this phone";
-    appStatus.classList.add("ready");
   } catch (error) {
     console.error(error);
-    appStatus.textContent = "Button error - check script.js upload";
-    appStatus.classList.add("error");
+    alert("Button error - check script.js upload");
   }
 });
