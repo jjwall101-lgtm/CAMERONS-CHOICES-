@@ -1,29 +1,40 @@
 const messages = {
   red: {
     emoji: "🔴",
-    main: "RED: OOPS DAY",
+    points: "000",
+    main: "RED: OOPS LEVEL",
     sub: "Today was hard. No treat today, but tomorrow is a brand new level."
   },
   amber: {
-    emoji: "🟠",
-    main: "AMBER: TRYING DAY",
-    sub: "Today had some good moments and some tricky moments. Keep going!"
+    emoji: "🟡",
+    points: "050",
+    main: "AMBER: TRYING LEVEL",
+    sub: "Today had good moments and tricky moments. Keep going!"
   },
   green: {
-    emoji: "🟢",
-    main: "GREEN: SUPER DAY",
-    sub: "Super job today. Treat earned!"
+    emoji: "⭐",
+    points: "100",
+    main: "GREEN: SUPER LEVEL",
+    sub: "Super effort today. Treat earned!"
   }
 };
 
 const redLight = document.getElementById("redLight");
 const amberLight = document.getElementById("amberLight");
 const greenLight = document.getElementById("greenLight");
+const redLabel = document.getElementById("redLabel");
+const amberLabel = document.getElementById("amberLabel");
+const greenLabel = document.getElementById("greenLabel");
 const resetButton = document.getElementById("resetButton");
 
 redLight.addEventListener("click", () => setDay("red"));
 amberLight.addEventListener("click", () => setDay("amber"));
 greenLight.addEventListener("click", () => setDay("green"));
+
+redLabel.addEventListener("click", () => setDay("red"));
+amberLabel.addEventListener("click", () => setDay("amber"));
+greenLabel.addEventListener("click", () => setDay("green"));
+
 resetButton.addEventListener("click", resetToday);
 
 function getToday() {
@@ -48,7 +59,8 @@ function setDay(colour) {
     date: today,
     colour: colour,
     text: messages[colour].main,
-    emoji: messages[colour].emoji
+    emoji: messages[colour].emoji,
+    points: messages[colour].points
   });
 
   history = history.slice(0, 60);
@@ -80,9 +92,11 @@ function updateDisplay() {
     document.querySelector("." + todayEntry.colour).classList.add("active");
     document.getElementById("message").textContent = messages[todayEntry.colour].main;
     document.getElementById("subMessage").textContent = messages[todayEntry.colour].sub;
+    document.getElementById("coinScore").textContent = messages[todayEntry.colour].points;
   } else {
     document.getElementById("message").textContent = "TAP A LIGHT TO CHOOSE TODAY";
-    document.getElementById("subMessage").textContent = "Every day is a new level. Pick red, amber, or green.";
+    document.getElementById("subMessage").textContent = "Every day is a new level. Choose red, amber, or green.";
+    document.getElementById("coinScore").textContent = "000";
   }
 
   updateHistoryList(history);
@@ -93,7 +107,7 @@ function updateHistoryList(history) {
   historyList.innerHTML = "";
 
   if (history.length === 0) {
-    historyList.innerHTML = "<p class='empty-history'>No days recorded yet.</p>";
+    historyList.innerHTML = "<p class='empty-history'>No levels recorded yet.</p>";
     return;
   }
 
@@ -102,7 +116,9 @@ function updateHistoryList(history) {
     div.className = "history-item";
 
     const emoji = item.emoji || messages[item.colour]?.emoji || "";
-    div.textContent = `${emoji} ${item.date} - ${item.text}`;
+    const points = item.points || messages[item.colour]?.points || "000";
+
+    div.textContent = `${emoji} ${item.date} - ${item.text} - ${points} coins`;
 
     historyList.appendChild(div);
   });

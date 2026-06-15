@@ -1,30 +1,24 @@
-# Camerons Behaviour - Mario Inspired Local Version
+# Camerons Behaviour - Retro Platform Version
 
-This version keeps the same local-save behaviour tracker but uses a retro platform-game theme.
+This is a local-save behaviour traffic-light app with a retro platform-game look.
 
-## Files to upload to GitHub
+It saves only on the phone/browser using localStorage.
 
-Upload these files to the root of your GitHub repo:
+## Upload to GitHub
+
+Upload these files to the root of your repo:
 
 - index.html
 - style.css
 - script.js
 - manifest.json
 - icon.svg
+- README.md
 
 ## GitHub Pages
 
-Use:
-
 Settings > Pages > Deploy from branch > main > /root
 
-## Tweaking the words
+## To change the words
 
-Open `script.js` and edit this section:
-
-const messages = {
-  red: {
-    main: "RED: OOPS DAY",
-    sub: "Today was hard. No treat today, but tomorrow is a brand new level."
-  }
-}
+Edit the `messages` section inside `script.js`.

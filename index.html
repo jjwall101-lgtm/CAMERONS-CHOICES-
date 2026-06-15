@@ -9,67 +9,90 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json" />
 
-  <meta name="theme-color" content="#5cc7ff" />
+  <meta name="theme-color" content="#4ab7ff" />
 </head>
 
 <body>
   <main class="app">
-    <section class="top-card">
-      <div class="game-icons">⭐ 🪙 🍄 🧱 ⭐</div>
+    <header class="hero">
+      <div class="cloud cloud-one"></div>
+      <div class="cloud cloud-two"></div>
+
+      <div class="score-bar">
+        <span>⭐ CAMERON</span>
+        <span>🪙 <span id="coinScore">000</span></span>
+        <span>WORLD 1-1</span>
+      </div>
+
       <h1>Camerons Behaviour</h1>
-      <p class="subtitle">Choose Cameron's level for today</p>
-      <p class="save-status">Saved on this phone only</p>
-    </section>
+      <p class="subtitle">Pick today’s power level</p>
 
-    <section class="world-strip">
-      <div class="cloud">☁️</div>
-      <div class="cloud">☁️</div>
-      <div class="question-block">?</div>
-      <div class="coin">🪙</div>
-      <div class="question-block">?</div>
-    </section>
+      <div class="power-row">
+        <div class="question-block">?</div>
+        <div class="coin-art"></div>
+        <div class="brick-block"></div>
+        <div class="mushroom-art">
+          <div class="mushroom-cap"></div>
+          <div class="mushroom-face"></div>
+        </div>
+        <div class="question-block">?</div>
+      </div>
+    </header>
 
-    <section class="traffic-light-card">
-      <div class="level-title">WORLD 1-1</div>
+    <section class="traffic-section">
+      <div class="pipe-top"></div>
 
       <section class="traffic-light" aria-label="Behaviour traffic light">
-        <button class="light red" id="redLight" aria-label="Red: tricky choices">
-          <span>🔴</span>
+        <button class="light red" id="redLight" aria-label="Red: oops day">
+          <span>!</span>
         </button>
 
-        <button class="light amber" id="amberLight" aria-label="Amber: okay day">
-          <span>🟠</span>
+        <button class="light amber" id="amberLight" aria-label="Amber: trying day">
+          <span>?</span>
         </button>
 
-        <button class="light green" id="greenLight" aria-label="Green: great choices">
-          <span>🟢</span>
+        <button class="light green" id="greenLight" aria-label="Green: super day">
+          <span>★</span>
         </button>
       </section>
 
-      <div class="colour-labels">
-        <div><strong>RED</strong><br />Oops day</div>
-        <div><strong>AMBER</strong><br />Trying day</div>
-        <div><strong>GREEN</strong><br />Super day</div>
+      <div class="pipe-stem"></div>
+
+      <div class="level-labels">
+        <button class="level-card red-card" id="redLabel">
+          <strong>RED</strong>
+          <span>Oops level</span>
+        </button>
+
+        <button class="level-card amber-card" id="amberLabel">
+          <strong>AMBER</strong>
+          <span>Trying level</span>
+        </button>
+
+        <button class="level-card green-card" id="greenLabel">
+          <strong>GREEN</strong>
+          <span>Super level</span>
+        </button>
       </div>
     </section>
 
     <section class="today-card">
-      <div class="today-title">TODAY'S RESULT</div>
+      <div class="today-title">TODAY’S LEVEL</div>
       <div class="message" id="message">Tap a light to choose today</div>
-      <div class="sub-message" id="subMessage"></div>
+      <div class="sub-message" id="subMessage">Every day is a new level.</div>
 
       <button class="reset-button" id="resetButton">RESET TODAY</button>
     </section>
 
     <section class="history">
-      <h2>DAY HISTORY</h2>
+      <h2>LEVEL HISTORY</h2>
       <div id="historyList"></div>
     </section>
 
-    <section class="ground-strip" aria-hidden="true">
-      <div class="ground-top"></div>
-      <div class="ground-bottom"></div>
-    </section>
+    <footer class="ground" aria-hidden="true">
+      <div class="grass"></div>
+      <div class="dirt"></div>
+    </footer>
   </main>
 
   <script src="script.js"></script>
