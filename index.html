@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Camerons Behaviour</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+
+  <meta name="theme-color" content="#222222" />
+</head>
+
+<body>
+  <main class="app">
+    <h1>Camerons Behaviour</h1>
+
+    <section class="traffic-light" aria-label="Behaviour traffic light">
+      <button class="light red" onclick="setDay('red')" aria-label="Red: bad choices"></button>
+      <button class="light amber" onclick="setDay('amber')" aria-label="Amber: normal day"></button>
+      <button class="light green" onclick="setDay('green')" aria-label="Green: good choices"></button>
+    </section>
+
+    <section class="today-card">
+      <div class="message" id="message">Tap a colour for today</div>
+      <div class="sub-message" id="subMessage"></div>
+
+      <button class="reset-button" onclick="resetToday()">Reset Today</button>
+    </section>
+
+    <section class="history">
+      <h2>History</h2>
+      <div id="historyList"></div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
