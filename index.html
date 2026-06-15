@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=20" />
+  <link rel="stylesheet" href="style.css?v=21" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -127,6 +127,24 @@
       </div>
     </section>
 
+    <section class="parent-notes-card" id="parentNotesCard" hidden>
+      <div class="parent-notes-title">PARENT NOTES</div>
+
+      <div class="note-form">
+        <label for="noteAuthor">Who wrote the note?</label>
+        <input type="text" id="noteAuthor" placeholder="Mum / Dad / Beth / Jay" maxlength="40" />
+
+        <label for="parentNoteText">Note</label>
+        <textarea id="parentNoteText" placeholder="Write a parent note here..." rows="4"></textarea>
+
+        <button type="button" id="addParentNoteButton">Add Note</button>
+      </div>
+
+      <div class="parent-notes-list" id="parentNotesList">
+        <p class="empty-notes">Unlock parent controls to view notes.</p>
+      </div>
+    </section>
+
     <section class="streak-card">
       <div class="streak-title" id="streakTitle">DAILY STREAK</div>
 
@@ -231,7 +249,7 @@
     </footer>
   </main>
 
-  <script src="script.js?v=19" type="module"></script>
+  <script src="script.js?v=20" type="module"></script>
   <script src="theme.js?v=3"></script>
 </body>
 </html>

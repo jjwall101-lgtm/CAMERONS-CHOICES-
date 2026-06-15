@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const PARENT_PIN_KEY = "cameronParentPinV1";
   const DEFAULT_PARENT_PIN = "1234";
   const LAST_NOTIFICATION_KEY = "cameronLastCoinNotificationV1";
+  const NOTE_AUTHOR_KEY = "cameronParentNoteAuthorV1";
 
   const RED_PENALTY = -50;
   const GREEN_REWARD = 50;
@@ -104,6 +105,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearHistoryButton = document.getElementById("clearHistoryButton");
   const enableNotificationsButton = document.getElementById("enableNotificationsButton");
   const notificationStatus = document.getElementById("notificationStatus");
+
+  const parentNotesCard = document.getElementById("parentNotesCard");
+  const noteAuthor = document.getElementById("noteAuthor");
+  const parentNoteText = document.getElementById("parentNoteText");
+  const addParentNoteButton = document.getElementById("addParentNoteButton");
+  const parentNotesList = document.getElementById("parentNotesList");
 
   function firebaseIsConfigured() {
     return !Object.values(firebaseConfig).some(value => String(value).includes("PASTE_YOUR"));
@@ -182,8 +189,28 @@ document.addEventListener("DOMContentLoaded", () => {
       coinTotal: Math.max(0, Number(data?.coinTotal) || 0),
       history,
       streak: normalizeStreak(data?.streak, history),
-      celebration: normalizeCelebration(data?.celebration)
+      celebration: normalizeCelebration(data?.celebration),
+      parentNotes: normalizeParentNotes(data?.parentNotes)
     };
+  }
+
+  function normalizeParentNotes(parentNotes) {
+    if (!Array.isArray(parentNotes)) {
+      return [];
+    }
+
+    return parentNotes
+      .filter(note => note && typeof note === "object")
+      .map(note => ({
+        id: note.id || `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        author: String(note.author || "Parent").slice(0, 40),
+        text: String(note.text || "").slice(0, 1200),
+        dateText: note.dateText || "",
+        dateISO: note.dateISO || "",
+        savedAt: note.savedAt || ""
+      }))
+      .filter(note => note.text.trim().length > 0)
+      .slice(0, 100);
   }
 
   function normalizeCelebration(celebration) {
@@ -514,6 +541,113 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let serviceWorkerRegistration = null;
 
+  function formatNoteDate(date = new Date()) {
+    return date.toLocaleString("en-GB", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function loadSavedNoteAuthor() {
+    if (!noteAuthor) {
+      return;
+    }
+
+    noteAuthor.value = localStorage.getItem(NOTE_AUTHOR_KEY) || "";
+  }
+
+  function saveNoteAuthorName() {
+    if (!noteAuthor) {
+      return;
+    }
+
+    localStorage.setItem(NOTE_AUTHOR_KEY, noteAuthor.value.trim());
+  }
+
+  async function addParentNote() {
+    if (!verifyParentPin("add a parent note")) {
+      return;
+    }
+
+    const author = noteAuthor ? noteAuthor.value.trim() : "";
+    const text = parentNoteText ? parentNoteText.value.trim() : "";
+
+    if (!author) {
+      alert("Add who wrote the note first.");
+      return;
+    }
+
+    if (!text) {
+      alert("Write a note first.");
+      return;
+    }
+
+    saveNoteAuthorName();
+
+    const data = await getLatestData();
+    const now = new Date();
+
+    data.parentNotes = normalizeParentNotes(data.parentNotes);
+
+    data.parentNotes.unshift({
+      id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      author,
+      text,
+      dateText: formatNoteDate(now),
+      dateISO: getDateISO(now),
+      savedAt: now.toISOString()
+    });
+
+    data.parentNotes = data.parentNotes.slice(0, 100);
+
+    if (parentNoteText) {
+      parentNoteText.value = "";
+    }
+
+    await saveData(data);
+  }
+
+  function updateParentNotesDisplay(data) {
+    if (!parentNotesList) {
+      return;
+    }
+
+    if (!parentUnlocked) {
+      parentNotesList.innerHTML = "<p class='empty-notes'>Unlock parent controls to view notes.</p>";
+      return;
+    }
+
+    const notes = normalizeParentNotes(data?.parentNotes);
+
+    if (notes.length === 0) {
+      parentNotesList.innerHTML = "<p class='empty-notes'>No parent notes yet.</p>";
+      return;
+    }
+
+    parentNotesList.innerHTML = "";
+
+    notes.forEach(note => {
+      const item = document.createElement("article");
+      item.className = "parent-note-item";
+
+      const meta = document.createElement("div");
+      meta.className = "parent-note-meta";
+      meta.textContent = `${note.dateText || "No date"} - ${note.author}`;
+
+      const text = document.createElement("p");
+      text.className = "parent-note-text";
+      text.textContent = note.text;
+
+      item.appendChild(meta);
+      item.appendChild(text);
+      parentNotesList.appendChild(item);
+    });
+  }
+
   function notificationSupported() {
     return "Notification" in window && "serviceWorker" in navigator;
   }
@@ -721,6 +855,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (lockControlsButton) {
       lockControlsButton.disabled = !parentUnlocked;
     }
+
+    if (parentNotesCard) {
+      parentNotesCard.hidden = !parentUnlocked;
+    }
+
+    updateParentNotesDisplay(currentData);
   }
 
   function unlockParentControls(actionText = "use parent controls") {
@@ -1178,6 +1318,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateStreakDisplay(data);
     updateHistoryList(data.history);
+    updateParentNotesDisplay(data);
     maybeSendCoinNotification(data).catch(error => console.error(error));
   }
 
@@ -1262,6 +1403,14 @@ document.addEventListener("DOMContentLoaded", () => {
       enableNotificationsButton.addEventListener("click", enableNotifications);
     }
 
+    if (addParentNoteButton) {
+      addParentNoteButton.addEventListener("click", addParentNote);
+    }
+
+    if (noteAuthor) {
+      noteAuthor.addEventListener("input", saveNoteAuthorName);
+    }
+
     if (collectPrizeButton) {
       collectPrizeButton.addEventListener("click", () => {
         const celebrationId = currentData?.celebration?.id || currentCelebrationId;
@@ -1335,6 +1484,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   try {
     parentUnlocked = false;
+    loadSavedNoteAuthor();
     setTreatTheme(getCurrentTheme());
     updateDisplay();
     updateLockDisplay();
