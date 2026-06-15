@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Camerons Behaviour</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      text-align: center;
+      color: #222;
+    }
+
+    h1 {
+      margin-top: 25px;
+      font-size: 32px;
+    }
+
+    .traffic-light {
+      width: 190px;
+      background: #222;
+      border-radius: 45px;
+      padding: 25px;
+      margin: 30px auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .light {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      margin: 20px auto;
+      opacity: 0.25;
+      cursor: pointer;
+      border: 6px solid #111;
+      transition: 0.2s;
+    }
+
+    .light.active {
+      opacity: 1;
+      transform: scale(1.08);
+      box-shadow: 0 0 35px currentColor;
+    }
+
+    .red {
+      background: red;
+      color: red;
+    }
+
+    .amber {
+      background: orange;
+      color: orange;
+    }
+
+    .green {
+      background: limegreen;
+      color: limegreen;
+    }
+
+    .message {
+      font-size: 26px;
+      font-weight: bold;
+      margin: 20px;
+    }
+
+    .sub-message {
+      font-size: 18px;
+      margin: 10px 25px;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 14px 22px;
+      border: none;
+      border-radius: 12px;
+      background: #222;
+      color: white;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .history {
+      background: white;
+      margin: 30px 20px;
+      padding: 15px;
+      border-radius: 15px;
+      text-align: left;
+    }
+
+    .history h2 {
+      text-align: center;
+    }
+
+    .history-item {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      font-size: 18px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Camerons Behaviour</h1>
+
+  <div class="traffic-light">
+    <div class="light red" onclick="setDay('red')"></div>
+    <div class="light amber" onclick="setDay('amber')"></div>
+    <div class="light green" onclick="setDay('green')"></div>
+  </div>
+
+  <div class="message" id="message">Tap a colour for today</div>
+  <div class="sub-message" id="subMessage"></div>
+
+  <button onclick="resetToday()">Reset Today</button>
+
+  <div class="history">
+    <h2>History</h2>
+    <div id="historyList"></div>
+  </div>
+
+  <script>
+    const messages = {
+      red: {
+        main: "Red: Bad choices",
+        sub: "Today has been difficult. A consequence is needed."
+      },
+      amber: {
+        main: "Amber: Normal day",
+        sub: "Today was okay. We try again tomorrow."
+      },
+      green: {
+        main: "Green: Good choices",
+        sub: "Great day. Treat earned."
+      }
+    };
+
+    function getToday() {
+      return new Date().toLocaleDateString("en-GB");
+    }
+
+    function setDay(colour) {
+      const today = getToday();
+      let history = JSON.parse(localStorage.getItem("behaviourHistory")) || [];
+
+      history = history.filter(item => item.date !== today);
+      history.unshift({
+        date: today,
+        colour: colour,
+        text: messages[colour].main
+      });
+
+      localStorage.setItem("behaviourHistory", JSON.stringify(history));
+      updateDisplay();
+    }
+
+    function resetToday() {
+      const today = getToday();
+      let history = JSON.parse(localStorage.getItem("behaviourHistory")) || [];
+      history = history.filter(item => item.date !== today);
+      localStorage.setItem("behaviourHistory", JSON.stringify(history));
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      const today = getToday();
+      const history = JSON.parse(localStorage.getItem("behaviourHistory")) || [];
+      const todayEntry = history.find(item => item.date === today);
+
+      document.querySelectorAll(".light").forEach(light => {
+        light.classList.remove("active");
+      });
+
+      if (todayEntry) {
+        document.querySelector("." + todayEntry.colour).classList.add("active");
+        document.getElementById("message").textContent = messages[todayEntry.colour].main;
+        document.getElementById("subMessage").textContent = messages[todayEntry.colour].sub;
+      } else {
+        document.getElementById("message").textContent = "Tap a colour for today";
+        document.getElementById("subMessage").textContent = "";
+      }
+
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = "";
+
+      if (history.length === 0) {
+        historyList.innerHTML = "<p style='text-align:center;'>No days recorded yet.</p>";
+        return;
+      }
+
+      history.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.textContent = `${item.date} - ${item.text}`;
+        historyList.appendChild(div);
+      });
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>
