@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=6" />
+  <link rel="stylesheet" href="style.css?v=7" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -50,7 +50,7 @@
         <div class="progress-inner" id="coinProgress"></div>
       </div>
 
-      <p class="coin-help">Green light adds 50 coins. Reach 1000 coins for a special treat.</p>
+      <p class="coin-help">Red removes 50 coins. Green adds 50 coins. Cameron must be amber before going green.</p>
 
       <div class="coin-controls">
         <button type="button" id="deduct10Button">-10</button>
@@ -90,7 +90,7 @@
       <div class="level-labels">
         <button type="button" class="level-card red-card" id="redLabel">
           <strong>RED</strong>
-          <span>Oops level</span>
+          <span>-50 coins</span>
         </button>
 
         <button type="button" class="level-card amber-card" id="amberLabel">
@@ -127,6 +127,6 @@
     </footer>
   </main>
 
-  <script src="script.js?v=6" defer></script>
+  <script src="script.js?v=7" defer></script>
 </body>
 </html>

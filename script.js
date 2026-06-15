@@ -1,21 +1,28 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const STORAGE_KEY = "cameronCoinsAppDataV1";
+  const STORAGE_KEY = "cameronCoinsAppDataV2";
+  const OLD_STORAGE_KEY = "cameronCoinsAppDataV1";
+
+  const RED_PENALTY = -50;
   const GREEN_REWARD = 50;
+  const AMBER_POINTS = 0;
   const GOAL = 1000;
 
   const messages = {
     red: {
       emoji: "🔴",
+      coinValue: RED_PENALTY,
       main: "RED: OOPS LEVEL",
-      sub: "Today was hard. No green coins today, but tomorrow is a brand new level."
+      sub: "Today was hard. 50 coins lost, but tomorrow is a brand new level."
     },
     amber: {
       emoji: "🟡",
+      coinValue: AMBER_POINTS,
       main: "AMBER: TRYING LEVEL",
-      sub: "Today had good moments and tricky moments. Keep going!"
+      sub: "Amber is the starting level. Good choices can move this up to green."
     },
     green: {
       emoji: "⭐",
+      coinValue: GREEN_REWARD,
       main: "GREEN: SUPER LEVEL",
       sub: "Super effort today. 50 coins earned!"
     }
@@ -46,7 +53,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getData() {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      let saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+
+      // Bring old saved data over once, so you don't lose existing coins/history.
+      if (!saved) {
+        const oldSaved = JSON.parse(localStorage.getItem(OLD_STORAGE_KEY));
+
+        if (oldSaved) {
+          saved = oldSaved;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+        }
+      }
 
       return {
         coinTotal: Number(saved?.coinTotal) || 0,
@@ -70,25 +87,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function addHistoryEntry(data, entry) {
     data.history.unshift(entry);
-    data.history = data.history.slice(0, 120);
+    data.history = data.history.slice(0, 160);
   }
 
-  function setDay(colour) {
+  function getTodayEntry(data) {
+    const today = getToday();
+    return data.history.find(item => item.type === "day" && item.date === today);
+  }
+
+  function getCoinValueForColour(colour) {
+    return messages[colour]?.coinValue || 0;
+  }
+
+  function canMoveToColour(currentColour, newColour) {
+    // Same colour is fine.
+    if (currentColour === newColour) {
+      return true;
+    }
+
+    // Cameron must go amber before green.
+    // So: no status -> green is blocked. Red -> green is blocked.
+    if (newColour === "green" && currentColour !== "amber") {
+      return false;
+    }
+
+    // Green can go straight to red.
+    return true;
+  }
+
+  function showLockedGreenMessage() {
+    document.getElementById("message").textContent = "AMBER FIRST";
+    document.getElementById("subMessage").textContent = "Cameron needs to go amber before he can move up to green.";
+  }
+
+  function setDay(colour, options = {}) {
     const today = getToday();
     const data = getData();
+    const existingToday = getTodayEntry(data);
+    const currentColour = existingToday?.colour || null;
 
-    const existingToday = data.history.find(item => item.type === "day" && item.date === today);
-    const alreadyHadGreenToday = existingToday?.colour === "green";
-
-    let coinChange = 0;
-
-    if (colour === "green" && !alreadyHadGreenToday) {
-      coinChange = GREEN_REWARD;
+    if (!options.force && !canMoveToColour(currentColour, colour)) {
+      showLockedGreenMessage();
+      return;
     }
 
-    if (colour !== "green" && alreadyHadGreenToday) {
-      coinChange = -GREEN_REWARD;
-    }
+    const oldCoinValue = existingToday ? getCoinValueForColour(existingToday.colour) : 0;
+    const newCoinValue = getCoinValueForColour(colour);
+    const coinChange = newCoinValue - oldCoinValue;
 
     data.coinTotal = clampCoins(data.coinTotal + coinChange);
 
@@ -102,6 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
       emoji: messages[colour].emoji,
       coinChange,
       coinsAfter: data.coinTotal,
+      automatic: options.automatic || false,
       savedAt: new Date().toISOString()
     });
 
@@ -109,25 +155,66 @@ document.addEventListener("DOMContentLoaded", () => {
     updateDisplay();
   }
 
+  function ensureTodayStartsAmber() {
+    const data = getData();
+    const today = getToday();
+    const existingToday = data.history.find(item => item.type === "day" && item.date === today);
+
+    if (existingToday) {
+      return;
+    }
+
+    addHistoryEntry(data, {
+      type: "day",
+      date: today,
+      colour: "amber",
+      text: messages.amber.main,
+      emoji: messages.amber.emoji,
+      coinChange: 0,
+      coinsAfter: data.coinTotal,
+      automatic: true,
+      savedAt: new Date().toISOString()
+    });
+
+    saveData(data);
+  }
+
+  function scheduleMidnightAmberReset() {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setDate(now.getDate() + 1);
+    midnight.setHours(0, 0, 0, 0);
+
+    const msUntilMidnight = midnight.getTime() - now.getTime();
+
+    setTimeout(() => {
+      ensureTodayStartsAmber();
+      updateDisplay();
+      scheduleMidnightAmberReset();
+    }, msUntilMidnight + 1000);
+  }
+
   function resetToday() {
     const today = getToday();
     const data = getData();
 
-    const existingToday = data.history.find(item => item.type === "day" && item.date === today);
+    const existingToday = getTodayEntry(data);
+    const oldCoinValue = existingToday ? getCoinValueForColour(existingToday.colour) : 0;
 
-    if (existingToday?.colour === "green") {
-      data.coinTotal = clampCoins(data.coinTotal - GREEN_REWARD);
-    }
+    // Reset today back to amber, not blank, because each day should start on amber.
+    data.coinTotal = clampCoins(data.coinTotal - oldCoinValue);
 
     data.history = data.history.filter(item => !(item.type === "day" && item.date === today));
 
     addHistoryEntry(data, {
-      type: "note",
+      type: "day",
       date: today,
-      text: "Today reset",
-      emoji: "↩️",
-      coinChange: existingToday?.colour === "green" ? -GREEN_REWARD : 0,
+      colour: "amber",
+      text: messages.amber.main,
+      emoji: messages.amber.emoji,
+      coinChange: -oldCoinValue,
       coinsAfter: data.coinTotal,
+      automatic: false,
       savedAt: new Date().toISOString()
     });
 
@@ -187,13 +274,15 @@ document.addEventListener("DOMContentLoaded", () => {
     data.history = [];
 
     saveData(data);
+
+    // After clearing history, put today back to amber.
+    ensureTodayStartsAmber();
     updateDisplay();
   }
 
   function updateDisplay() {
-    const today = getToday();
     const data = getData();
-    const todayEntry = data.history.find(item => item.type === "day" && item.date === today);
+    const todayEntry = getTodayEntry(data);
 
     document.querySelectorAll(".light").forEach(light => {
       light.classList.remove("active");
@@ -209,8 +298,8 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("message").textContent = messages[todayEntry.colour].main;
       document.getElementById("subMessage").textContent = messages[todayEntry.colour].sub;
     } else {
-      document.getElementById("message").textContent = "TAP A LIGHT TO CHOOSE TODAY";
-      document.getElementById("subMessage").textContent = "Green earns 50 coins. Reach 1000 coins for a special treat.";
+      document.getElementById("message").textContent = "AMBER START";
+      document.getElementById("subMessage").textContent = "Each new day starts on amber.";
     }
 
     coinTotalTop.textContent = data.coinTotal;
@@ -251,8 +340,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const coinText = formatCoinChange(item.coinChange);
       const totalText = `Total: ${item.coinsAfter ?? 0}`;
+      const autoText = item.automatic ? " - auto" : "";
 
-      div.textContent = `${item.emoji || ""} ${item.date} - ${item.text} - ${coinText} - ${totalText}`;
+      div.textContent = `${item.emoji || ""} ${item.date} - ${item.text}${autoText} - ${coinText} - ${totalText}`;
 
       historyList.appendChild(div);
     });
@@ -278,8 +368,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   try {
     connectButtons();
+    ensureTodayStartsAmber();
     updateDisplay();
-
+    scheduleMidnightAmberReset();
   } catch (error) {
     console.error(error);
     alert("Button error - check script.js upload");
