@@ -17,12 +17,13 @@ document.addEventListener("DOMContentLoaded", () => {
     Firebase Console > Project settings > General > Your apps > Web app
   */
   const firebaseConfig = {
-    apiKey: "PASTE_YOUR_API_KEY_HERE",
-    authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
-    projectId: "PASTE_YOUR_PROJECT_ID_HERE",
-    storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
-    messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
-    appId: "PASTE_YOUR_APP_ID_HERE"
+    apiKey: "AIzaSyD6a8UsUhqSZlRV2gs4FUUIGJJBS8kX3wk",
+    authDomain: "cameronsapp-9d08a.firebaseapp.com",
+    projectId: "cameronsapp-9d08a",
+    storageBucket: "cameronsapp-9d08a.firebasestorage.app",
+    messagingSenderId: "664203865452",
+    appId: "1:664203865452:web:b19f0e1d2ce170503d1749",
+    measurementId: "G-DQ3WVXEN1C"
   };
 
   const FAMILY_RECORD_ID = "cameron-shared-family-app";
