@@ -1991,3 +1991,33 @@ html[data-theme="minecraft"] .note-form button {
 html[data-theme="minecraft"] .parent-note-item {
   background: #f1dfad;
 }
+
+
+.delete-note-button {
+  margin-top: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 9px 12px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  cursor: pointer;
+  touch-action: manipulation;
+  background: #ffb2b0;
+  color: var(--outline);
+}
+
+.delete-note-button:active {
+  transform: translateY(3px);
+  box-shadow: 1px 1px 0 var(--outline);
+}
+
+html[data-theme="space"] .delete-note-button {
+  background: #a5162a;
+  color: white;
+}
+
+html[data-theme="minecraft"] .delete-note-button {
+  background: #d95b43;
+  color: white;
+}

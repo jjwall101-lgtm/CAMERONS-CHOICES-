@@ -611,6 +611,23 @@ document.addEventListener("DOMContentLoaded", () => {
     await saveData(data);
   }
 
+  async function deleteParentNote(noteId) {
+    if (!verifyParentPin("delete this parent note")) {
+      return;
+    }
+
+    const confirmed = confirm("Delete this parent note?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.parentNotes = normalizeParentNotes(data.parentNotes).filter(note => note.id !== noteId);
+
+    await saveData(data);
+  }
+
   function updateParentNotesDisplay(data) {
     if (!parentNotesList) {
       return;
@@ -642,8 +659,15 @@ document.addEventListener("DOMContentLoaded", () => {
       text.className = "parent-note-text";
       text.textContent = note.text;
 
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "delete-note-button";
+      deleteButton.textContent = "Delete Note";
+      deleteButton.addEventListener("click", () => deleteParentNote(note.id));
+
       item.appendChild(meta);
       item.appendChild(text);
+      item.appendChild(deleteButton);
       parentNotesList.appendChild(item);
     });
   }
