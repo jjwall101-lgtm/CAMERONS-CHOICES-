@@ -1,20 +1,19 @@
 # Cameron
 
-This version makes amber/orange neutral.
+This version rewards transitions instead of repeated green taps.
 
 ## Rules
 
 - Every new day starts on amber
-- Red removes 50 coins
-- Amber removes 0 coins
-- Green adds 50 coins
-- Going from green back to amber does not remove coins
+- Amber to green adds 50 coins every time
+- Pressing green again while already green adds 0 coins
+- Green to amber removes 0 coins
+- Amber is safe
 - Cameron must be amber before he can go green
-- Cameron can go straight from green to red
-- Green reward happens once per day
-- Red penalty happens once per day
+- Green can go straight to red
+- Moving onto red removes 50 coins
+- Pressing red again while already red removes 0 coins
 - 1000 coins unlocks the special treat message
-- You can still manually deduct coins or reset coins
 
 ## Upload to GitHub
 
@@ -32,5 +31,5 @@ Upload all files to the root of the repo:
 
 This version uses:
 
-style.css?v=8
-script.js?v=8
+style.css?v=9
+script.js?v=9
