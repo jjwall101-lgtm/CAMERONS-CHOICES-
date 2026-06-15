@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=14" />
+  <link rel="stylesheet" href="style.css?v=16" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -86,6 +86,17 @@
         <div class="progress-inner" id="coinProgress"></div>
       </div>
 
+      <div class="journey-wrap" aria-label="Journey to 1000 coins">
+        <div class="journey-track">
+          <span class="journey-start">0</span>
+          <span class="journey-character" id="progressCharacter">🍄</span>
+          <span class="finish-line">
+            <span class="finish-flag">🏁</span>
+            <span class="finish-text">1000</span>
+          </span>
+        </div>
+      </div>
+
       <p class="coin-help" id="coinHelp">
         Synced between phones when Firebase is connected.
       </p>
@@ -93,8 +104,29 @@
       <div class="coin-controls">
         <button type="button" id="deduct10Button">-10</button>
         <button type="button" id="deduct50Button">-50</button>
+        <button type="button" id="add10Button">+10</button>
         <button type="button" id="add50Button">+50</button>
         <button type="button" id="resetCoinsButton">Reset Coins</button>
+      </div>
+
+      <div class="pin-controls">
+        <button type="button" id="changePinButton">Parent PIN</button>
+        <p>Manual coin changes need the parent PIN.</p>
+      </div>
+    </section>
+
+    <section class="streak-card">
+      <div class="streak-title" id="streakTitle">DAILY STREAK</div>
+
+      <div class="streak-main">
+        <span id="streakCount">0</span>
+        <span>day streak</span>
+      </div>
+
+      <p class="streak-message" id="streakMessage">Reach green today to start a streak.</p>
+
+      <div class="streak-best">
+        Best streak: <span id="bestStreak">0</span>
       </div>
     </section>
 
@@ -176,7 +208,7 @@
     </footer>
   </main>
 
-  <script src="script.js?v=11" type="module"></script>
-  <script src="theme.js?v=1"></script>
+  <script src="script.js?v=12" type="module"></script>
+  <script src="theme.js?v=2"></script>
 </body>
 </html>

@@ -1100,3 +1100,495 @@ html[data-theme="minecraft"] .mc-dirt {
     font-size: 19px;
   }
 }
+
+
+/* FUNCTION UPDATE: parent PIN, +10, character progress bar, daily streak */
+
+.coin-controls {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.pin-controls {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.pin-controls button {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: bold;
+  padding: 10px 14px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pin-controls button:active {
+  transform: translateY(3px);
+  box-shadow: 1px 1px 0 var(--outline);
+}
+
+.pin-controls p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.journey-wrap {
+  margin: 14px 0 10px;
+}
+
+.journey-track {
+  position: relative;
+  height: 64px;
+  border: 4px solid var(--outline);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,0.45);
+}
+
+.journey-start {
+  position: absolute;
+  left: 8px;
+  bottom: 5px;
+  z-index: 4;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.journey-character {
+  position: absolute;
+  left: 0%;
+  top: 14px;
+  z-index: 5;
+  font-size: 32px;
+  line-height: 1;
+  transform: translateX(0);
+  transition: left 0.35s ease;
+  filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.4));
+}
+
+.finish-line {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 58px;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-left: 4px solid var(--outline);
+  font-weight: bold;
+  z-index: 3;
+}
+
+.finish-flag {
+  display: block;
+  font-size: 24px;
+}
+
+.finish-text {
+  display: block;
+  font-size: 11px;
+}
+
+.streak-card {
+  position: relative;
+  padding: 18px 12px 20px;
+  margin-bottom: 18px;
+  border: 5px solid var(--outline);
+  box-shadow: 6px 6px 0 var(--outline);
+  background: #ffffff;
+  text-align: center;
+}
+
+.streak-title {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 4px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  font-weight: bold;
+  font-size: 17px;
+}
+
+.streak-main {
+  margin: 12px 0 6px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.streak-main #streakCount {
+  display: block;
+  font-size: 52px;
+  line-height: 1;
+}
+
+.streak-main span:last-child {
+  font-size: 18px;
+}
+
+.streak-message {
+  margin: 10px 0;
+  font-weight: bold;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.streak-best {
+  display: inline-block;
+  padding: 8px 12px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  font-weight: bold;
+}
+
+/* Mario streak and journey */
+html[data-theme="mario"] .journey-track {
+  background:
+    linear-gradient(180deg, #91e7ff 0 56%, #43b047 57% 72%, #8b4a28 73% 100%);
+}
+
+html[data-theme="mario"] .finish-line {
+  background:
+    repeating-conic-gradient(#ffffff 0 25%, #1b1b1b 0 50%) 50% / 18px 18px;
+  color: #1b1b1b;
+  text-shadow: 1px 1px 0 white;
+}
+
+html[data-theme="mario"] .pin-controls button,
+html[data-theme="mario"] .streak-title,
+html[data-theme="mario"] .streak-best {
+  background: var(--coin);
+  color: #8a4a00;
+}
+
+html[data-theme="mario"] .streak-card {
+  background: #fff8d6;
+}
+
+/* Space streak and journey */
+html[data-theme="space"] .journey-track {
+  background:
+    radial-gradient(circle at 12% 20%, white 0 1px, transparent 2px),
+    radial-gradient(circle at 42% 36%, white 0 1px, transparent 2px),
+    radial-gradient(circle at 70% 18%, white 0 1px, transparent 2px),
+    linear-gradient(180deg, #090b2f 0%, #151b62 100%);
+}
+
+html[data-theme="space"] .journey-character {
+  filter: drop-shadow(0 0 10px rgba(69,216,255,0.9));
+}
+
+html[data-theme="space"] .finish-line {
+  background: linear-gradient(180deg, #d8dce8, #9ea6bd);
+  color: #020316;
+}
+
+html[data-theme="space"] .pin-controls button,
+html[data-theme="space"] .streak-title,
+html[data-theme="space"] .streak-best {
+  background: var(--purple);
+  color: white;
+}
+
+html[data-theme="space"] .streak-card {
+  background: rgba(12, 16, 62, 0.95);
+  color: white;
+  box-shadow: 6px 6px 0 rgba(0,0,0,0.8);
+}
+
+/* Minecraft streak and journey */
+html[data-theme="minecraft"] .journey-track {
+  background:
+    linear-gradient(180deg, #73c7ff 0 45%, #5cae40 46% 70%, #7b4a2a 71% 100%);
+}
+
+html[data-theme="minecraft"] .journey-character {
+  filter: drop-shadow(3px 3px 0 #1b1b1b);
+}
+
+html[data-theme="minecraft"] .finish-line {
+  background:
+    repeating-linear-gradient(45deg, #30d5c8 0 9px, #1aa39b 9px 18px);
+  color: #1b1b1b;
+}
+
+html[data-theme="minecraft"] .pin-controls button,
+html[data-theme="minecraft"] .streak-title,
+html[data-theme="minecraft"] .streak-best {
+  background: #5cae40;
+  color: white;
+}
+
+html[data-theme="minecraft"] .streak-card {
+  background: #d8c08a;
+}
+
+@media (max-width: 420px) {
+  .coin-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .coin-controls button:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .journey-character {
+    font-size: 28px;
+  }
+
+  .finish-line {
+    width: 50px;
+  }
+
+  .streak-main #streakCount {
+    font-size: 44px;
+  }
+}
+
+
+/* IMPROVED THEME TRAFFIC-LIGHT SHELLS */
+
+/* Make the default outer wrappers hidden unless that theme is active */
+.pipe-top,
+.pipe-stem,
+.rocket-pad-top,
+.rocket-pad-stem,
+.minecraft-topper,
+.minecraft-stem {
+  display: none;
+}
+
+/* MARIO: traffic light sits inside a green transport tube */
+html[data-theme="mario"] .traffic-section {
+  background: linear-gradient(180deg, #baf1ff 0%, #eaffff 58%, #7fdc75 59%, #43b047 100%);
+}
+
+html[data-theme="mario"] .pipe-top,
+html[data-theme="mario"] .pipe-stem {
+  display: block;
+}
+
+html[data-theme="mario"] .pipe-top {
+  width: 252px;
+  height: 54px;
+  margin: 0 auto -10px;
+  border-radius: 24px 24px 10px 10px;
+  background: linear-gradient(90deg, #007b39 0%, #00a84f 22%, #73e675 48%, #00a84f 78%, #007b39 100%);
+  border: 5px solid var(--outline);
+  box-shadow:
+    inset 0 6px 0 rgba(255,255,255,0.35),
+    6px 6px 0 var(--outline);
+}
+
+html[data-theme="mario"] .pipe-stem {
+  width: 212px;
+  height: 44px;
+  margin: -8px auto 18px;
+  border-radius: 0 0 18px 18px;
+  background: linear-gradient(90deg, #007b39 0%, #00a84f 22%, #73e675 48%, #00a84f 78%, #007b39 100%);
+  border-left: 5px solid var(--outline);
+  border-right: 5px solid var(--outline);
+  border-bottom: 5px solid var(--outline);
+  box-shadow:
+    inset 0 -6px 0 rgba(0,0,0,0.14),
+    6px 6px 0 var(--outline);
+}
+
+html[data-theme="mario"] .traffic-light {
+  position: relative;
+  width: 226px;
+  border-radius: 0 0 28px 28px;
+  margin-top: 0;
+  padding-top: 16px;
+  background: linear-gradient(180deg, #2d2d2d 0%, #101010 100%);
+  border: 6px solid var(--outline);
+  box-shadow:
+    inset 0 0 0 4px #4a4a4a,
+    0 6px 0 rgba(255,255,255,0.15),
+    6px 6px 0 var(--outline);
+}
+
+html[data-theme="mario"] .traffic-light::before {
+  content: "";
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 248px;
+  height: 24px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, #007b39 0%, #00a84f 22%, #73e675 48%, #00a84f 78%, #007b39 100%);
+  border: 5px solid var(--outline);
+  box-sizing: border-box;
+}
+
+/* SPACE: traffic light becomes a rocket body */
+html[data-theme="space"] .rocket-pad-top,
+html[data-theme="space"] .rocket-pad-stem {
+  display: none;
+}
+
+html[data-theme="space"] .traffic-section {
+  background:
+    radial-gradient(circle at 16% 20%, rgba(255,255,255,0.8) 0 2px, transparent 3px),
+    radial-gradient(circle at 84% 26%, rgba(255,255,255,0.8) 0 2px, transparent 3px),
+    linear-gradient(180deg, #11195a 0%, #090b2f 100%);
+}
+
+html[data-theme="space"] .traffic-light {
+  position: relative;
+  width: 236px;
+  padding: 34px 18px 56px;
+  border-radius: 110px 110px 34px 34px;
+  margin-top: 16px;
+  background: linear-gradient(180deg, #eef2fb 0%, #c9d1e4 52%, #9aa5bf 100%);
+  border: 6px solid var(--outline);
+  box-shadow:
+    inset 0 0 0 4px #ffffff,
+    0 0 20px rgba(69,216,255,0.28),
+    6px 6px 0 var(--outline);
+}
+
+html[data-theme="space"] .traffic-light::before {
+  content: "";
+  position: absolute;
+  top: -38px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 78px;
+  height: 54px;
+  background: linear-gradient(180deg, #eef2fb 0%, #c9d1e4 100%);
+  border: 6px solid var(--outline);
+  border-bottom: none;
+  border-radius: 46px 46px 0 0;
+  box-sizing: border-box;
+}
+
+html[data-theme="space"] .traffic-light::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -42px;
+  transform: translateX(-50%);
+  width: 68px;
+  height: 44px;
+  background: linear-gradient(180deg, #ffec8f 0%, #ff8b2b 45%, transparent 100%);
+  clip-path: polygon(50% 100%, 0 0, 25% 15%, 50% 0, 75% 15%, 100% 0);
+  filter: drop-shadow(0 0 10px rgba(255,139,43,0.85));
+}
+
+html[data-theme="space"] .traffic-light .light {
+  box-shadow:
+    inset 8px 8px 0 rgba(255,255,255,0.24),
+    0 0 0 4px rgba(0,0,0,0.18);
+}
+
+/* MINECRAFT: traffic light sits in stacked block tower */
+html[data-theme="minecraft"] .traffic-section {
+  background:
+    linear-gradient(180deg, #73c7ff 0 20%, #5cae40 21% 100%);
+}
+
+html[data-theme="minecraft"] .minecraft-topper,
+html[data-theme="minecraft"] .minecraft-stem {
+  display: block;
+}
+
+html[data-theme="minecraft"] .minecraft-topper {
+  width: 230px;
+  height: 40px;
+  margin: 0 auto -4px;
+  background:
+    repeating-linear-gradient(90deg, #5cae40 0 18px, #4b9636 18px 36px),
+    linear-gradient(180deg, #5cae40 0 35%, #7b4a2a 36% 100%);
+  border: 5px solid var(--outline);
+  box-shadow: 6px 6px 0 var(--outline);
+}
+
+html[data-theme="minecraft"] .minecraft-stem {
+  width: 184px;
+  height: 36px;
+  margin: -4px auto 18px;
+  background:
+    repeating-linear-gradient(90deg, #7b4a2a 0 18px, #5d351e 18px 36px);
+  border-left: 5px solid var(--outline);
+  border-right: 5px solid var(--outline);
+  border-bottom: 5px solid var(--outline);
+  box-shadow: 6px 6px 0 var(--outline);
+}
+
+html[data-theme="minecraft"] .traffic-light {
+  position: relative;
+  width: 236px;
+  padding: 14px 14px 18px;
+  border-radius: 0;
+  background:
+    repeating-linear-gradient(90deg, #595959 0 26px, #454545 26px 52px),
+    repeating-linear-gradient(180deg, #676767 0 26px, #4f4f4f 26px 52px);
+  border: 6px solid var(--outline);
+  box-shadow:
+    inset 0 0 0 4px #8a8a8a,
+    6px 6px 0 var(--outline);
+}
+
+html[data-theme="minecraft"] .traffic-light::before,
+html[data-theme="minecraft"] .traffic-light::after {
+  content: "";
+  position: absolute;
+  left: -14px;
+  width: calc(100% + 28px);
+  height: 14px;
+  background:
+    repeating-linear-gradient(90deg, #9a9a9a 0 18px, #6a6a6a 18px 36px);
+  border: 4px solid var(--outline);
+  box-sizing: border-box;
+}
+
+html[data-theme="minecraft"] .traffic-light::before {
+  top: -14px;
+}
+
+html[data-theme="minecraft"] .traffic-light::after {
+  bottom: -14px;
+}
+
+html[data-theme="minecraft"] .light {
+  border-radius: 0;
+  box-shadow:
+    inset 8px 8px 0 rgba(255,255,255,0.20),
+    0 0 0 4px rgba(0,0,0,0.18);
+}
+
+/* Mobile tuning for the themed shells */
+@media (max-width: 420px) {
+  html[data-theme="mario"] .pipe-top {
+    width: 232px;
+  }
+
+  html[data-theme="mario"] .pipe-stem {
+    width: 194px;
+  }
+
+  html[data-theme="mario"] .traffic-light::before {
+    width: 228px;
+  }
+
+  html[data-theme="space"] .traffic-light,
+  html[data-theme="minecraft"] .traffic-light {
+    width: 214px;
+  }
+
+  html[data-theme="space"] .traffic-light::before {
+    width: 70px;
+  }
+
+  html[data-theme="minecraft"] .minecraft-topper {
+    width: 212px;
+  }
+
+  html[data-theme="minecraft"] .minecraft-stem {
+    width: 170px;
+  }
+}
