@@ -1,28 +1,27 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const STORAGE_KEY = "cameronCoinsAppDataV2";
-  const OLD_STORAGE_KEY = "cameronCoinsAppDataV1";
+  const STORAGE_KEY = "cameronCoinsAppDataV3";
+  const OLD_STORAGE_KEYS = [
+    "cameronCoinsAppDataV2",
+    "cameronCoinsAppDataV1"
+  ];
 
   const RED_PENALTY = -50;
   const GREEN_REWARD = 50;
-  const AMBER_POINTS = 0;
   const GOAL = 1000;
 
   const messages = {
     red: {
       emoji: "🔴",
-      coinValue: RED_PENALTY,
       main: "RED: OOPS LEVEL",
       sub: "Today was hard. 50 coins lost, but tomorrow is a brand new level."
     },
     amber: {
       emoji: "🟡",
-      coinValue: AMBER_POINTS,
       main: "AMBER: TRYING LEVEL",
-      sub: "Amber is the starting level. Good choices can move this up to green."
+      sub: "Amber is safe. No coins are added or taken away."
     },
     green: {
       emoji: "⭐",
-      coinValue: GREEN_REWARD,
       main: "GREEN: SUPER LEVEL",
       sub: "Super effort today. 50 coins earned!"
     }
@@ -55,13 +54,16 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       let saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
 
-      // Bring old saved data over once, so you don't lose existing coins/history.
+      // Bring older saved data over once, so you don't lose existing coins/history.
       if (!saved) {
-        const oldSaved = JSON.parse(localStorage.getItem(OLD_STORAGE_KEY));
+        for (const oldKey of OLD_STORAGE_KEYS) {
+          const oldSaved = JSON.parse(localStorage.getItem(oldKey));
 
-        if (oldSaved) {
-          saved = oldSaved;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+          if (oldSaved) {
+            saved = oldSaved;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+            break;
+          }
         }
       }
 
@@ -95,12 +97,25 @@ document.addEventListener("DOMContentLoaded", () => {
     return data.history.find(item => item.type === "day" && item.date === today);
   }
 
-  function getCoinValueForColour(colour) {
-    return messages[colour]?.coinValue || 0;
+  function getDayNetCoinChange(entry) {
+    if (!entry) {
+      return 0;
+    }
+
+    let total = 0;
+
+    if (entry.greenAwarded) {
+      total += GREEN_REWARD;
+    }
+
+    if (entry.redPenaltyApplied) {
+      total += RED_PENALTY;
+    }
+
+    return total;
   }
 
   function canMoveToColour(currentColour, newColour) {
-    // Same colour is fine.
     if (currentColour === newColour) {
       return true;
     }
@@ -112,6 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Green can go straight to red.
+    // Amber is always allowed and does not remove coins.
     return true;
   }
 
@@ -131,9 +147,26 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const oldCoinValue = existingToday ? getCoinValueForColour(existingToday.colour) : 0;
-    const newCoinValue = getCoinValueForColour(colour);
-    const coinChange = newCoinValue - oldCoinValue;
+    let greenAwarded = Boolean(existingToday?.greenAwarded);
+    let redPenaltyApplied = Boolean(existingToday?.redPenaltyApplied);
+    let coinChange = 0;
+
+    // Amber/orange is neutral. It NEVER takes coins away.
+    if (colour === "amber") {
+      coinChange = 0;
+    }
+
+    // Green adds 50 once per day.
+    if (colour === "green" && !greenAwarded) {
+      coinChange = GREEN_REWARD;
+      greenAwarded = true;
+    }
+
+    // Red removes 50 once per day.
+    if (colour === "red" && !redPenaltyApplied) {
+      coinChange = RED_PENALTY;
+      redPenaltyApplied = true;
+    }
 
     data.coinTotal = clampCoins(data.coinTotal + coinChange);
 
@@ -145,8 +178,11 @@ document.addEventListener("DOMContentLoaded", () => {
       colour,
       text: messages[colour].main,
       emoji: messages[colour].emoji,
-      coinChange,
+      coinChange: getDayNetCoinChange({ greenAwarded, redPenaltyApplied }),
+      lastMoveCoinChange: coinChange,
       coinsAfter: data.coinTotal,
+      greenAwarded,
+      redPenaltyApplied,
       automatic: options.automatic || false,
       savedAt: new Date().toISOString()
     });
@@ -171,7 +207,10 @@ document.addEventListener("DOMContentLoaded", () => {
       text: messages.amber.main,
       emoji: messages.amber.emoji,
       coinChange: 0,
+      lastMoveCoinChange: 0,
       coinsAfter: data.coinTotal,
+      greenAwarded: false,
+      redPenaltyApplied: false,
       automatic: true,
       savedAt: new Date().toISOString()
     });
@@ -199,10 +238,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = getData();
 
     const existingToday = getTodayEntry(data);
-    const oldCoinValue = existingToday ? getCoinValueForColour(existingToday.colour) : 0;
+    const oldNetCoinChange = getDayNetCoinChange(existingToday);
 
-    // Reset today back to amber, not blank, because each day should start on amber.
-    data.coinTotal = clampCoins(data.coinTotal - oldCoinValue);
+    // Reset today back to amber and undo today's green/red coin movement.
+    data.coinTotal = clampCoins(data.coinTotal - oldNetCoinChange);
 
     data.history = data.history.filter(item => !(item.type === "day" && item.date === today));
 
@@ -212,8 +251,11 @@ document.addEventListener("DOMContentLoaded", () => {
       colour: "amber",
       text: messages.amber.main,
       emoji: messages.amber.emoji,
-      coinChange: -oldCoinValue,
+      coinChange: 0,
+      lastMoveCoinChange: -oldNetCoinChange,
       coinsAfter: data.coinTotal,
+      greenAwarded: false,
+      redPenaltyApplied: false,
       automatic: false,
       savedAt: new Date().toISOString()
     });
@@ -235,6 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
       text: reason,
       emoji: actualChange >= 0 ? "🪙" : "➖",
       coinChange: actualChange,
+      lastMoveCoinChange: actualChange,
       coinsAfter: data.coinTotal,
       savedAt: new Date().toISOString()
     });
@@ -255,6 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
       text: "Coin total reset",
       emoji: "🔄",
       coinChange: -oldTotal,
+      lastMoveCoinChange: -oldTotal,
       coinsAfter: 0,
       savedAt: new Date().toISOString()
     });
@@ -296,7 +340,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       document.getElementById("message").textContent = messages[todayEntry.colour].main;
-      document.getElementById("subMessage").textContent = messages[todayEntry.colour].sub;
+
+      if (todayEntry.colour === "amber" && todayEntry.greenAwarded) {
+        document.getElementById("subMessage").textContent = "Back on amber. No coins removed.";
+      } else {
+        document.getElementById("subMessage").textContent = messages[todayEntry.colour].sub;
+      }
     } else {
       document.getElementById("message").textContent = "AMBER START";
       document.getElementById("subMessage").textContent = "Each new day starts on amber.";
