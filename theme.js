@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const treatSubtitle = document.getElementById("treatSubtitle");
   const amberLabelText = document.getElementById("amberLabelText");
   const greenLabelText = document.getElementById("greenLabelText");
+  const progressCharacter = document.getElementById("progressCharacter");
+  const streakTitle = document.getElementById("streakTitle");
 
   const themeText = {
     mario: {
@@ -22,6 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
       treatSubtitle: "1000 coins reached!",
       amber: "Trying level",
       green: "+50 coins",
+      runner: "🍄",
+      streakTitle: "DAILY STREAK",
       themeColor: "#4ab7ff"
     },
     space: {
@@ -33,6 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
       treatSubtitle: "1000 coins reached! Mission complete!",
       amber: "Orbit mode",
       green: "Launch +50",
+      runner: "🚀",
+      streakTitle: "MISSION STREAK",
       themeColor: "#090b2f"
     },
     minecraft: {
@@ -44,6 +50,8 @@ document.addEventListener("DOMContentLoaded", () => {
       treatSubtitle: "1000 coins reached! Diamond reward unlocked!",
       amber: "Crafting",
       green: "Diamond +50",
+      runner: "⛏️",
+      streakTitle: "BUILD STREAK",
       themeColor: "#5cae40"
     }
   };
@@ -63,6 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (treatSubtitle) treatSubtitle.textContent = text.treatSubtitle;
     if (amberLabelText) amberLabelText.textContent = text.amber;
     if (greenLabelText) greenLabelText.textContent = text.green;
+    if (progressCharacter) progressCharacter.textContent = text.runner;
+    if (streakTitle) streakTitle.textContent = text.streakTitle;
 
     const themeMeta = document.querySelector('meta[name="theme-color"]');
     if (themeMeta) themeMeta.setAttribute("content", text.themeColor);

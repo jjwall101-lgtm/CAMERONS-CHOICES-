@@ -9,13 +9,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  /*
-    FIREBASE SETUP NEEDED
-
-    Replace the values below with your Firebase web app config.
-
-    Firebase Console > Project settings > General > Your apps > Web app
-  */
   const firebaseConfig = {
     apiKey: "AIzaSyD6a8UsUhqSZlRV2gs4FUUIGJJBS8kX3wk",
     authDomain: "cameronsapp-9d08a.firebaseapp.com",
@@ -28,13 +21,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const FAMILY_RECORD_ID = "cameron-shared-family-app";
 
-  const LOCAL_STORAGE_KEY = "cameronCoinsAppDataV5SyncBackup";
+  const LOCAL_STORAGE_KEY = "cameronCoinsAppDataV6SyncBackup";
   const OLD_STORAGE_KEYS = [
+    "cameronCoinsAppDataV5SyncBackup",
     "cameronCoinsAppDataV4",
     "cameronCoinsAppDataV3",
     "cameronCoinsAppDataV2",
     "cameronCoinsAppDataV1"
   ];
+
+  const PARENT_PIN_KEY = "cameronParentPinV1";
+  const DEFAULT_PARENT_PIN = "1234";
 
   const RED_PENALTY = -50;
   const GREEN_REWARD = 50;
@@ -67,7 +64,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const coinTotalTop = document.getElementById("coinTotalTop");
   const coinTotalMain = document.getElementById("coinTotalMain");
   const coinProgress = document.getElementById("coinProgress");
+  const progressCharacter = document.getElementById("progressCharacter");
   const treatCard = document.getElementById("treatCard");
+
+  const streakCount = document.getElementById("streakCount");
+  const bestStreak = document.getElementById("bestStreak");
+  const streakMessage = document.getElementById("streakMessage");
 
   const redLight = document.getElementById("redLight");
   const amberLight = document.getElementById("amberLight");
@@ -78,8 +80,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const deduct10Button = document.getElementById("deduct10Button");
   const deduct50Button = document.getElementById("deduct50Button");
+  const add10Button = document.getElementById("add10Button");
   const add50Button = document.getElementById("add50Button");
   const resetCoinsButton = document.getElementById("resetCoinsButton");
+  const changePinButton = document.getElementById("changePinButton");
   const resetTodayButton = document.getElementById("resetTodayButton");
   const clearHistoryButton = document.getElementById("clearHistoryButton");
 
@@ -88,12 +92,43 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setSyncStatus(text, statusClass) {
+    if (!syncStatus) return;
     syncStatus.textContent = text;
     syncStatus.className = `sync-status ${statusClass}`;
   }
 
   function getToday() {
     return new Date().toLocaleDateString("en-GB");
+  }
+
+  function getDateISO(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function getYesterdayISO() {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return getDateISO(yesterday);
+  }
+
+  function dateTextToISO(dateText) {
+    if (!dateText) return "";
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
+      return dateText;
+    }
+
+    const parts = String(dateText).split("/");
+
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+
+    return "";
   }
 
   function getLocalData() {
@@ -123,10 +158,168 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function normalizeData(data) {
+    const history = Array.isArray(data?.history) ? data.history : [];
+
     return {
       coinTotal: Math.max(0, Number(data?.coinTotal) || 0),
-      history: Array.isArray(data?.history) ? data.history : []
+      history,
+      streak: normalizeStreak(data?.streak, history)
     };
+  }
+
+  function normalizeStreak(streak, history) {
+    if (streak && typeof streak === "object") {
+      return {
+        current: Math.max(0, Number(streak.current) || 0),
+        best: Math.max(0, Number(streak.best) || 0),
+        lastGreenDateISO: streak.lastGreenDateISO || ""
+      };
+    }
+
+    return buildStreakFromHistory(history);
+  }
+
+  function dayReachedGreen(item) {
+    if (!item || item.type !== "day") return false;
+
+    if (item.colour === "green") {
+      return true;
+    }
+
+    if (Array.isArray(item.moves)) {
+      return item.moves.some(move => move.to === "green");
+    }
+
+    return false;
+  }
+
+  function entryToISO(item) {
+    return item?.dateISO || dateTextToISO(item?.date);
+  }
+
+  function buildStreakFromHistory(history) {
+    const greenDays = Array.from(
+      new Set(
+        history
+          .filter(dayReachedGreen)
+          .map(entryToISO)
+          .filter(Boolean)
+      )
+    ).sort();
+
+    let current = 0;
+    let best = 0;
+    let previousDate = null;
+
+    greenDays.forEach(dateISO => {
+      if (!previousDate) {
+        current = 1;
+      } else {
+        const previous = new Date(previousDate + "T12:00:00");
+        previous.setDate(previous.getDate() + 1);
+        current = getDateISO(previous) === dateISO ? current + 1 : 1;
+      }
+
+      best = Math.max(best, current);
+      previousDate = dateISO;
+    });
+
+    const lastGreenDateISO = greenDays[greenDays.length - 1] || "";
+
+    return {
+      current,
+      best,
+      lastGreenDateISO
+    };
+  }
+
+  function getVisibleStreak(streak) {
+    const todayISO = getDateISO();
+    const yesterdayISO = getYesterdayISO();
+
+    if (streak.lastGreenDateISO === todayISO || streak.lastGreenDateISO === yesterdayISO) {
+      return Math.max(0, Number(streak.current) || 0);
+    }
+
+    return 0;
+  }
+
+  function updateStreakForGreen(data) {
+    data.streak = normalizeStreak(data.streak, data.history);
+
+    const todayISO = getDateISO();
+    const yesterdayISO = getYesterdayISO();
+
+    if (data.streak.lastGreenDateISO === todayISO) {
+      return false;
+    }
+
+    const current = data.streak.lastGreenDateISO === yesterdayISO
+      ? getVisibleStreak(data.streak) + 1
+      : 1;
+
+    data.streak.current = current;
+    data.streak.best = Math.max(Number(data.streak.best) || 0, current);
+    data.streak.lastGreenDateISO = todayISO;
+
+    return true;
+  }
+
+  function recalculateStreak(data) {
+    data.streak = buildStreakFromHistory(data.history || []);
+  }
+
+  function getParentPin() {
+    return localStorage.getItem(PARENT_PIN_KEY) || DEFAULT_PARENT_PIN;
+  }
+
+  function verifyParentPin(actionText) {
+    const typedPin = prompt(`Parent PIN needed to ${actionText}.`);
+
+    if (typedPin === null) {
+      return false;
+    }
+
+    if (typedPin === getParentPin()) {
+      return true;
+    }
+
+    alert("Wrong PIN. No changes were made.");
+    return false;
+  }
+
+  function changeParentPin() {
+    const currentPin = prompt("Enter current parent PIN.");
+
+    if (currentPin === null) {
+      return;
+    }
+
+    if (currentPin !== getParentPin()) {
+      alert("Wrong PIN. The PIN was not changed.");
+      return;
+    }
+
+    const newPin = prompt("Enter a new parent PIN. Use 4 to 8 numbers.");
+
+    if (newPin === null) {
+      return;
+    }
+
+    if (!/^\d{4,8}$/.test(newPin)) {
+      alert("PIN not changed. Use 4 to 8 numbers only.");
+      return;
+    }
+
+    const repeatPin = prompt("Enter the new PIN again.");
+
+    if (repeatPin !== newPin) {
+      alert("PINs did not match. The PIN was not changed.");
+      return;
+    }
+
+    localStorage.setItem(PARENT_PIN_KEY, newPin);
+    alert("Parent PIN changed on this phone.");
   }
 
   async function getLatestData() {
@@ -177,7 +370,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function addHistoryEntry(data, entry) {
     data.history.unshift(entry);
-    data.history = data.history.slice(0, 200);
+    data.history = data.history.slice(0, 250);
   }
 
   function getTodayEntry(data) {
@@ -216,6 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function setDay(colour, options = {}) {
     const today = getToday();
+    const todayISO = getDateISO();
     const data = await getLatestData();
 
     ensureTodayStartsAmberInData(data);
@@ -229,6 +423,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const coinChange = options.automatic ? 0 : getCoinChangeForMove(currentColour, colour);
+
+    if (coinChange !== 0 && !verifyParentPin("change Cameron's coins")) {
+      return;
+    }
+
+    let streakChanged = false;
+
+    if (!options.automatic && colour === "green") {
+      streakChanged = updateStreakForGreen(data);
+    }
 
     data.coinTotal = clampCoins(data.coinTotal + coinChange);
 
@@ -245,6 +449,7 @@ document.addEventListener("DOMContentLoaded", () => {
     addHistoryEntry(data, {
       type: "day",
       date: today,
+      dateISO: todayISO,
       colour,
       text: messages[colour].main,
       emoji: messages[colour].emoji,
@@ -252,6 +457,8 @@ document.addEventListener("DOMContentLoaded", () => {
       lastMoveCoinChange: coinChange,
       coinsAfter: data.coinTotal,
       moves: [...previousDailyMoves, newMove],
+      streakAfter: getVisibleStreak(data.streak),
+      streakChanged,
       automatic: options.automatic || false,
       savedAt: new Date().toISOString()
     });
@@ -261,6 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function ensureTodayStartsAmberInData(data) {
     const today = getToday();
+    const todayISO = getDateISO();
     const existingToday = data.history.find(item => item.type === "day" && item.date === today);
 
     if (existingToday) {
@@ -270,6 +478,7 @@ document.addEventListener("DOMContentLoaded", () => {
     addHistoryEntry(data, {
       type: "day",
       date: today,
+      dateISO: todayISO,
       colour: "amber",
       text: messages.amber.main,
       emoji: messages.amber.emoji,
@@ -319,7 +528,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function resetToday() {
+    if (!verifyParentPin("reset today")) {
+      return;
+    }
+
     const today = getToday();
+    const todayISO = getDateISO();
     const data = await getLatestData();
 
     const existingToday = getTodayEntry(data);
@@ -331,6 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
     addHistoryEntry(data, {
       type: "day",
       date: today,
+      dateISO: todayISO,
       colour: "amber",
       text: messages.amber.main,
       emoji: messages.amber.emoji,
@@ -349,10 +564,15 @@ document.addEventListener("DOMContentLoaded", () => {
       savedAt: new Date().toISOString()
     });
 
+    recalculateStreak(data);
     await saveData(data);
   }
 
   async function adjustCoins(amount, reason) {
+    if (!verifyParentPin("change Cameron's coins")) {
+      return;
+    }
+
     const data = await getLatestData();
 
     const oldTotal = data.coinTotal;
@@ -362,6 +582,7 @@ document.addEventListener("DOMContentLoaded", () => {
     addHistoryEntry(data, {
       type: "coins",
       date: getToday(),
+      dateISO: getDateISO(),
       text: reason,
       emoji: actualChange >= 0 ? "🪙" : "➖",
       coinChange: actualChange,
@@ -374,6 +595,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function resetCoins() {
+    if (!verifyParentPin("reset Cameron's coins")) {
+      return;
+    }
+
+    const confirmed = confirm("Reset Cameron's coins to 0?");
+
+    if (!confirmed) {
+      return;
+    }
+
     const data = await getLatestData();
 
     const oldTotal = data.coinTotal;
@@ -382,6 +613,7 @@ document.addEventListener("DOMContentLoaded", () => {
     addHistoryEntry(data, {
       type: "coins",
       date: getToday(),
+      dateISO: getDateISO(),
       text: "Coin total reset",
       emoji: "🔄",
       coinChange: -oldTotal,
@@ -394,6 +626,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function clearHistory() {
+    if (!verifyParentPin("clear history")) {
+      return;
+    }
+
     const confirmed = confirm("Clear the saved history? Coin total will stay the same.");
 
     if (!confirmed) {
@@ -404,6 +640,7 @@ document.addEventListener("DOMContentLoaded", () => {
     data.history = [];
 
     ensureTodayStartsAmberInData(data);
+    recalculateStreak(data);
     await saveData(data);
   }
 
@@ -425,7 +662,8 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("message").textContent = messages[todayEntry.colour].main;
 
       if (todayEntry.lastMoveCoinChange === GREEN_REWARD) {
-        document.getElementById("subMessage").textContent = "Amber to green. 50 coins earned!";
+        const visibleStreak = getVisibleStreak(data.streak);
+        document.getElementById("subMessage").textContent = `Amber to green. 50 coins earned. Streak: ${visibleStreak} day${visibleStreak === 1 ? "" : "s"}.`;
       } else if (todayEntry.lastMoveCoinChange === RED_PENALTY) {
         document.getElementById("subMessage").textContent = "Moved onto red. 50 coins lost.";
       } else if (todayEntry.colour === "green") {
@@ -444,13 +682,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const progress = Math.min(100, (data.coinTotal / GOAL) * 100);
     coinProgress.style.width = `${progress}%`;
 
+    if (progressCharacter) {
+      const characterProgress = Math.min(90, progress);
+      progressCharacter.style.left = `${characterProgress}%`;
+    }
+
     if (data.coinTotal >= GOAL) {
       treatCard.classList.add("show");
     } else {
       treatCard.classList.remove("show");
     }
 
+    updateStreakDisplay(data);
     updateHistoryList(data.history);
+  }
+
+  function updateStreakDisplay(data) {
+    if (!streakCount || !bestStreak || !streakMessage) {
+      return;
+    }
+
+    const visibleStreak = getVisibleStreak(data.streak);
+    const todayISO = getDateISO();
+
+    streakCount.textContent = visibleStreak;
+    bestStreak.textContent = Math.max(Number(data.streak.best) || 0, visibleStreak);
+
+    if (data.streak.lastGreenDateISO === todayISO) {
+      streakMessage.textContent = "Green reached today. The streak is safe.";
+    } else if (visibleStreak > 0) {
+      streakMessage.textContent = "Reach green today to keep the streak going.";
+    } else {
+      streakMessage.textContent = "Reach green today to start a streak.";
+    }
   }
 
   function formatCoinChange(value) {
@@ -476,9 +740,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const coinText = formatCoinChange(item.coinChange);
       const totalText = `Total: ${item.coinsAfter ?? 0}`;
+      const streakText = item.streakAfter ? ` - Streak: ${item.streakAfter}` : "";
       const autoText = item.automatic ? " - auto" : "";
 
-      div.textContent = `${item.emoji || ""} ${item.date} - ${item.text}${autoText} - ${coinText} - ${totalText}`;
+      div.textContent = `${item.emoji || ""} ${item.date} - ${item.text}${autoText} - ${coinText} - ${totalText}${streakText}`;
 
       historyList.appendChild(div);
     });
@@ -495,8 +760,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     deduct10Button.addEventListener("click", () => adjustCoins(-10, "10 coins deducted"));
     deduct50Button.addEventListener("click", () => adjustCoins(-50, "50 coins deducted"));
+    add10Button.addEventListener("click", () => adjustCoins(10, "10 coins added manually"));
     add50Button.addEventListener("click", () => adjustCoins(50, "50 coins added manually"));
     resetCoinsButton.addEventListener("click", resetCoins);
+    changePinButton.addEventListener("click", changeParentPin);
 
     resetTodayButton.addEventListener("click", resetToday);
     clearHistoryButton.addEventListener("click", clearHistory);
