@@ -77,6 +77,18 @@ document.addEventListener("DOMContentLoaded", () => {
     syncStatus: $("syncStatus"),
     headerUnlockButton: $("headerUnlockButton"),
     modeStatusPill: $("modeStatusPill"),
+    childCoinTotal: $("childCoinTotal"),
+    childNextReward: $("childNextReward"),
+    childTodayLevel: $("childTodayLevel"),
+    childStreakCount: $("childStreakCount"),
+    parentDashboardGrid: $("parentDashboardGrid"),
+    rewardRequestList: $("rewardRequestList"),
+    quickLogLevelSelect: $("quickLogLevelSelect"),
+    quickLogCategorySelect: $("quickLogCategorySelect"),
+    quickLogNoteText: $("quickLogNoteText"),
+    saveQuickLogButton: $("saveQuickLogButton"),
+    calendarGrid: $("calendarGrid"),
+    calendarDayDetails: $("calendarDayDetails"),
     parentPageUnlockButton: $("parentPageUnlockButton"),
     settingsUnlockButton: $("settingsUnlockButton"),
     lockStatus: $("lockStatus"),
@@ -208,6 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
       history: [],
       parentNotes: [],
       rewards: DEFAULT_REWARDS,
+      rewardRequests: [],
       categories: DEFAULT_CATEGORIES,
       streak: {
         current: 0,
@@ -251,6 +264,28 @@ document.addEventListener("DOMContentLoaded", () => {
       }))
       .filter(reward => reward.name.trim())
       .slice(0, 50);
+  }
+
+  function normalizeRewardRequests(requests) {
+    if (!Array.isArray(requests)) {
+      return [];
+    }
+
+    return requests
+      .filter(request => request && typeof request === "object")
+      .map(request => ({
+        id: request.id || `request-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        rewardId: request.rewardId || "",
+        rewardName: String(request.rewardName || "Reward").slice(0, 80),
+        rewardIcon: String(request.rewardIcon || "🎁").slice(0, 4),
+        rewardCost: Math.max(1, Number(request.rewardCost) || 1),
+        status: ["pending", "approved", "rejected"].includes(request.status) ? request.status : "pending",
+        requestedAt: request.requestedAt || "",
+        requestedDateISO: request.requestedDateISO || "",
+        resolvedAt: request.resolvedAt || "",
+        resolvedBy: request.resolvedBy || ""
+      }))
+      .slice(0, 100);
   }
 
   function normalizeCategories(categories) {
@@ -321,6 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
       history: normalizeHistory(data?.history),
       parentNotes: normalizeNotes(data?.parentNotes),
       rewards: normalizeRewards(data?.rewards),
+      rewardRequests: normalizeRewardRequests(data?.rewardRequests),
       categories: normalizeCategories(data?.categories),
       streak: {
         current: Math.max(0, Number(data?.streak?.current) || 0),
@@ -737,6 +773,392 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     await saveData(data);
+  }
+
+  async function requestReward(rewardId) {
+    const data = await getLatestData();
+    data.rewardRequests = normalizeRewardRequests(data.rewardRequests);
+
+    const reward = normalizeRewards(data.rewards).find(item => item.id === rewardId);
+
+    if (!reward) {
+      return;
+    }
+
+    if (data.coinTotal < reward.cost) {
+      alert("Not enough coins for this reward yet.");
+      return;
+    }
+
+    const existingPending = data.rewardRequests.some(request => request.status === "pending" && request.rewardId === rewardId);
+
+    if (existingPending) {
+      alert("This reward has already been requested.");
+      return;
+    }
+
+    const now = new Date();
+
+    data.rewardRequests.unshift({
+      id: `request-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      rewardId: reward.id,
+      rewardName: reward.name,
+      rewardIcon: reward.icon,
+      rewardCost: reward.cost,
+      status: "pending",
+      requestedAt: now.toISOString(),
+      requestedDateISO: getDateISO(now),
+      resolvedAt: "",
+      resolvedBy: ""
+    });
+
+    addHistoryEntry(data, {
+      type: "reward",
+      level: "request",
+      text: `Reward requested: ${reward.icon} ${reward.name}`,
+      coinChange: 0,
+      coinsAfter: data.coinTotal
+    });
+
+    await saveData(data);
+
+    alert("Reward request sent to Parent Mode.");
+  }
+
+  async function approveRewardRequest(requestId) {
+    if (!verifyParentPin("approve this reward request")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.rewardRequests = normalizeRewardRequests(data.rewardRequests);
+
+    const request = data.rewardRequests.find(item => item.id === requestId && item.status === "pending");
+
+    if (!request) {
+      return;
+    }
+
+    if (data.coinTotal < request.rewardCost) {
+      alert("There are not enough coins left to approve this reward.");
+      return;
+    }
+
+    if (!confirm(`Approve "${request.rewardName}" for ${request.rewardCost} coins?`)) {
+      return;
+    }
+
+    data.coinTotal = Math.max(0, data.coinTotal - request.rewardCost);
+
+    data.rewardRequests = data.rewardRequests.map(item => {
+      if (item.id !== requestId) {
+        return item;
+      }
+
+      return {
+        ...item,
+        status: "approved",
+        resolvedAt: new Date().toISOString(),
+        resolvedBy: elements.noteAuthor?.value || "Parent"
+      };
+    });
+
+    addHistoryEntry(data, {
+      type: "reward",
+      level: "approved",
+      text: `Reward approved: ${request.rewardIcon} ${request.rewardName}`,
+      coinChange: -request.rewardCost,
+      coinsAfter: data.coinTotal
+    });
+
+    await saveData(data);
+  }
+
+  async function rejectRewardRequest(requestId) {
+    if (!verifyParentPin("reject this reward request")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.rewardRequests = normalizeRewardRequests(data.rewardRequests);
+
+    const request = data.rewardRequests.find(item => item.id === requestId && item.status === "pending");
+
+    if (!request) {
+      return;
+    }
+
+    data.rewardRequests = data.rewardRequests.map(item => {
+      if (item.id !== requestId) {
+        return item;
+      }
+
+      return {
+        ...item,
+        status: "rejected",
+        resolvedAt: new Date().toISOString(),
+        resolvedBy: elements.noteAuthor?.value || "Parent"
+      };
+    });
+
+    addHistoryEntry(data, {
+      type: "reward",
+      level: "rejected",
+      text: `Reward rejected: ${request.rewardIcon} ${request.rewardName}`,
+      coinChange: 0,
+      coinsAfter: data.coinTotal
+    });
+
+    await saveData(data);
+  }
+
+  async function saveQuickDailyLog() {
+    if (!verifyParentPin("save a daily log")) {
+      return;
+    }
+
+    const level = elements.quickLogLevelSelect?.value || "amber";
+    const category = elements.quickLogCategorySelect?.value || "General";
+    const note = elements.quickLogNoteText?.value.trim() || "";
+
+    const data = await getLatestData();
+    const previousLevel = data.today.level;
+    let coinChange = 0;
+
+    if (level === "green" && previousLevel !== "green") {
+      coinChange = data.settings.greenCoins;
+    }
+
+    if (level === "red" && previousLevel !== "red") {
+      coinChange = -data.settings.redCoins;
+    }
+
+    const before = data.coinTotal;
+    data.coinTotal = Math.max(0, before + coinChange);
+    const actualChange = data.coinTotal - before;
+
+    data.today = {
+      date: getDateISO(),
+      level,
+      category,
+      reason: note
+    };
+
+    if (level === "green" && data.streak.lastGreenDate !== getDateISO()) {
+      data.streak.current += 1;
+      data.streak.best = Math.max(data.streak.best, data.streak.current);
+      data.streak.lastGreenDate = getDateISO();
+    }
+
+    if (level === "red") {
+      data.streak.current = 0;
+    }
+
+    addHistoryEntry(data, {
+      type: "level",
+      level,
+      category,
+      text: note ? `Quick daily log: ${level.toUpperCase()} - ${note}` : `Quick daily log: ${level.toUpperCase()}`,
+      coinChange: actualChange,
+      coinsAfter: data.coinTotal
+    });
+
+    if (note) {
+      const now = new Date();
+      const author = elements.noteAuthor?.value.trim() || "Parent";
+      data.parentNotes = normalizeNotes(data.parentNotes);
+      data.parentNotes.unshift({
+        id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        author,
+        category,
+        text: note,
+        dateText: formatDateTime(now),
+        dateISO: getDateISO(now),
+        savedAt: now.toISOString()
+      });
+    }
+
+    elements.quickLogNoteText.value = "";
+
+    startCelebrationIfNeeded(data);
+    await saveData(data);
+  }
+
+  function updateChildDashboard() {
+    if (!elements.childCoinTotal) {
+      return;
+    }
+
+    const total = currentData.coinTotal;
+    const rewards = normalizeRewards(currentData.rewards).sort((a, b) => a.cost - b.cost);
+    const next = rewards.find(reward => reward.cost > total) || rewards.find(reward => total >= reward.cost);
+
+    elements.childCoinTotal.textContent = total;
+    elements.childTodayLevel.textContent = currentData.today.level.toUpperCase();
+    elements.childStreakCount.textContent = currentData.streak.current;
+
+    if (!next) {
+      elements.childNextReward.textContent = "No rewards yet.";
+      return;
+    }
+
+    if (total >= next.cost) {
+      elements.childNextReward.textContent = `${next.icon} ${next.name} is ready!`;
+    } else {
+      elements.childNextReward.textContent = `${next.icon} ${next.name}: ${next.cost - total} coins to go`;
+    }
+  }
+
+  function updateRewardRequests() {
+    const list = elements.rewardRequestList;
+
+    if (!list) {
+      return;
+    }
+
+    if (!parentUnlocked) {
+      list.innerHTML = "<p class='empty-notes'>Unlock Parent Mode to view reward requests.</p>";
+      return;
+    }
+
+    const requests = normalizeRewardRequests(currentData.rewardRequests)
+      .filter(request => request.status === "pending");
+
+    list.innerHTML = "";
+
+    if (!requests.length) {
+      list.innerHTML = "<p class='empty-notes'>No reward requests yet.</p>";
+      return;
+    }
+
+    requests.forEach(request => {
+      const item = document.createElement("article");
+      item.className = "reward-request-item";
+
+      const info = document.createElement("div");
+      info.className = "reward-request-info";
+      info.innerHTML = `<strong>${request.rewardIcon} ${request.rewardName}</strong><span>${request.rewardCost} coins</span>`;
+
+      const actions = document.createElement("div");
+      actions.className = "reward-request-actions";
+
+      const approve = document.createElement("button");
+      approve.type = "button";
+      approve.textContent = "Approve";
+      approve.addEventListener("click", () => approveRewardRequest(request.id));
+
+      const reject = document.createElement("button");
+      reject.type = "button";
+      reject.textContent = "Reject";
+      reject.className = "reject-request-button";
+      reject.addEventListener("click", () => rejectRewardRequest(request.id));
+
+      actions.appendChild(approve);
+      actions.appendChild(reject);
+
+      item.appendChild(info);
+      item.appendChild(actions);
+      list.appendChild(item);
+    });
+  }
+
+  function updateParentDashboard() {
+    const grid = elements.parentDashboardGrid;
+
+    if (!grid) {
+      return;
+    }
+
+    if (!parentUnlocked) {
+      grid.innerHTML = "";
+      return;
+    }
+
+    const pendingRequests = normalizeRewardRequests(currentData.rewardRequests)
+      .filter(request => request.status === "pending").length;
+
+    const todayHistory = normalizeHistory(currentData.history)
+      .filter(item => item.dateISO === getDateISO());
+
+    const greenLogs = todayHistory.filter(item => item.level === "green").length;
+    const redLogs = todayHistory.filter(item => item.level === "red").length;
+    const notesToday = normalizeNotes(currentData.parentNotes)
+      .filter(note => note.dateISO === getDateISO()).length;
+
+    grid.innerHTML = "";
+
+    [
+      ["Coins", currentData.coinTotal],
+      ["Today", currentData.today.level.toUpperCase()],
+      ["Pending rewards", pendingRequests],
+      ["Notes today", notesToday],
+      ["Green logs", greenLogs],
+      ["Red logs", redLogs]
+    ].forEach(([label, value]) => {
+      const card = document.createElement("div");
+      card.className = "dashboard-stat";
+      card.innerHTML = `<strong>${value}</strong><span>${label}</span>`;
+      grid.appendChild(card);
+    });
+  }
+
+  function updateCalendar() {
+    const grid = elements.calendarGrid;
+    const details = elements.calendarDayDetails;
+
+    if (!grid || !details) {
+      return;
+    }
+
+    grid.innerHTML = "";
+
+    const today = new Date();
+    const history = normalizeHistory(currentData.history);
+    const notes = normalizeNotes(currentData.parentNotes);
+
+    for (let offset = 27; offset >= 0; offset -= 1) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - offset);
+      const dateISO = getDateISO(date);
+
+      const dayItems = history.filter(item => item.dateISO === dateISO);
+      const dayNotes = notes.filter(note => note.dateISO === dateISO);
+
+      let level = "blank";
+
+      if (dayItems.some(item => item.level === "red")) {
+        level = "red";
+      } else if (dayItems.some(item => item.level === "green")) {
+        level = "green";
+      } else if (dayItems.some(item => item.level === "amber")) {
+        level = "amber";
+      }
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `calendar-day calendar-${level}`;
+      button.innerHTML = `<strong>${date.getDate()}</strong><span>${date.toLocaleDateString("en-GB", { weekday: "short" })}</span>`;
+
+      if (dayNotes.length) {
+        button.classList.add("has-note");
+      }
+
+      button.addEventListener("click", () => {
+        const lines = [
+          `<strong>${date.toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "short", year: "numeric" })}</strong>`,
+          "",
+          dayItems.length ? "<b>History</b>" : "<b>No history</b>",
+          ...dayItems.slice(0, 6).map(item => `• ${item.text}`),
+          "",
+          dayNotes.length ? "<b>Notes</b>" : "<b>No notes</b>",
+          ...dayNotes.slice(0, 6).map(note => `• ${note.author}: ${note.text}`)
+        ];
+
+        details.innerHTML = lines.join("<br>");
+      });
+
+      grid.appendChild(button);
+    }
   }
 
   async function claimReward(rewardId) {
@@ -1172,7 +1594,11 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCoinDisplay();
     updateLevelDisplay();
     updateStreakDisplay();
+    updateChildDashboard();
     updateRewardsShop();
+    updateRewardRequests();
+    updateParentDashboard();
+    updateCalendar();
     updateParentNotes();
     updateRewardEditor();
     updateCategoryOptions();
@@ -1260,6 +1686,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const categories = normalizeCategories(currentData.categories);
     const selects = [
       elements.behaviourCategorySelect,
+      elements.quickLogCategorySelect,
       elements.noteCategorySelect,
       elements.noteFilterSelect
     ];
@@ -1334,12 +1761,22 @@ document.addEventListener("DOMContentLoaded", () => {
       info.appendChild(cost);
       info.appendChild(status);
 
+      const existingPending = normalizeRewardRequests(currentData.rewardRequests)
+        .some(request => request.status === "pending" && request.rewardId === reward.id);
+
       const claim = document.createElement("button");
       claim.type = "button";
       claim.className = "claim-reward-button";
-      claim.textContent = "Claim";
-      claim.disabled = childMode || !affordable || !parentUnlocked;
-      claim.addEventListener("click", () => claimReward(reward.id));
+
+      if (childMode) {
+        claim.textContent = existingPending ? "Asked" : "Ask";
+        claim.disabled = !affordable || existingPending;
+        claim.addEventListener("click", () => requestReward(reward.id));
+      } else {
+        claim.textContent = "Claim";
+        claim.disabled = !affordable || !parentUnlocked;
+        claim.addEventListener("click", () => claimReward(reward.id));
+      }
 
       item.appendChild(icon);
       item.appendChild(info);
@@ -1969,6 +2406,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     elements.enableNotificationsButton.addEventListener("click", enableNotifications);
     elements.settingsEnableNotificationsButton.addEventListener("click", enableNotifications);
+
+    elements.saveQuickLogButton.addEventListener("click", saveQuickDailyLog);
 
     elements.addParentNoteButton.addEventListener("click", addOrUpdateNote);
     elements.noteAuthor.value = localStorage.getItem(NOTE_AUTHOR_KEY) || "";

@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=31" />
+  <link rel="stylesheet" href="style.css?v=32" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -79,8 +79,32 @@
       <button type="button" class="nav-button" data-page="parent">Parent</button>
       <button type="button" class="nav-button" data-page="history">History</button>
       <button type="button" class="nav-button" data-page="reports">Reports</button>
+      <button type="button" class="nav-button" data-page="calendar">Calendar</button>
       <button type="button" class="nav-button" data-page="settings">Settings</button>
     </nav>
+
+
+    <section class="child-dashboard-card child-mode-only" id="childDashboardCard">
+      <div class="child-welcome">Cameron’s Adventure</div>
+
+      <div class="child-big-coins">
+        <span id="childCoinTotal">0</span>
+        <small>coins</small>
+      </div>
+
+      <div class="child-next-reward" id="childNextReward">Next reward loading...</div>
+
+      <div class="child-status-row">
+        <div>
+          <strong id="childTodayLevel">AMBER</strong>
+          <span>Today</span>
+        </div>
+        <div>
+          <strong id="childStreakCount">0</strong>
+          <span>Streak</span>
+        </div>
+      </div>
+    </section>
 
     <section class="page active" id="page-home">
       <section class="coin-card">
@@ -210,6 +234,38 @@
         </div>
 
         <div class="parent-unlocked-content" id="parentUnlockedContent" hidden>
+
+          <section class="parent-panel parent-dashboard-panel">
+            <div class="panel-title">Parent Dashboard</div>
+            <div class="parent-dashboard-grid" id="parentDashboardGrid"></div>
+          </section>
+
+          <section class="parent-panel reward-requests-panel">
+            <div class="panel-title">Reward Requests</div>
+            <div class="reward-request-list" id="rewardRequestList">
+              <p class="empty-notes">No reward requests yet.</p>
+            </div>
+          </section>
+
+          <section class="parent-panel quick-log-panel">
+            <div class="panel-title">Quick Daily Log</div>
+
+            <label for="quickLogLevelSelect">Today’s level</label>
+            <select id="quickLogLevelSelect">
+              <option value="green">Green</option>
+              <option value="amber">Amber</option>
+              <option value="red">Red</option>
+            </select>
+
+            <label for="quickLogCategorySelect">Category</label>
+            <select id="quickLogCategorySelect"></select>
+
+            <label for="quickLogNoteText">Quick note</label>
+            <textarea id="quickLogNoteText" rows="3" placeholder="What happened today?"></textarea>
+
+            <button type="button" id="saveQuickLogButton">Save Daily Log</button>
+          </section>
+
           <section class="parent-panel">
             <div class="panel-title">Parent Notes</div>
 
@@ -312,6 +368,27 @@
       </section>
     </section>
 
+
+    <section class="page" id="page-calendar">
+      <section class="calendar-card">
+        <div class="section-title">CALENDAR</div>
+        <p class="calendar-subtitle">Tap a day to see notes and logs.</p>
+
+        <div class="calendar-key">
+          <span><b class="key-green"></b>Green</span>
+          <span><b class="key-amber"></b>Amber</span>
+          <span><b class="key-red"></b>Red</span>
+          <span><b class="key-blank"></b>No log</span>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid"></div>
+
+        <div class="calendar-day-details" id="calendarDayDetails">
+          Select a day to view details.
+        </div>
+      </section>
+    </section>
+
     <section class="page" id="page-settings">
       <section class="settings-card">
         <div class="section-title">SETTINGS</div>
@@ -396,6 +473,6 @@
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=31" type="module"></script>
+  <script src="script.js?v=32" type="module"></script>
 </body>
 </html>
