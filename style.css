@@ -2977,3 +2977,176 @@ html[data-theme="minecraft"] .reward-affordable {
     grid-column: 1 / -1;
   }
 }
+
+
+/* -5 BUTTON + HEADER ICON ANIMATION UPGRADE */
+
+.coin-controls {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.power-row > * {
+  transform-origin: center bottom;
+  will-change: transform, filter;
+}
+
+.question-block {
+  animation: questionPop 2.4s infinite ease-in-out;
+}
+
+.question-block:nth-of-type(2) {
+  animation-delay: 0.45s;
+}
+
+.coin-art {
+  animation: coinFlipBounce 1.7s infinite ease-in-out !important;
+}
+
+.brick-block {
+  animation: brickTap 2.6s infinite ease-in-out;
+}
+
+.mushroom-art {
+  animation: mushroomWaddle 2.1s infinite ease-in-out;
+}
+
+.rocket-art {
+  animation: rocketLaunchBob 1.6s infinite ease-in-out !important;
+}
+
+.astronaut-helmet {
+  animation: helmetFloat 2.2s infinite ease-in-out;
+}
+
+.minecraft-character {
+  animation: minecraftStep 1.9s infinite steps(2, end);
+}
+
+.minecraft-block {
+  animation: blockPulse 2.4s infinite ease-in-out;
+}
+
+.power-row > *:hover,
+.power-row > *:active {
+  filter: brightness(1.08) saturate(1.15);
+  transform: translateY(-6px) scale(1.05);
+}
+
+@keyframes questionPop {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  35% {
+    transform: translateY(-7px) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(3deg);
+  }
+}
+
+@keyframes coinFlipBounce {
+  0%, 100% {
+    transform: translateY(0) rotateY(0deg) scale(1);
+  }
+  35% {
+    transform: translateY(-10px) rotateY(180deg) scale(1.06);
+  }
+  70% {
+    transform: translateY(0) rotateY(360deg) scale(1);
+  }
+}
+
+@keyframes brickTap {
+  0%, 100% {
+    transform: translateY(0);
+    filter: brightness(1);
+  }
+  42% {
+    transform: translateY(-4px);
+    filter: brightness(1.12);
+  }
+  50% {
+    transform: translateY(2px);
+  }
+}
+
+@keyframes mushroomWaddle {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(-3px) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(0deg);
+  }
+  75% {
+    transform: translateX(3px) rotate(4deg);
+  }
+}
+
+@keyframes rocketLaunchBob {
+  0%, 100% {
+    transform: translateY(0) rotate(-1deg);
+    filter: drop-shadow(0 0 0 rgba(255,139,43,0));
+  }
+  45% {
+    transform: translateY(-13px) rotate(2deg);
+    filter: drop-shadow(0 0 10px rgba(255,139,43,0.75));
+  }
+  70% {
+    transform: translateY(-5px) rotate(-2deg);
+  }
+}
+
+@keyframes helmetFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(4deg);
+  }
+}
+
+@keyframes minecraftStep {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-5px) translateX(3px);
+  }
+}
+
+@keyframes blockPulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.04);
+    filter: brightness(1.12);
+  }
+}
+
+html[data-theme="mario"] .question-block,
+html[data-theme="mario"] .coin-art,
+html[data-theme="mario"] .brick-block,
+html[data-theme="mario"] .mushroom-art {
+  display: block;
+}
+
+html[data-theme="space"] .rocket-art,
+html[data-theme="space"] .astronaut-helmet {
+  display: block;
+}
+
+html[data-theme="minecraft"] .minecraft-character,
+html[data-theme="minecraft"] .minecraft-block {
+  display: block;
+}
+
+@media (min-width: 560px) {
+  .coin-controls {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}

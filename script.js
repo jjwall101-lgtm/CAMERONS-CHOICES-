@@ -100,6 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const amberLabel = document.getElementById("amberLabel");
   const greenLabel = document.getElementById("greenLabel");
 
+  const deduct5Button = document.getElementById("deduct5Button");
   const deduct10Button = document.getElementById("deduct10Button");
   const deduct50Button = document.getElementById("deduct50Button");
   const add5Button = document.getElementById("add5Button");
