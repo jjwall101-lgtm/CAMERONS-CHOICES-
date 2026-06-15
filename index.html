@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=30" />
+  <link rel="stylesheet" href="style.css?v=31" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -15,7 +15,7 @@
   <meta name="theme-color" content="#4ab7ff" />
 </head>
 
-<body>
+<body class="child-mode">
   <main class="app">
     <header class="hero">
       <div class="hero-bg hero-bg-one"></div>
@@ -24,12 +24,14 @@
       <section class="profile-card">
         <div class="profile-top-row">
           <div class="sync-pill" id="syncStatus">Sync loading...</div>
-          <button type="button" class="small-parent-button" id="headerUnlockButton">Unlock</button>
+          <button type="button" class="small-parent-button" id="headerUnlockButton">Parent Mode</button>
         </div>
 
         <img class="app-icon-preview" src="icon.png" alt="Cameron app logo" />
 
         <h1>Cameron</h1>
+
+        <p class="mode-status-pill" id="modeStatusPill">Child Mode</p>
 
         <section class="theme-switcher" aria-label="Theme selector">
           <label for="themeSelect">Theme</label>
@@ -394,6 +396,6 @@
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=30" type="module"></script>
+  <script src="script.js?v=31" type="module"></script>
 </body>
 </html>

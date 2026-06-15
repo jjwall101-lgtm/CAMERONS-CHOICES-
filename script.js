@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const THEME_KEY = "cameronSelectedTheme";
   const NOTE_AUTHOR_KEY = "cameronParentNoteAuthorV1";
   const LAST_NOTIFICATION_KEY = "cameronLastNotificationV2";
+  const CHILD_MODE_KEY = "cameronChildModeV1";
   const DEFAULT_PIN = "1234";
 
   const DEFAULT_CATEGORIES = [
@@ -64,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentUser = null;
   let unsubscribeSnapshot = null;
   let parentUnlocked = false;
+  let childMode = localStorage.getItem(CHILD_MODE_KEY) !== "false";
   let notificationsReady = false;
   let serviceWorkerRegistration = null;
   let editingNoteId = "";
@@ -74,6 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const elements = {
     syncStatus: $("syncStatus"),
     headerUnlockButton: $("headerUnlockButton"),
+    modeStatusPill: $("modeStatusPill"),
     parentPageUnlockButton: $("parentPageUnlockButton"),
     settingsUnlockButton: $("settingsUnlockButton"),
     lockStatus: $("lockStatus"),
@@ -365,6 +368,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (pin === getParentPin()) {
       parentUnlocked = true;
+
+      if (childMode) {
+        childMode = false;
+        localStorage.setItem(CHILD_MODE_KEY, "false");
+      }
+
       updateParentLockDisplay();
       return true;
     }
@@ -533,6 +542,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function adjustCoins(amount) {
+    if (childMode) {
+      alert("Enter Parent Mode to change coins.");
+      return;
+    }
+
     if (!verifyParentPin("change coins")) {
       return;
     }
@@ -559,6 +573,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function setLevel(level) {
+    if (childMode) {
+      alert("Enter Parent Mode to change today's level.");
+      return;
+    }
+
     if (!verifyParentPin("change today's level")) {
       return;
     }
@@ -1049,6 +1068,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function switchPage(page) {
+    if (childMode && !["home", "rewards"].includes(page)) {
+      page = "home";
+    }
+
     document.querySelectorAll(".page").forEach(section => {
       section.classList.toggle("active", section.id === `page-${page}`);
     });
@@ -1063,12 +1086,32 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateParentLockDisplay() {
     const locked = !parentUnlocked;
 
+    document.body.classList.toggle("child-mode", childMode);
+    document.body.classList.toggle("parent-mode", !childMode);
+
+    if (childMode) {
+      parentUnlocked = false;
+    }
+
+    document.querySelectorAll(".nav-button").forEach(button => {
+      const parentOnlyPage = !["home", "rewards"].includes(button.dataset.page);
+      button.hidden = childMode && parentOnlyPage;
+    });
+
+    if (elements.modeStatusPill) {
+      elements.modeStatusPill.textContent = childMode ? "Child Mode" : "Parent Mode";
+    }
+
     if (elements.lockStatus) {
-      elements.lockStatus.textContent = parentUnlocked ? "Parent controls unlocked" : "Parent controls locked";
+      elements.lockStatus.textContent = childMode
+        ? "Child Mode: parent controls hidden"
+        : parentUnlocked
+          ? "Parent controls unlocked"
+          : "Parent controls locked";
     }
 
     if (elements.headerUnlockButton) {
-      elements.headerUnlockButton.textContent = parentUnlocked ? "Lock" : "Unlock";
+      elements.headerUnlockButton.textContent = childMode ? "Parent Mode" : "Back to Child Mode";
     }
 
     if (elements.parentLockedPanel) {
@@ -1109,12 +1152,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     parentButtons.forEach(button => {
       if (button) {
-        button.disabled = !parentUnlocked;
+        button.disabled = childMode || !parentUnlocked;
       }
     });
   }
 
   function updateDisplay() {
+    if (childMode) {
+      const activePage = document.querySelector(".page.active");
+      if (activePage && !["page-home", "page-rewards"].includes(activePage.id)) {
+        switchPage("home");
+      }
+    }
+
     currentData = applyDailyReset(normalizeData(currentData));
     storeLocalData(currentData);
 
@@ -1288,7 +1338,7 @@ document.addEventListener("DOMContentLoaded", () => {
       claim.type = "button";
       claim.className = "claim-reward-button";
       claim.textContent = "Claim";
-      claim.disabled = !affordable || !parentUnlocked;
+      claim.disabled = childMode || !affordable || !parentUnlocked;
       claim.addEventListener("click", () => claimReward(reward.id));
 
       item.appendChild(icon);
@@ -1877,13 +1927,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     elements.headerUnlockButton.addEventListener("click", () => {
-      if (parentUnlocked) {
-        parentUnlocked = false;
+      if (childMode) {
+        if (verifyParentPin("enter Parent Mode")) {
+          childMode = false;
+          parentUnlocked = true;
+          localStorage.setItem(CHILD_MODE_KEY, "false");
+          switchPage("home");
+        }
       } else {
-        verifyParentPin("unlock parent controls");
+        childMode = true;
+        parentUnlocked = false;
+        localStorage.setItem(CHILD_MODE_KEY, "true");
+        switchPage("home");
       }
 
       updateParentLockDisplay();
+      updateDisplay();
     });
 
     elements.parentPageUnlockButton.addEventListener("click", () => verifyParentPin("unlock parent page"));

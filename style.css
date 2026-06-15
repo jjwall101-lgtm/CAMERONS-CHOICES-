@@ -1268,3 +1268,328 @@ html[data-theme="minecraft"] .astronaut-helmet {
     grid-template-columns: 72px 1fr 34px;
   }
 }
+
+
+/* CHILD MODE + CALMER VISUAL POLISH */
+
+body.child-mode {
+  --child-soft: rgba(255,255,255,0.72);
+}
+
+body.child-mode .app {
+  max-width: 500px;
+}
+
+body.child-mode .hero,
+body.child-mode .coin-card,
+body.child-mode .streak-card,
+body.child-mode .behaviour-card,
+body.child-mode .rewards-shop-card,
+body.child-mode .treat-card {
+  border-radius: 28px;
+  box-shadow: 0 12px 0 rgba(0,0,0,0.13), 0 20px 32px rgba(0,0,0,0.14), 5px 5px 0 var(--outline);
+}
+
+body.child-mode .profile-top-row {
+  justify-content: center;
+}
+
+.mode-status-pill {
+  display: inline-block;
+  margin: 2px auto 8px;
+  padding: 8px 14px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  border-radius: 999px;
+  background: var(--theme-accent);
+  color: var(--theme-dark);
+  font-weight: 900;
+  font-size: 13px;
+}
+
+body.child-mode .sync-pill {
+  display: none;
+}
+
+body.child-mode .small-parent-button {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 7px 9px;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+body.child-mode .theme-switcher {
+  display: none;
+}
+
+body.child-mode .app-nav {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 340px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body.child-mode .nav-button {
+  font-size: 15px;
+  padding: 12px 10px;
+}
+
+body.child-mode .coin-controls,
+body.child-mode .notification-controls,
+body.child-mode .parent-hint,
+body.child-mode .reset-button,
+body.child-mode .level-labels,
+body.child-mode #behaviourCategorySelect,
+body.child-mode #behaviourReasonText,
+body.child-mode .behaviour-card label,
+body.child-mode .history-card,
+body.child-mode .parent-page-card,
+body.child-mode .reports-card,
+body.child-mode .settings-card {
+  display: none !important;
+}
+
+.child-mode-only {
+  display: none;
+}
+
+body.child-mode .child-mode-only {
+  display: block;
+}
+
+.child-safe-message {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.8);
+  font-weight: 900;
+  text-align: center;
+}
+
+body.child-mode .coin-count {
+  font-size: 64px;
+  margin-top: 18px;
+}
+
+body.child-mode .next-reward {
+  padding: 12px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.75);
+}
+
+body.child-mode .traffic-light {
+  pointer-events: none;
+  opacity: 0.96;
+  transform: scale(0.96);
+}
+
+body.child-mode .light:not(.active) {
+  opacity: 0.18;
+}
+
+body.child-mode .today-level-pill {
+  font-size: 28px;
+  padding: 12px 22px;
+}
+
+body.child-mode .rewards-shop-subtitle {
+  font-size: 15px;
+}
+
+body.child-mode .claim-reward-button {
+  display: none;
+}
+
+body.child-mode .reward-shop-item {
+  grid-template-columns: 62px 1fr;
+  border-radius: 22px;
+}
+
+body.child-mode .reward-shop-icon {
+  width: 62px;
+  height: 62px;
+  font-size: 34px;
+  border-radius: 18px;
+}
+
+body.child-mode .reward-shop-info strong {
+  font-size: 17px;
+}
+
+body.child-mode .reward-affordable {
+  outline: 4px solid var(--green);
+  outline-offset: -8px;
+}
+
+body.child-mode .streak-main span:first-child {
+  font-size: 62px;
+}
+
+body.parent-mode .child-mode-only {
+  display: none !important;
+}
+
+body.parent-mode .app-nav {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* calmer visual polish for both modes */
+
+.hero,
+.coin-card,
+.streak-card,
+.behaviour-card,
+.rewards-shop-card,
+.parent-page-card,
+.history-card,
+.reports-card,
+.settings-card,
+.treat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after,
+.coin-card::after,
+.streak-card::after,
+.behaviour-card::after,
+.rewards-shop-card::after,
+.parent-page-card::after,
+.history-card::after,
+.reports-card::after,
+.settings-card::after,
+.treat-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent 34%);
+}
+
+.section-title,
+.panel-title,
+.mode-status-pill {
+  position: relative;
+  z-index: 2;
+}
+
+.app-icon-preview {
+  box-shadow: 0 10px 18px rgba(0,0,0,0.14), 5px 5px 0 var(--outline);
+}
+
+.power-row {
+  margin-top: 4px;
+}
+
+.power-row > * {
+  animation-duration: 2.8s !important;
+}
+
+body.child-mode .power-row > * {
+  animation-duration: 3.4s !important;
+}
+
+.progress-outer,
+.journey-track,
+.today-level-pill,
+.next-reward,
+.reward-shop-item,
+.parent-note-item,
+.history-item,
+.report-stat,
+.parent-panel {
+  position: relative;
+  z-index: 2;
+}
+
+.journey-track {
+  height: 76px;
+}
+
+.progress-inner {
+  background: linear-gradient(90deg, #ff7070 0%, #ffd447 48%, #5be477 100%);
+}
+
+html[data-theme="space"] .progress-inner {
+  background: linear-gradient(90deg, #7a75ff 0%, #45d8ff 55%, #d68dff 100%);
+}
+
+html[data-theme="minecraft"] .progress-inner {
+  background: linear-gradient(90deg, #5cae40 0%, #30d5c8 55%, #48a8ff 100%);
+}
+
+.nav-button,
+.coin-controls button,
+.notification-controls button,
+.reset-button,
+.collect-prize-button,
+.level-card,
+.locked-panel button,
+.note-form button,
+.reward-form button,
+.category-form button,
+.history-header button,
+.reports-card button,
+.settings-card button,
+.reward-editor-buttons button,
+.claim-reward-button,
+.delete-note-button,
+.edit-note-button {
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.16s ease;
+}
+
+.nav-button:hover,
+.coin-controls button:hover,
+.notification-controls button:hover,
+.reset-button:hover,
+.collect-prize-button:hover,
+.level-card:hover,
+.locked-panel button:hover,
+.note-form button:hover,
+.reward-form button:hover,
+.category-form button:hover,
+.history-header button:hover,
+.reports-card button:hover,
+.settings-card button:hover,
+.reward-editor-buttons button:hover,
+.claim-reward-button:hover,
+.delete-note-button:hover,
+.edit-note-button:hover {
+  filter: brightness(1.04);
+}
+
+html[data-theme="mario"] body.child-mode .hero {
+  background: linear-gradient(180deg, #9ee9ff 0%, #e9fbff 100%);
+}
+
+html[data-theme="space"] body.child-mode .hero {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,.88) 0 2px, transparent 3px),
+    radial-gradient(circle at 72% 34%, rgba(255,255,255,.68) 0 2px, transparent 3px),
+    linear-gradient(180deg, #121a5e 0%, #080c35 100%);
+}
+
+html[data-theme="minecraft"] body.child-mode .hero {
+  background: linear-gradient(180deg, #91dcff 0%, #ddf7ff 52%, #c6f0ae 100%);
+}
+
+@media (max-width: 420px) {
+  body.child-mode .coin-count {
+    font-size: 58px;
+  }
+
+  body.child-mode .small-parent-button {
+    right: -2px;
+    top: -2px;
+  }
+
+  body.child-mode .app-nav {
+    max-width: 310px;
+  }
+}
