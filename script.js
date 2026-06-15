@@ -512,8 +512,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  let serviceWorkerRegistration = null;
+
   function notificationSupported() {
-    return "Notification" in window;
+    return "Notification" in window && "serviceWorker" in navigator;
+  }
+
+  async function setupServiceWorker() {
+    if (!("serviceWorker" in navigator)) {
+      return null;
+    }
+
+    try {
+      serviceWorkerRegistration = await navigator.serviceWorker.register("./sw.js?v=1");
+      await navigator.serviceWorker.ready;
+      return serviceWorkerRegistration;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
   }
 
   function updateNotificationStatus() {
@@ -546,27 +563,63 @@ document.addEventListener("DOMContentLoaded", () => {
     enableNotificationsButton.disabled = false;
   }
 
+  async function showPhoneNotification(title, options = {}) {
+    if (!notificationSupported() || Notification.permission !== "granted") {
+      return false;
+    }
+
+    try {
+      const registration = serviceWorkerRegistration || await navigator.serviceWorker.ready;
+
+      if (!registration || !registration.showNotification) {
+        return false;
+      }
+
+      await registration.showNotification(title, {
+        icon: "icon.png",
+        badge: "icon-192.png",
+        ...options
+      });
+
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  }
+
   async function enableNotifications() {
     if (!notificationSupported()) {
-      updateNotificationStatus();
+      setupServiceWorker().finally(updateNotificationStatus);
       return;
     }
 
     try {
+      const registration = await setupServiceWorker();
+
+      if (!registration) {
+        if (notificationStatus) {
+          notificationStatus.textContent = "Could not set up notifications. Refresh and try again.";
+        }
+
+        return;
+      }
+
       const permission = await Notification.requestPermission();
-      updateNotificationStatus();
+      setupServiceWorker().finally(updateNotificationStatus);
 
       if (permission === "granted") {
-        new Notification("Cameron notifications enabled", {
+        await showPhoneNotification("Cameron notifications enabled", {
           body: "You will be notified when coins are gained or lost.",
-          icon: "icon.png",
-          badge: "icon-192.png"
+          tag: "cameron-notifications-enabled",
+          renotify: true
         });
       }
     } catch (error) {
       console.error(error);
+
       if (notificationStatus) {
-        notificationStatus.textContent = "Could not enable notifications.";
+        notificationStatus.textContent = "Could not enable notifications. Check Chrome notification settings.";
       }
     }
   }
@@ -598,7 +651,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function maybeSendCoinNotification(data) {
+  async function maybeSendCoinNotification(data) {
     const latest = getLatestCoinChangeItem(data.history || []);
 
     if (!latest) {
@@ -632,18 +685,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const body = `${latest.text || "Coin total changed"}. Total: ${latest.coinsAfter ?? 0}`;
 
-    try {
-      new Notification(title, {
-        body,
-        icon: "icon.png",
-        badge: "icon-192.png",
-        tag: "cameron-coin-change",
-        renotify: true,
-        vibrate: [120, 80, 120]
-      });
-    } catch (error) {
-      console.error(error);
-    }
+    await showPhoneNotification(title, {
+      body,
+      tag: "cameron-coin-change-" + notificationId,
+      renotify: true,
+      vibrate: [120, 80, 120],
+      data: {
+        url: "./index.html"
+      }
+    });
   }
 
   function getParentPin() {
@@ -1128,7 +1178,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateStreakDisplay(data);
     updateHistoryList(data.history);
-    maybeSendCoinNotification(data);
+    maybeSendCoinNotification(data).catch(error => console.error(error));
   }
 
   function updateStreakDisplay(data) {
@@ -1288,7 +1338,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTreatTheme(getCurrentTheme());
     updateDisplay();
     updateLockDisplay();
-    updateNotificationStatus();
+    setupServiceWorker().finally(updateNotificationStatus);
     connectButtons();
     startFirebaseSync();
     scheduleMidnightAmberReset();
