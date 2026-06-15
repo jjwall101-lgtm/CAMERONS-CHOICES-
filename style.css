@@ -1790,3 +1790,53 @@ html[data-theme="minecraft"] .collect-prize-button {
 .treat-card:not(.show) .collect-prize-button {
   display: none;
 }
+
+
+.notification-controls {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.notification-controls button {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: bold;
+  padding: 10px 14px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.notification-controls button:active {
+  transform: translateY(3px);
+  box-shadow: 1px 1px 0 var(--outline);
+}
+
+.notification-controls button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.notification-controls p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+html[data-theme="mario"] .notification-controls button {
+  background: var(--coin);
+  color: #8a4a00;
+}
+
+html[data-theme="space"] .notification-controls button {
+  background: var(--cyan);
+  color: #020316;
+}
+
+html[data-theme="minecraft"] .notification-controls button {
+  background: #30d5c8;
+  color: #1b1b1b;
+}

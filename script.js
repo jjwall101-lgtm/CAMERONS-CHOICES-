@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const PARENT_PIN_KEY = "cameronParentPinV1";
   const DEFAULT_PARENT_PIN = "1234";
+  const LAST_NOTIFICATION_KEY = "cameronLastCoinNotificationV1";
 
   const RED_PENALTY = -50;
   const GREEN_REWARD = 50;
@@ -43,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let isFirebaseReady = false;
   let currentData = getLocalData();
   let parentUnlocked = false;
+  let notificationsReady = false;
   let currentCelebrationId = "";
   let celebrationTimer = null;
 
@@ -100,6 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const changePinButton = document.getElementById("changePinButton");
   const resetTodayButton = document.getElementById("resetTodayButton");
   const clearHistoryButton = document.getElementById("clearHistoryButton");
+  const enableNotificationsButton = document.getElementById("enableNotificationsButton");
+  const notificationStatus = document.getElementById("notificationStatus");
 
   function firebaseIsConfigured() {
     return !Object.values(firebaseConfig).some(value => String(value).includes("PASTE_YOUR"));
@@ -505,6 +509,140 @@ document.addEventListener("DOMContentLoaded", () => {
     if (celebrationTimer) {
       clearTimeout(celebrationTimer);
       celebrationTimer = null;
+    }
+  }
+
+  function notificationSupported() {
+    return "Notification" in window;
+  }
+
+  function updateNotificationStatus() {
+    if (!notificationStatus || !enableNotificationsButton) {
+      return;
+    }
+
+    if (!notificationSupported()) {
+      notificationStatus.textContent = "Notifications are not supported on this phone/browser.";
+      enableNotificationsButton.disabled = true;
+      return;
+    }
+
+    if (Notification.permission === "granted") {
+      notificationStatus.textContent = "Notifications are on.";
+      enableNotificationsButton.textContent = "Notifications On";
+      enableNotificationsButton.disabled = true;
+      return;
+    }
+
+    if (Notification.permission === "denied") {
+      notificationStatus.textContent = "Notifications are blocked in browser settings.";
+      enableNotificationsButton.textContent = "Notifications Blocked";
+      enableNotificationsButton.disabled = true;
+      return;
+    }
+
+    notificationStatus.textContent = "Notifications are off.";
+    enableNotificationsButton.textContent = "Enable Notifications";
+    enableNotificationsButton.disabled = false;
+  }
+
+  async function enableNotifications() {
+    if (!notificationSupported()) {
+      updateNotificationStatus();
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      updateNotificationStatus();
+
+      if (permission === "granted") {
+        new Notification("Cameron notifications enabled", {
+          body: "You will be notified when coins are gained or lost.",
+          icon: "icon.png",
+          badge: "icon-192.png"
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      if (notificationStatus) {
+        notificationStatus.textContent = "Could not enable notifications.";
+      }
+    }
+  }
+
+  function getNotificationId(item) {
+    return [
+      item.savedAt || "",
+      item.date || "",
+      item.text || "",
+      item.coinChange || 0,
+      item.coinsAfter ?? ""
+    ].join("|");
+  }
+
+  function getLatestCoinChangeItem(history = []) {
+    return history.find(item => {
+      const coinChange = Number(item?.coinChange) || 0;
+
+      if (coinChange === 0) {
+        return false;
+      }
+
+      // Do not send a "lost 1000 coins" notification after a prize is collected.
+      if (item.type === "prize-reset") {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  function maybeSendCoinNotification(data) {
+    const latest = getLatestCoinChangeItem(data.history || []);
+
+    if (!latest) {
+      return;
+    }
+
+    const notificationId = getNotificationId(latest);
+    const lastNotificationId = localStorage.getItem(LAST_NOTIFICATION_KEY);
+
+    if (!notificationsReady) {
+      localStorage.setItem(LAST_NOTIFICATION_KEY, notificationId);
+      notificationsReady = true;
+      return;
+    }
+
+    if (notificationId === lastNotificationId) {
+      return;
+    }
+
+    localStorage.setItem(LAST_NOTIFICATION_KEY, notificationId);
+
+    if (!notificationSupported() || Notification.permission !== "granted") {
+      return;
+    }
+
+    const coinChange = Number(latest.coinChange) || 0;
+    const amount = Math.abs(coinChange);
+    const title = coinChange > 0
+      ? `Cameron gained ${amount} coins`
+      : `Cameron lost ${amount} coins`;
+
+    const body = `${latest.text || "Coin total changed"}. Total: ${latest.coinsAfter ?? 0}`;
+
+    try {
+      new Notification(title, {
+        body,
+        icon: "icon.png",
+        badge: "icon-192.png",
+        tag: "cameron-coin-change",
+        renotify: true,
+        vibrate: [120, 80, 120]
+      });
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -990,6 +1128,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateStreakDisplay(data);
     updateHistoryList(data.history);
+    maybeSendCoinNotification(data);
   }
 
   function updateStreakDisplay(data) {
@@ -1069,6 +1208,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     changePinButton.addEventListener("click", changeParentPin);
 
+    if (enableNotificationsButton) {
+      enableNotificationsButton.addEventListener("click", enableNotifications);
+    }
+
     if (collectPrizeButton) {
       collectPrizeButton.addEventListener("click", () => {
         const celebrationId = currentData?.celebration?.id || currentCelebrationId;
@@ -1145,6 +1288,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTreatTheme(getCurrentTheme());
     updateDisplay();
     updateLockDisplay();
+    updateNotificationStatus();
     connectButtons();
     startFirebaseSync();
     scheduleMidnightAmberReset();
