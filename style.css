@@ -2725,3 +2725,255 @@ html[data-theme="minecraft"] .jay-signature { background: #d8c08a; color: #1b1b1
   transform: scale(0.88);
   transform-origin: bottom right;
 }
+
+
+/* REWARDS + PARENT PAGE UPDATE */
+
+.coin-controls {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.parent-page-card,
+.rewards-shop-card {
+  position: relative;
+  padding: 18px 12px 20px;
+  margin-bottom: 18px;
+  border: 5px solid var(--outline);
+  box-shadow: 6px 6px 0 var(--outline);
+  background: #ffffff;
+  text-align: left;
+}
+
+.parent-page-card[hidden] {
+  display: none !important;
+}
+
+.parent-page-title,
+.rewards-shop-title {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 4px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  font-weight: bold;
+  font-size: 17px;
+  margin-bottom: 12px;
+}
+
+.rewards-shop-subtitle {
+  margin: 0 0 12px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.parent-page-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.parent-panel {
+  padding: 12px;
+  border: 4px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  background: rgba(255,255,255,0.75);
+}
+
+.reward-form,
+.reward-editor-item {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.reward-form label,
+.reward-editor-item label {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.reward-form input,
+.reward-editor-item input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  padding: 10px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  background: white;
+  color: var(--outline);
+}
+
+.reward-form button,
+.reward-editor-buttons button,
+.claim-reward-button {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 10px 12px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.reward-form button:active,
+.reward-editor-buttons button:active,
+.claim-reward-button:active {
+  transform: translateY(3px);
+  box-shadow: 1px 1px 0 var(--outline);
+}
+
+.reward-editor-list,
+.rewards-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.reward-editor-item,
+.reward-shop-item {
+  padding: 12px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  background: rgba(255,255,255,0.75);
+}
+
+.reward-editor-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.delete-reward-button {
+  background: #ffb2b0;
+}
+
+.reward-shop-item {
+  display: grid;
+  grid-template-columns: 54px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.reward-shop-icon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  background: #fff8d6;
+  font-size: 28px;
+}
+
+.reward-shop-info {
+  display: grid;
+  gap: 3px;
+}
+
+.reward-shop-info strong {
+  font-size: 15px;
+}
+
+.reward-shop-info span,
+.reward-shop-info small {
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.claim-reward-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.reward-affordable {
+  background: #dcffd7;
+}
+
+html[data-theme="mario"] .parent-page-card,
+html[data-theme="mario"] .rewards-shop-card,
+html[data-theme="mario"] .parent-panel,
+html[data-theme="mario"] .reward-editor-item,
+html[data-theme="mario"] .reward-shop-item {
+  background: #fff8d6;
+}
+
+html[data-theme="mario"] .parent-page-title,
+html[data-theme="mario"] .rewards-shop-title,
+html[data-theme="mario"] .reward-form button,
+html[data-theme="mario"] .reward-editor-buttons button,
+html[data-theme="mario"] .claim-reward-button {
+  background: var(--coin);
+  color: #8a4a00;
+}
+
+html[data-theme="space"] .parent-page-card,
+html[data-theme="space"] .rewards-shop-card,
+html[data-theme="space"] .parent-panel,
+html[data-theme="space"] .reward-editor-item,
+html[data-theme="space"] .reward-shop-item {
+  background: rgba(12, 16, 62, 0.95);
+  color: white;
+}
+
+html[data-theme="space"] .parent-page-title,
+html[data-theme="space"] .rewards-shop-title,
+html[data-theme="space"] .reward-form button,
+html[data-theme="space"] .reward-editor-buttons button,
+html[data-theme="space"] .claim-reward-button {
+  background: var(--purple);
+  color: white;
+}
+
+html[data-theme="space"] .reward-form input,
+html[data-theme="space"] .reward-editor-item input {
+  background: #10103e;
+  color: white;
+}
+
+html[data-theme="space"] .reward-shop-icon {
+  background: #151b62;
+  color: white;
+}
+
+html[data-theme="space"] .reward-affordable {
+  background: #174d39;
+}
+
+html[data-theme="minecraft"] .parent-page-card,
+html[data-theme="minecraft"] .rewards-shop-card,
+html[data-theme="minecraft"] .parent-panel,
+html[data-theme="minecraft"] .reward-editor-item,
+html[data-theme="minecraft"] .reward-shop-item {
+  background: #d8c08a;
+}
+
+html[data-theme="minecraft"] .parent-page-title,
+html[data-theme="minecraft"] .rewards-shop-title,
+html[data-theme="minecraft"] .reward-form button,
+html[data-theme="minecraft"] .reward-editor-buttons button,
+html[data-theme="minecraft"] .claim-reward-button {
+  background: #5cae40;
+  color: white;
+}
+
+html[data-theme="minecraft"] .reward-shop-icon {
+  background: #f1dfad;
+}
+
+html[data-theme="minecraft"] .reward-affordable {
+  background: #bdf3ad;
+}
+
+@media (max-width: 420px) {
+  .coin-controls {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .reward-shop-item {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .claim-reward-button {
+    grid-column: 1 / -1;
+  }
+}

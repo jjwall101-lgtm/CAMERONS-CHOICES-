@@ -36,6 +36,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const LAST_NOTIFICATION_KEY = "cameronLastCoinNotificationV1";
   const NOTE_AUTHOR_KEY = "cameronParentNoteAuthorV1";
 
+  const DEFAULT_REWARDS = [
+    { id: "reward-100-story", icon: "📖", name: "Choose a bedtime story", cost: 100 },
+    { id: "reward-250-treat", icon: "🍫", name: "Small treat", cost: 250 },
+    { id: "reward-500-park", icon: "🛝", name: "Park trip", cost: 500 },
+    { id: "reward-1000-prize", icon: "🎁", name: "Big prize", cost: 1000 }
+  ];
+
   const RED_PENALTY = -50;
   const GREEN_REWARD = 50;
   const GOAL = 1000;
@@ -95,6 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const deduct10Button = document.getElementById("deduct10Button");
   const deduct50Button = document.getElementById("deduct50Button");
+  const add5Button = document.getElementById("add5Button");
   const add10Button = document.getElementById("add10Button");
   const add50Button = document.getElementById("add50Button");
   const resetCoinsButton = document.getElementById("resetCoinsButton");
@@ -106,7 +114,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const enableNotificationsButton = document.getElementById("enableNotificationsButton");
   const notificationStatus = document.getElementById("notificationStatus");
 
-  const parentNotesCard = document.getElementById("parentNotesCard");
+  const parentPageCard = document.getElementById("parentPageCard");
+  const rewardsList = document.getElementById("rewardsList");
+  const rewardEditorList = document.getElementById("rewardEditorList");
+  const rewardIconInput = document.getElementById("rewardIconInput");
+  const rewardNameInput = document.getElementById("rewardNameInput");
+  const rewardCostInput = document.getElementById("rewardCostInput");
+  const addRewardButton = document.getElementById("addRewardButton");
   const noteAuthor = document.getElementById("noteAuthor");
   const parentNoteText = document.getElementById("parentNoteText");
   const addParentNoteButton = document.getElementById("addParentNoteButton");
@@ -190,7 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
       history,
       streak: normalizeStreak(data?.streak, history),
       celebration: normalizeCelebration(data?.celebration),
-      parentNotes: normalizeParentNotes(data?.parentNotes)
+      parentNotes: normalizeParentNotes(data?.parentNotes),
+      rewards: normalizeRewards(data?.rewards)
     };
   }
 
@@ -211,6 +226,21 @@ document.addEventListener("DOMContentLoaded", () => {
       }))
       .filter(note => note.text.trim().length > 0)
       .slice(0, 100);
+  }
+
+  function normalizeRewards(rewards) {
+    const source = Array.isArray(rewards) && rewards.length > 0 ? rewards : DEFAULT_REWARDS;
+
+    return source
+      .filter(reward => reward && typeof reward === "object")
+      .map(reward => ({
+        id: reward.id || `reward-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        icon: String(reward.icon || "🎁").slice(0, 4),
+        name: String(reward.name || "Reward").slice(0, 60),
+        cost: Math.max(1, Math.min(10000, Number(reward.cost) || 100))
+      }))
+      .filter(reward => reward.name.trim().length > 0)
+      .slice(0, 50);
   }
 
   function normalizeCelebration(celebration) {
@@ -568,6 +598,276 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem(NOTE_AUTHOR_KEY, noteAuthor.value.trim());
   }
 
+  async function addReward() {
+    if (!verifyParentPin("add a reward")) {
+      return;
+    }
+
+    const icon = rewardIconInput ? rewardIconInput.value.trim() : "";
+    const name = rewardNameInput ? rewardNameInput.value.trim() : "";
+    const cost = rewardCostInput ? Number(rewardCostInput.value) : 0;
+
+    if (!name) {
+      alert("Add a reward name first.");
+      return;
+    }
+
+    if (!cost || cost < 1) {
+      alert("Add a valid coin cost first.");
+      return;
+    }
+
+    const data = await getLatestData();
+    data.rewards = normalizeRewards(data.rewards);
+
+    data.rewards.push({
+      id: `reward-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      icon: icon || "🎁",
+      name,
+      cost: Math.max(1, Math.min(10000, Math.round(cost)))
+    });
+
+    if (rewardIconInput) rewardIconInput.value = "";
+    if (rewardNameInput) rewardNameInput.value = "";
+    if (rewardCostInput) rewardCostInput.value = "";
+
+    await saveData(data);
+  }
+
+  async function saveReward(rewardId) {
+    if (!verifyParentPin("edit this reward")) {
+      return;
+    }
+
+    const item = document.querySelector(`[data-reward-editor-id="${rewardId}"]`);
+
+    if (!item) {
+      return;
+    }
+
+    const iconInput = item.querySelector(".reward-edit-icon");
+    const nameInput = item.querySelector(".reward-edit-name");
+    const costInput = item.querySelector(".reward-edit-cost");
+
+    const icon = iconInput ? iconInput.value.trim() : "";
+    const name = nameInput ? nameInput.value.trim() : "";
+    const cost = costInput ? Number(costInput.value) : 0;
+
+    if (!name) {
+      alert("Reward needs a name.");
+      return;
+    }
+
+    if (!cost || cost < 1) {
+      alert("Reward needs a valid coin cost.");
+      return;
+    }
+
+    const data = await getLatestData();
+    data.rewards = normalizeRewards(data.rewards).map(reward => {
+      if (reward.id !== rewardId) {
+        return reward;
+      }
+
+      return {
+        ...reward,
+        icon: icon || "🎁",
+        name,
+        cost: Math.max(1, Math.min(10000, Math.round(cost)))
+      };
+    });
+
+    await saveData(data);
+  }
+
+  async function deleteReward(rewardId) {
+    if (!verifyParentPin("delete this reward")) {
+      return;
+    }
+
+    const confirmed = confirm("Delete this reward?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.rewards = normalizeRewards(data.rewards).filter(reward => reward.id !== rewardId);
+
+    await saveData(data);
+  }
+
+  async function claimReward(rewardId) {
+    if (!verifyParentPin("claim this reward")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.rewards = normalizeRewards(data.rewards);
+
+    const reward = data.rewards.find(item => item.id === rewardId);
+
+    if (!reward) {
+      return;
+    }
+
+    if ((Number(data.coinTotal) || 0) < reward.cost) {
+      alert("Not enough coins for this reward yet.");
+      return;
+    }
+
+    const confirmed = confirm(`Claim "${reward.name}" for ${reward.cost} coins?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    data.coinTotal = Math.max(0, (Number(data.coinTotal) || 0) - reward.cost);
+
+    addHistoryEntry(data, {
+      type: "reward-claimed",
+      text: `Reward claimed: ${reward.icon} ${reward.name}`,
+      level: "reward",
+      coinChange: -reward.cost,
+      coinsAfter: data.coinTotal
+    });
+
+    await saveData(data);
+  }
+
+  function updateRewardsList(data) {
+    if (!rewardsList) {
+      return;
+    }
+
+    const rewards = normalizeRewards(data?.rewards);
+    const coinTotal = Number(data?.coinTotal) || 0;
+
+    if (rewards.length === 0) {
+      rewardsList.innerHTML = "<p class='empty-notes'>No rewards set yet.</p>";
+      return;
+    }
+
+    rewardsList.innerHTML = "";
+
+    rewards.forEach(reward => {
+      const affordable = coinTotal >= reward.cost;
+
+      const item = document.createElement("article");
+      item.className = "reward-shop-item";
+      item.classList.toggle("reward-affordable", affordable);
+
+      const icon = document.createElement("div");
+      icon.className = "reward-shop-icon";
+      icon.textContent = reward.icon;
+
+      const info = document.createElement("div");
+      info.className = "reward-shop-info";
+
+      const name = document.createElement("strong");
+      name.textContent = reward.name;
+
+      const cost = document.createElement("span");
+      cost.textContent = `${reward.cost} coins`;
+
+      const status = document.createElement("small");
+      status.textContent = affordable ? "Ready to claim" : `${Math.max(0, reward.cost - coinTotal)} coins to go`;
+
+      info.appendChild(name);
+      info.appendChild(cost);
+      info.appendChild(status);
+
+      const claimButton = document.createElement("button");
+      claimButton.type = "button";
+      claimButton.className = "claim-reward-button";
+      claimButton.textContent = "Claim";
+      claimButton.disabled = !affordable;
+      claimButton.addEventListener("click", () => claimReward(reward.id));
+
+      item.appendChild(icon);
+      item.appendChild(info);
+      item.appendChild(claimButton);
+      rewardsList.appendChild(item);
+    });
+  }
+
+  function updateRewardEditor(data) {
+    if (!rewardEditorList) {
+      return;
+    }
+
+    if (!parentUnlocked) {
+      rewardEditorList.innerHTML = "<p class='empty-notes'>Unlock parent controls to edit rewards.</p>";
+      return;
+    }
+
+    const rewards = normalizeRewards(data?.rewards);
+
+    if (rewards.length === 0) {
+      rewardEditorList.innerHTML = "<p class='empty-notes'>No rewards yet.</p>";
+      return;
+    }
+
+    rewardEditorList.innerHTML = "";
+
+    rewards.forEach(reward => {
+      const item = document.createElement("article");
+      item.className = "reward-editor-item";
+      item.dataset.rewardEditorId = reward.id;
+
+      const iconLabel = document.createElement("label");
+      iconLabel.textContent = "Icon";
+      const iconInput = document.createElement("input");
+      iconInput.className = "reward-edit-icon";
+      iconInput.value = reward.icon;
+      iconInput.maxLength = 4;
+
+      const nameLabel = document.createElement("label");
+      nameLabel.textContent = "Reward";
+      const nameInput = document.createElement("input");
+      nameInput.className = "reward-edit-name";
+      nameInput.value = reward.name;
+      nameInput.maxLength = 60;
+
+      const costLabel = document.createElement("label");
+      costLabel.textContent = "Cost";
+      const costInput = document.createElement("input");
+      costInput.className = "reward-edit-cost";
+      costInput.type = "number";
+      costInput.min = "1";
+      costInput.max = "10000";
+      costInput.step = "1";
+      costInput.value = reward.cost;
+
+      const buttonRow = document.createElement("div");
+      buttonRow.className = "reward-editor-buttons";
+
+      const saveButton = document.createElement("button");
+      saveButton.type = "button";
+      saveButton.textContent = "Save";
+      saveButton.addEventListener("click", () => saveReward(reward.id));
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.textContent = "Delete";
+      deleteButton.className = "delete-reward-button";
+      deleteButton.addEventListener("click", () => deleteReward(reward.id));
+
+      buttonRow.appendChild(saveButton);
+      buttonRow.appendChild(deleteButton);
+
+      item.appendChild(iconLabel);
+      item.appendChild(iconInput);
+      item.appendChild(nameLabel);
+      item.appendChild(nameInput);
+      item.appendChild(costLabel);
+      item.appendChild(costInput);
+      item.appendChild(buttonRow);
+
+      rewardEditorList.appendChild(item);
+    });
+  }
+
   async function addParentNote() {
     if (!verifyParentPin("add a parent note")) {
       return;
@@ -880,11 +1180,12 @@ document.addEventListener("DOMContentLoaded", () => {
       lockControlsButton.disabled = !parentUnlocked;
     }
 
-    if (parentNotesCard) {
-      parentNotesCard.hidden = !parentUnlocked;
+    if (parentPageCard) {
+      parentPageCard.hidden = !parentUnlocked;
     }
 
     updateParentNotesDisplay(currentData);
+    updateRewardEditor(currentData);
   }
 
   function unlockParentControls(actionText = "use parent controls") {
@@ -1343,6 +1644,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updateStreakDisplay(data);
     updateHistoryList(data.history);
     updateParentNotesDisplay(data);
+    updateRewardsList(data);
+    updateRewardEditor(data);
     maybeSendCoinNotification(data).catch(error => console.error(error));
   }
 
@@ -1429,6 +1732,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (addParentNoteButton) {
       addParentNoteButton.addEventListener("click", addParentNote);
+    }
+
+    if (addRewardButton) {
+      addRewardButton.addEventListener("click", addReward);
     }
 
     if (noteAuthor) {

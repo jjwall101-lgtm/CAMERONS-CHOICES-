@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=27" />
+  <link rel="stylesheet" href="style.css?v=28" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -100,6 +100,7 @@
       <div class="coin-controls">
         <button type="button" id="deduct10Button">-10</button>
         <button type="button" id="deduct50Button">-50</button>
+        <button type="button" id="add5Button">+5</button>
         <button type="button" id="add10Button">+10</button>
         <button type="button" id="add50Button">+50</button>
         <button type="button" id="resetCoinsButton">Reset Coins</button>
@@ -123,21 +124,48 @@
       </div>
     </section>
 
-    <section class="parent-notes-card" id="parentNotesCard" hidden>
-      <div class="parent-notes-title">PARENT NOTES</div>
+    <section class="parent-page-card" id="parentPageCard" hidden>
+      <div class="parent-page-title">PARENT PAGE</div>
 
-      <div class="note-form">
-        <label for="noteAuthor">Who wrote the note?</label>
-        <input type="text" id="noteAuthor" placeholder="Mum / Dad / Beth / Jay" maxlength="40" />
+      <div class="parent-page-grid">
+        <section class="parent-panel">
+          <div class="parent-notes-title">PARENT NOTES</div>
 
-        <label for="parentNoteText">Note</label>
-        <textarea id="parentNoteText" placeholder="Write a parent note here..." rows="4"></textarea>
+          <div class="note-form">
+            <label for="noteAuthor">Who wrote the note?</label>
+            <input type="text" id="noteAuthor" placeholder="Mum / Dad / Beth / Jay" maxlength="40" />
 
-        <button type="button" id="addParentNoteButton">Add Note</button>
-      </div>
+            <label for="parentNoteText">Note</label>
+            <textarea id="parentNoteText" placeholder="Write a parent note here..." rows="4"></textarea>
 
-      <div class="parent-notes-list" id="parentNotesList">
-        <p class="empty-notes">Unlock parent controls to view notes.</p>
+            <button type="button" id="addParentNoteButton">Add Note</button>
+          </div>
+
+          <div class="parent-notes-list" id="parentNotesList">
+            <p class="empty-notes">Unlock parent controls to view notes.</p>
+          </div>
+        </section>
+
+        <section class="parent-panel">
+          <div class="parent-notes-title">EDIT REWARDS SHOP</div>
+
+          <div class="reward-form">
+            <label for="rewardIconInput">Reward icon</label>
+            <input type="text" id="rewardIconInput" placeholder="🎮" maxlength="4" />
+
+            <label for="rewardNameInput">Reward name</label>
+            <input type="text" id="rewardNameInput" placeholder="Choose a small treat" maxlength="60" />
+
+            <label for="rewardCostInput">Coin cost</label>
+            <input type="number" id="rewardCostInput" placeholder="100" min="1" max="10000" step="1" />
+
+            <button type="button" id="addRewardButton">Add Reward</button>
+          </div>
+
+          <div class="reward-editor-list" id="rewardEditorList">
+            <p class="empty-notes">No rewards yet.</p>
+          </div>
+        </section>
       </div>
     </section>
 
@@ -154,6 +182,12 @@
       <div class="streak-best">
         Best streak: <span id="bestStreak">0</span>
       </div>
+    </section>
+
+    <section class="rewards-shop-card" id="rewardsShopCard">
+      <div class="rewards-shop-title">REWARDS SHOP</div>
+      <p class="rewards-shop-subtitle">Spend coins on rewards.</p>
+      <div class="rewards-list" id="rewardsList"></div>
     </section>
 
     <section class="treat-card" id="treatCard">
@@ -246,7 +280,7 @@
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=21" type="module"></script>
+  <script src="script.js?v=22" type="module"></script>
   <script src="theme.js?v=3"></script>
 </body>
 </html>
