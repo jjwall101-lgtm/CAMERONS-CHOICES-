@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=9" />
+  <link rel="stylesheet" href="style.css?v=11" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -30,6 +30,7 @@
       <img class="app-icon-preview" src="icon.png" alt="Cameron app logo" />
 
       <h1>Cameron</h1>
+
       <div class="power-row">
         <div class="question-block">?</div>
         <div class="coin-art"></div>
@@ -44,13 +45,19 @@
 
     <section class="coin-card">
       <div class="coin-title">COIN BANK</div>
-      <div class="coin-count"><span id="coinTotalMain">0</span> / 1000</div>
+      <p class="sync-status" id="syncStatus">Sync loading...</p>
+
+      <div class="coin-count">
+        <span id="coinTotalMain">0</span> / 1000
+      </div>
 
       <div class="progress-outer" aria-label="Coin progress to special treat">
         <div class="progress-inner" id="coinProgress"></div>
       </div>
 
-      <p class="coin-help">Amber to green adds 50 coins. Pressing green again does not add more.</p>
+      <p class="coin-help">
+        Synced between phones when Firebase is connected.
+      </p>
 
       <div class="coin-controls">
         <button type="button" id="deduct10Button">-10</button>
@@ -110,7 +117,9 @@
       <div class="message" id="message">Tap a light to choose today</div>
       <div class="sub-message" id="subMessage">Every day is a new level.</div>
 
-      <button type="button" class="reset-button" id="resetTodayButton">RESET TODAY</button>
+      <button type="button" class="reset-button" id="resetTodayButton">
+        RESET TODAY
+      </button>
     </section>
 
     <section class="history">
@@ -118,6 +127,7 @@
         <h2>LEVEL HISTORY</h2>
         <button type="button" id="clearHistoryButton">Clear History</button>
       </div>
+
       <div id="historyList"></div>
     </section>
 
