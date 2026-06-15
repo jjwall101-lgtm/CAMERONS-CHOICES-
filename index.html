@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=29" />
+  <link rel="stylesheet" href="style.css?v=30" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -16,258 +16,370 @@
 </head>
 
 <body>
-  <span id="coinTotalTop" class="hidden-script-hook">0</span>
-  <span id="themeHeaderIcon" class="hidden-script-hook">⭐ CAMERON</span>
   <main class="app">
     <header class="hero">
-      <div class="cloud cloud-one"></div>
-      <div class="cloud cloud-two"></div>
-      <div class="star-field star-one"></div>
-      <div class="star-field star-two"></div>
+      <div class="hero-bg hero-bg-one"></div>
+      <div class="hero-bg hero-bg-two"></div>
 
-      <img class="app-icon-preview" src="icon.png" alt="Cameron app logo" />
+      <section class="profile-card">
+        <div class="profile-top-row">
+          <div class="sync-pill" id="syncStatus">Sync loading...</div>
+          <button type="button" class="small-parent-button" id="headerUnlockButton">Unlock</button>
+        </div>
 
-      <h1>Cameron</h1>
+        <img class="app-icon-preview" src="icon.png" alt="Cameron app logo" />
 
-      <section class="theme-switcher" aria-label="Theme selector">
-        <label for="themeSelect">Theme</label>
-        <select id="themeSelect">
-          <option value="mario">Mario / Retro</option>
-          <option value="space">Spaceman & Rocket</option>
-          <option value="minecraft">Minecraft Blocks</option>
-        </select>
+        <h1>Cameron</h1>
+
+        <section class="theme-switcher" aria-label="Theme selector">
+          <label for="themeSelect">Theme</label>
+          <select id="themeSelect">
+            <option value="mario">Mario / Retro</option>
+            <option value="space">Spaceman & Rocket</option>
+            <option value="minecraft">Minecraft Blocks</option>
+          </select>
+        </section>
+
+        <div class="power-row" aria-hidden="true">
+          <div class="question-block">?</div>
+          <div class="coin-art"></div>
+          <div class="brick-block"></div>
+
+          <div class="rocket-art">
+            <div class="rocket-window"></div>
+            <div class="rocket-fin left"></div>
+            <div class="rocket-fin right"></div>
+            <div class="rocket-flame"></div>
+          </div>
+
+          <div class="mushroom-art">
+            <div class="mushroom-cap"></div>
+            <div class="mushroom-face"></div>
+          </div>
+
+          <div class="astronaut-helmet">
+            <div class="helmet-visor"></div>
+          </div>
+
+          <div class="minecraft-character">
+            <div class="mc-head"></div>
+            <div class="mc-body"></div>
+          </div>
+
+          <div class="minecraft-block grass-block"></div>
+        </div>
       </section>
-
-      <div class="power-row">
-        <div class="question-block">?</div>
-        <div class="coin-art"></div>
-        <div class="brick-block"></div>
-
-        <div class="rocket-art">
-          <div class="rocket-window"></div>
-          <div class="rocket-fin left"></div>
-          <div class="rocket-fin right"></div>
-          <div class="rocket-flame"></div>
-        </div>
-
-        <div class="mushroom-art">
-          <div class="mushroom-cap"></div>
-          <div class="mushroom-face"></div>
-        </div>
-
-        <div class="astronaut-helmet">
-          <div class="helmet-visor"></div>
-        </div>
-
-        <div class="minecraft-character">
-          <div class="mc-head"></div>
-          <div class="mc-body"></div>
-        </div>
-
-        <div class="minecraft-block grass-block"></div>
-
-        <div class="question-block">?</div>
-      </div>
     </header>
 
-    <section class="coin-card">
-      <div class="coin-title" id="coinTitle">COIN BANK</div>
-      <p class="sync-status" id="syncStatus">Sync loading...</p>
+    <nav class="app-nav" aria-label="App pages">
+      <button type="button" class="nav-button active" data-page="home">Home</button>
+      <button type="button" class="nav-button" data-page="rewards">Rewards</button>
+      <button type="button" class="nav-button" data-page="parent">Parent</button>
+      <button type="button" class="nav-button" data-page="history">History</button>
+      <button type="button" class="nav-button" data-page="reports">Reports</button>
+      <button type="button" class="nav-button" data-page="settings">Settings</button>
+    </nav>
 
-      <div class="coin-count">
-        <span id="coinTotalMain">0</span> / 1000
-      </div>
+    <section class="page active" id="page-home">
+      <section class="coin-card">
+        <div class="section-title">COIN BANK</div>
 
-      <div class="progress-outer" aria-label="Coin progress to special treat">
-        <div class="progress-inner" id="coinProgress"></div>
-      </div>
-
-      <div class="journey-wrap" aria-label="Journey to 1000 coins">
-        <div class="journey-track">
-          <span class="journey-start">0</span>
-          <span class="journey-character" id="progressCharacter">🍄</span>
-          <span class="finish-line">
-            <span class="finish-flag">🏁</span>
-            <span class="finish-text">1000</span>
-          </span>
-        </div>
-      </div>
-
-      <p class="coin-help" id="coinHelp">
-        Synced between phones when Firebase is connected.
-      </p>
-
-      <div class="coin-controls">
-        <button type="button" id="deduct5Button">-5</button>
-        <button type="button" id="deduct10Button">-10</button>
-        <button type="button" id="deduct50Button">-50</button>
-        <button type="button" id="add5Button">+5</button>
-        <button type="button" id="add10Button">+10</button>
-        <button type="button" id="add50Button">+50</button>
-        <button type="button" id="resetCoinsButton">Reset Coins</button>
-      </div>
-
-      <div class="pin-controls">
-        <div class="lock-status" id="lockStatus">Parent controls locked</div>
-
-        <div class="lock-buttons">
-          <button type="button" id="unlockControlsButton">Unlock</button>
-          <button type="button" id="lockControlsButton">Lock</button>
-          <button type="button" id="changePinButton">Parent PIN</button>
+        <div class="coin-count">
+          <span id="coinTotalMain">0</span>
+          <small>/ <span id="goalDisplay">1000</span></small>
         </div>
 
-        <p>Unlock parent controls before changing coins.</p>
-      </div>
+        <div class="progress-outer" aria-label="Coin progress to goal">
+          <div class="progress-inner" id="coinProgress"></div>
+        </div>
 
-      <div class="notification-controls">
-        <button type="button" id="enableNotificationsButton">Enable Notifications</button>
-        <p id="notificationStatus">Notifications are off.</p>
-      </div>
-    </section>
-
-    <section class="parent-page-card" id="parentPageCard" hidden>
-      <div class="parent-page-title">PARENT PAGE</div>
-
-      <div class="parent-page-grid">
-        <section class="parent-panel">
-          <div class="parent-notes-title">PARENT NOTES</div>
-
-          <div class="note-form">
-            <label for="noteAuthor">Who wrote the note?</label>
-            <input type="text" id="noteAuthor" placeholder="Mum / Dad / Beth / Jay" maxlength="40" />
-
-            <label for="parentNoteText">Note</label>
-            <textarea id="parentNoteText" placeholder="Write a parent note here..." rows="4"></textarea>
-
-            <button type="button" id="addParentNoteButton">Add Note</button>
+        <div class="journey-wrap" aria-label="Journey to goal coins">
+          <div class="journey-track">
+            <span class="journey-start">0</span>
+            <span class="journey-character" id="progressCharacter">🍄</span>
+            <span class="finish-line">
+              <span class="finish-flag">🏁</span>
+              <span class="finish-text" id="finishGoal">1000</span>
+            </span>
           </div>
+        </div>
 
-          <div class="parent-notes-list" id="parentNotesList">
-            <p class="empty-notes">Unlock parent controls to view notes.</p>
-          </div>
-        </section>
+        <p class="next-reward" id="nextRewardText">Next reward loading...</p>
 
-        <section class="parent-panel">
-          <div class="parent-notes-title">EDIT REWARDS SHOP</div>
+        <div class="coin-controls">
+          <button type="button" id="deduct5Button">-5</button>
+          <button type="button" id="deduct10Button">-10</button>
+          <button type="button" id="deduct50Button">-50</button>
+          <button type="button" id="add5Button">+5</button>
+          <button type="button" id="add10Button">+10</button>
+          <button type="button" id="add50Button">+50</button>
+        </div>
 
-          <div class="reward-form">
-            <label for="rewardIconInput">Reward icon</label>
-            <input type="text" id="rewardIconInput" placeholder="🎮" maxlength="4" />
+        <p class="parent-hint" id="lockStatus">Parent controls locked</p>
 
-            <label for="rewardNameInput">Reward name</label>
-            <input type="text" id="rewardNameInput" placeholder="Choose a small treat" maxlength="60" />
-
-            <label for="rewardCostInput">Coin cost</label>
-            <input type="number" id="rewardCostInput" placeholder="100" min="1" max="10000" step="1" />
-
-            <button type="button" id="addRewardButton">Add Reward</button>
-          </div>
-
-          <div class="reward-editor-list" id="rewardEditorList">
-            <p class="empty-notes">No rewards yet.</p>
-          </div>
-        </section>
-      </div>
-    </section>
-
-    <section class="streak-card">
-      <div class="streak-title" id="streakTitle">DAILY STREAK</div>
-
-      <div class="streak-main">
-        <span id="streakCount">0</span>
-        <span>day streak</span>
-      </div>
-
-      <p class="streak-message" id="streakMessage">Reach green today to start a streak.</p>
-
-      <div class="streak-best">
-        Best streak: <span id="bestStreak">0</span>
-      </div>
-    </section>
-
-    <section class="rewards-shop-card" id="rewardsShopCard">
-      <div class="rewards-shop-title">REWARDS SHOP</div>
-      <p class="rewards-shop-subtitle">Spend coins on rewards.</p>
-      <div class="rewards-list" id="rewardsList"></div>
-    </section>
-
-    <section class="treat-card" id="treatCard">
-      <div class="treat-box" id="treatBox">
-        <div class="box-lid" id="treatBoxIcon">?</div>
-        <div class="special-treat-text" id="specialTreatText">SPECIAL TREAT!</div>
-      </div>
-
-      <div class="prize-drop" id="prizeDrop">
-        <div class="prize-drop-icon" id="prizeDropIcon">🌟</div>
-        <div class="prize-drop-name" id="prizeDropName">SUPER STAR PRIZE</div>
-      </div>
-
-      <p class="treat-subtitle" id="treatSubtitle">1000 coins reached!</p>
-      <p class="treat-reset-note" id="treatResetNote">Prize revealed! Press collect to reset back to 0.</p>
-
-      <button type="button" class="collect-prize-button" id="collectPrizeButton">
-        COLLECT PRIZE
-      </button>
-    </section>
-
-    <section class="traffic-section">
-      <div class="pipe-top"></div>
-      <div class="rocket-pad-top"></div>
-      <div class="minecraft-topper"></div>
-
-      <section class="traffic-light" aria-label="Behaviour traffic light">
-        <button type="button" class="light red" id="redLight" aria-label="Red: oops level">
-          <span>!</span>
-        </button>
-
-        <button type="button" class="light amber" id="amberLight" aria-label="Amber: trying level">
-          <span>?</span>
-        </button>
-
-        <button type="button" class="light green" id="greenLight" aria-label="Green: super level">
-          <span>★</span>
-        </button>
+        <div class="notification-controls">
+          <button type="button" id="enableNotificationsButton">Enable Notifications</button>
+          <p id="notificationStatus">Notifications are off.</p>
+        </div>
       </section>
 
-      <div class="pipe-stem"></div>
-      <div class="rocket-pad-stem"></div>
-      <div class="minecraft-stem"></div>
+      <section class="streak-card">
+        <div class="section-title">DAILY STREAK</div>
+        <div class="streak-main">
+          <span id="streakCount">0</span>
+          <span>day streak</span>
+        </div>
+        <p class="streak-message" id="streakMessage">Reach green today to start a streak.</p>
+        <div class="streak-best">Best streak: <span id="bestStreak">0</span></div>
+      </section>
 
-      <div class="level-labels">
-        <button type="button" class="level-card red-card" id="redLabel">
-          <strong>RED</strong>
-          <span>-50 coins</span>
-        </button>
+      <section class="behaviour-card">
+        <div class="section-title">TODAY'S LEVEL</div>
 
-        <button type="button" class="level-card amber-card" id="amberLabel">
-          <strong>AMBER</strong>
-          <span id="amberLabelText">Trying level</span>
-        </button>
+        <div class="today-level-pill" id="todayLevelPill">AMBER</div>
 
-        <button type="button" class="level-card green-card" id="greenLabel">
-          <strong>GREEN</strong>
-          <span id="greenLabelText">+50 coins</span>
-        </button>
-      </div>
+        <label for="behaviourCategorySelect">Reason/category</label>
+        <select id="behaviourCategorySelect"></select>
+
+        <label for="behaviourReasonText">Quick note / reason</label>
+        <textarea id="behaviourReasonText" rows="3" placeholder="Optional note for this change..."></textarea>
+
+        <section class="traffic-light" aria-label="Behaviour traffic light">
+          <button type="button" class="light red" id="redLight" aria-label="Red level">
+            <span>!</span>
+          </button>
+
+          <button type="button" class="light amber active" id="amberLight" aria-label="Amber level">
+            <span>?</span>
+          </button>
+
+          <button type="button" class="light green" id="greenLight" aria-label="Green level">
+            <span>★</span>
+          </button>
+        </section>
+
+        <div class="level-labels">
+          <button type="button" class="level-card red-card" id="redLabel">
+            <strong>RED</strong>
+            <span id="redCoinValue">-50 coins</span>
+          </button>
+
+          <button type="button" class="level-card amber-card" id="amberLabel">
+            <strong>AMBER</strong>
+            <span>Trying level</span>
+          </button>
+
+          <button type="button" class="level-card green-card" id="greenLabel">
+            <strong>GREEN</strong>
+            <span id="greenCoinValue">+50 coins</span>
+          </button>
+        </div>
+
+        <button type="button" class="reset-button" id="resetTodayButton">Reset today to amber</button>
+      </section>
+
+      <section class="treat-card" id="treatCard">
+        <div class="section-title">PRIZE REACHED</div>
+        <div class="prize-drop" id="prizeDrop">
+          <div class="prize-drop-icon" id="prizeDropIcon">🌟</div>
+          <div class="prize-drop-name" id="prizeDropName">SUPER STAR PRIZE</div>
+        </div>
+        <p class="treat-subtitle" id="treatSubtitle">Goal reached!</p>
+        <p class="treat-reset-note" id="treatResetNote">Press collect to reset coins back to 0.</p>
+        <button type="button" class="collect-prize-button" id="collectPrizeButton">COLLECT PRIZE</button>
+      </section>
     </section>
 
-    <section class="today-card">
-      <div class="today-title" id="todayTitle">TODAY'S LEVEL</div>
-      <div class="message" id="message">Tap a light to choose today</div>
-      <div class="sub-message" id="subMessage">Every day is a new level.</div>
-
-      <button type="button" class="reset-button" id="resetTodayButton">
-        RESET TODAY
-      </button>
+    <section class="page" id="page-rewards">
+      <section class="rewards-shop-card">
+        <div class="section-title">REWARDS SHOP</div>
+        <p class="rewards-shop-subtitle">Spend coins on rewards. Claiming a reward removes the cost from the coin bank.</p>
+        <div class="rewards-list" id="rewardsList"></div>
+      </section>
     </section>
 
-    <section class="history">
-      <div class="history-header">
-        <h2 id="historyTitle">LEVEL HISTORY</h2>
-        <button type="button" id="clearHistoryButton">Clear History</button>
-      </div>
+    <section class="page" id="page-parent">
+      <section class="parent-page-card">
+        <div class="section-title">PARENT PAGE</div>
 
-      <div id="historyList"></div>
+        <div class="locked-panel" id="parentLockedPanel">
+          <p>Unlock with the parent PIN to see notes and edit rewards.</p>
+          <button type="button" id="parentPageUnlockButton">Unlock Parent Page</button>
+        </div>
+
+        <div class="parent-unlocked-content" id="parentUnlockedContent" hidden>
+          <section class="parent-panel">
+            <div class="panel-title">Parent Notes</div>
+
+            <div class="note-form">
+              <label for="noteAuthor">Who wrote the note?</label>
+              <input type="text" id="noteAuthor" placeholder="Mum / Dad / Beth / Jay" maxlength="40" />
+
+              <label for="noteCategorySelect">Category</label>
+              <select id="noteCategorySelect"></select>
+
+              <label for="parentNoteText">Note</label>
+              <textarea id="parentNoteText" placeholder="Write a parent note here..." rows="4"></textarea>
+
+              <button type="button" id="addParentNoteButton">Add Note</button>
+            </div>
+
+            <label for="noteFilterSelect">Filter notes</label>
+            <select id="noteFilterSelect"></select>
+
+            <div class="parent-notes-list" id="parentNotesList">
+              <p class="empty-notes">No parent notes yet.</p>
+            </div>
+          </section>
+
+          <section class="parent-panel">
+            <div class="panel-title">Edit Rewards Shop</div>
+
+            <div class="reward-form">
+              <label for="rewardIconInput">Reward icon</label>
+              <input type="text" id="rewardIconInput" placeholder="🎮" maxlength="4" />
+
+              <label for="rewardNameInput">Reward name</label>
+              <input type="text" id="rewardNameInput" placeholder="Choose a small treat" maxlength="60" />
+
+              <label for="rewardCostInput">Coin cost</label>
+              <input type="number" id="rewardCostInput" placeholder="100" min="1" max="10000" step="1" />
+
+              <button type="button" id="addRewardButton">Add Reward</button>
+            </div>
+
+            <div class="reward-editor-list" id="rewardEditorList"></div>
+          </section>
+
+          <section class="parent-panel">
+            <div class="panel-title">Behaviour Categories</div>
+
+            <div class="category-form">
+              <input type="text" id="newCategoryInput" placeholder="Add category e.g. bedtime" maxlength="40" />
+              <button type="button" id="addCategoryButton">Add Category</button>
+            </div>
+
+            <div class="category-list" id="categoryList"></div>
+          </section>
+        </div>
+      </section>
+    </section>
+
+    <section class="page" id="page-history">
+      <section class="history-card">
+        <div class="history-header">
+          <div class="section-title">HISTORY</div>
+          <button type="button" id="clearHistoryButton">Clear History</button>
+        </div>
+
+        <label for="historyFilterSelect">Filter history</label>
+        <select id="historyFilterSelect">
+          <option value="all">All history</option>
+          <option value="coin">Coin changes</option>
+          <option value="level">Levels</option>
+          <option value="reward">Rewards</option>
+          <option value="note">Notes</option>
+        </select>
+
+        <div id="historyList"></div>
+      </section>
+    </section>
+
+    <section class="page" id="page-reports">
+      <section class="reports-card">
+        <div class="section-title">WEEKLY REPORT</div>
+
+        <div class="report-summary" id="reportSummary"></div>
+
+        <div class="chart-card">
+          <div class="panel-title">Level trend</div>
+          <div class="bar-chart" id="levelChart"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="panel-title">Coins this week</div>
+          <div class="bar-chart" id="coinChart"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="panel-title">Notes by category</div>
+          <div class="bar-chart" id="noteChart"></div>
+        </div>
+
+        <button type="button" id="copyWeeklyReportButton">Copy Weekly Report</button>
+      </section>
+    </section>
+
+    <section class="page" id="page-settings">
+      <section class="settings-card">
+        <div class="section-title">SETTINGS</div>
+
+        <div class="locked-panel" id="settingsLockedPanel">
+          <p>Unlock with the parent PIN to edit settings.</p>
+          <button type="button" id="settingsUnlockButton">Unlock Settings</button>
+        </div>
+
+        <div class="settings-unlocked-content" id="settingsUnlockedContent" hidden>
+          <section class="parent-panel">
+            <div class="panel-title">Coin Settings</div>
+
+            <label for="goalInput">Goal coins</label>
+            <input type="number" id="goalInput" min="50" max="10000" step="10" />
+
+            <label for="greenCoinsInput">Green coin value</label>
+            <input type="number" id="greenCoinsInput" min="0" max="1000" step="5" />
+
+            <label for="redCoinsInput">Red coin value</label>
+            <input type="number" id="redCoinsInput" min="0" max="1000" step="5" />
+
+            <button type="button" id="saveCoinSettingsButton">Save Coin Settings</button>
+          </section>
+
+          <section class="parent-panel">
+            <div class="panel-title">Parent PIN</div>
+
+            <label for="newPinInput">New PIN</label>
+            <input type="password" id="newPinInput" inputmode="numeric" placeholder="New PIN" />
+
+            <button type="button" id="changePinButton">Change PIN</button>
+          </section>
+
+          <section class="parent-panel">
+            <div class="panel-title">Notifications</div>
+            <button type="button" id="settingsEnableNotificationsButton">Enable Notifications</button>
+            <p id="settingsNotificationStatus">Notifications are off.</p>
+          </section>
+
+          <section class="parent-panel">
+            <div class="panel-title">Secure Firebase Setup</div>
+            <p class="small-copy">
+              Optional: create/sign in parent accounts, press “Add this parent”, then use the included Firestore rules file to lock the database.
+            </p>
+
+            <label for="authEmailInput">Email</label>
+            <input type="email" id="authEmailInput" placeholder="parent@email.com" />
+
+            <label for="authPasswordInput">Password</label>
+            <input type="password" id="authPasswordInput" placeholder="Password" />
+
+            <div class="auth-buttons">
+              <button type="button" id="createAccountButton">Create Account</button>
+              <button type="button" id="signInButton">Sign In</button>
+              <button type="button" id="signOutButton">Sign Out</button>
+              <button type="button" id="addThisParentButton">Add This Parent</button>
+            </div>
+
+            <p id="authStatus">Not signed in.</p>
+          </section>
+
+          <section class="parent-panel danger-panel">
+            <div class="panel-title">Data Controls</div>
+            <button type="button" id="exportDataButton">Export Data</button>
+            <button type="button" id="resetCoinsButton">Reset Coins</button>
+            <button type="button" id="clearAllDataButton">Clear All App Data</button>
+          </section>
+        </div>
+      </section>
     </section>
 
     <footer class="ground" aria-hidden="true">
@@ -278,10 +390,10 @@
       <div class="mc-grass"></div>
       <div class="mc-dirt"></div>
     </footer>
+
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=23" type="module"></script>
-  <script src="theme.js?v=3"></script>
+  <script src="script.js?v=30" type="module"></script>
 </body>
 </html>

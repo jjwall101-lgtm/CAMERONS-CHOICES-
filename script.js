@@ -6,8 +6,15 @@ import {
   setDoc,
   onSnapshot,
   serverTimestamp,
-  runTransaction
+  enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const firebaseConfig = {
@@ -21,558 +28,159 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const FAMILY_RECORD_ID = "cameron-shared-family-app";
+  const DATA_KEY = "cameronApp2DataV1";
+  const PIN_KEY = "cameronParentPinV1";
+  const THEME_KEY = "cameronSelectedTheme";
+  const NOTE_AUTHOR_KEY = "cameronParentNoteAuthorV1";
+  const LAST_NOTIFICATION_KEY = "cameronLastNotificationV2";
+  const DEFAULT_PIN = "1234";
 
-  const LOCAL_STORAGE_KEY = "cameronCoinsAppDataV6SyncBackup";
-  const OLD_STORAGE_KEYS = [
-    "cameronCoinsAppDataV5SyncBackup",
-    "cameronCoinsAppDataV4",
-    "cameronCoinsAppDataV3",
-    "cameronCoinsAppDataV2",
-    "cameronCoinsAppDataV1"
+  const DEFAULT_CATEGORIES = [
+    "General",
+    "School",
+    "Home",
+    "Bedtime",
+    "Toileting",
+    "Kindness",
+    "Listening",
+    "Meltdown",
+    "Shutdown",
+    "Sensory overload",
+    "Physical outburst",
+    "Good transition"
   ];
 
-  const PARENT_PIN_KEY = "cameronParentPinV1";
-  const DEFAULT_PARENT_PIN = "1234";
-  const LAST_NOTIFICATION_KEY = "cameronLastCoinNotificationV1";
-  const NOTE_AUTHOR_KEY = "cameronParentNoteAuthorV1";
-
   const DEFAULT_REWARDS = [
-    { id: "reward-100-story", icon: "📖", name: "Choose a bedtime story", cost: 100 },
+    { id: "reward-100-story", icon: "📖", name: "Choose bedtime story", cost: 100 },
     { id: "reward-250-treat", icon: "🍫", name: "Small treat", cost: 250 },
     { id: "reward-500-park", icon: "🛝", name: "Park trip", cost: 500 },
     { id: "reward-1000-prize", icon: "🎁", name: "Big prize", cost: 1000 }
   ];
 
-  const RED_PENALTY = -50;
-  const GREEN_REWARD = 50;
-  const GOAL = 1000;
-
+  let app = null;
   let db = null;
+  let auth = null;
   let appDoc = null;
-  let isFirebaseReady = false;
-  let currentData = getLocalData();
+  let currentUser = null;
+  let unsubscribeSnapshot = null;
   let parentUnlocked = false;
   let notificationsReady = false;
-  let currentCelebrationId = "";
-  let celebrationTimer = null;
+  let serviceWorkerRegistration = null;
+  let editingNoteId = "";
+  let currentData = getLocalData();
 
-  const messages = {
-    red: {
-      emoji: "🔴",
-      main: "RED: OOPS LEVEL",
-      sub: "Red removes 50 coins when Cameron moves onto red."
-    },
-    amber: {
-      emoji: "🟡",
-      main: "AMBER: TRYING LEVEL",
-      sub: "Amber is safe. No coins are added or taken away."
-    },
-    green: {
-      emoji: "⭐",
-      main: "GREEN: SUPER LEVEL",
-      sub: "Amber to green earns 50 coins. Pressing green again adds nothing."
-    }
+  const $ = id => document.getElementById(id);
+
+  const elements = {
+    syncStatus: $("syncStatus"),
+    headerUnlockButton: $("headerUnlockButton"),
+    parentPageUnlockButton: $("parentPageUnlockButton"),
+    settingsUnlockButton: $("settingsUnlockButton"),
+    lockStatus: $("lockStatus"),
+
+    themeSelect: $("themeSelect"),
+
+    coinTotalMain: $("coinTotalMain"),
+    goalDisplay: $("goalDisplay"),
+    finishGoal: $("finishGoal"),
+    coinProgress: $("coinProgress"),
+    progressCharacter: $("progressCharacter"),
+    nextRewardText: $("nextRewardText"),
+
+    deduct5Button: $("deduct5Button"),
+    deduct10Button: $("deduct10Button"),
+    deduct50Button: $("deduct50Button"),
+    add5Button: $("add5Button"),
+    add10Button: $("add10Button"),
+    add50Button: $("add50Button"),
+    resetCoinsButton: $("resetCoinsButton"),
+
+    enableNotificationsButton: $("enableNotificationsButton"),
+    settingsEnableNotificationsButton: $("settingsEnableNotificationsButton"),
+    notificationStatus: $("notificationStatus"),
+    settingsNotificationStatus: $("settingsNotificationStatus"),
+
+    streakCount: $("streakCount"),
+    bestStreak: $("bestStreak"),
+    streakMessage: $("streakMessage"),
+
+    todayLevelPill: $("todayLevelPill"),
+    behaviourCategorySelect: $("behaviourCategorySelect"),
+    behaviourReasonText: $("behaviourReasonText"),
+    redLight: $("redLight"),
+    amberLight: $("amberLight"),
+    greenLight: $("greenLight"),
+    redLabel: $("redLabel"),
+    amberLabel: $("amberLabel"),
+    greenLabel: $("greenLabel"),
+    redCoinValue: $("redCoinValue"),
+    greenCoinValue: $("greenCoinValue"),
+    resetTodayButton: $("resetTodayButton"),
+
+    treatCard: $("treatCard"),
+    prizeDropIcon: $("prizeDropIcon"),
+    prizeDropName: $("prizeDropName"),
+    treatSubtitle: $("treatSubtitle"),
+    treatResetNote: $("treatResetNote"),
+    collectPrizeButton: $("collectPrizeButton"),
+
+    rewardsList: $("rewardsList"),
+
+    parentLockedPanel: $("parentLockedPanel"),
+    parentUnlockedContent: $("parentUnlockedContent"),
+    noteAuthor: $("noteAuthor"),
+    noteCategorySelect: $("noteCategorySelect"),
+    parentNoteText: $("parentNoteText"),
+    addParentNoteButton: $("addParentNoteButton"),
+    noteFilterSelect: $("noteFilterSelect"),
+    parentNotesList: $("parentNotesList"),
+
+    rewardIconInput: $("rewardIconInput"),
+    rewardNameInput: $("rewardNameInput"),
+    rewardCostInput: $("rewardCostInput"),
+    addRewardButton: $("addRewardButton"),
+    rewardEditorList: $("rewardEditorList"),
+
+    newCategoryInput: $("newCategoryInput"),
+    addCategoryButton: $("addCategoryButton"),
+    categoryList: $("categoryList"),
+
+    historyFilterSelect: $("historyFilterSelect"),
+    historyList: $("historyList"),
+    clearHistoryButton: $("clearHistoryButton"),
+
+    reportSummary: $("reportSummary"),
+    levelChart: $("levelChart"),
+    coinChart: $("coinChart"),
+    noteChart: $("noteChart"),
+    copyWeeklyReportButton: $("copyWeeklyReportButton"),
+
+    settingsLockedPanel: $("settingsLockedPanel"),
+    settingsUnlockedContent: $("settingsUnlockedContent"),
+    goalInput: $("goalInput"),
+    greenCoinsInput: $("greenCoinsInput"),
+    redCoinsInput: $("redCoinsInput"),
+    saveCoinSettingsButton: $("saveCoinSettingsButton"),
+    newPinInput: $("newPinInput"),
+    changePinButton: $("changePinButton"),
+
+    authEmailInput: $("authEmailInput"),
+    authPasswordInput: $("authPasswordInput"),
+    createAccountButton: $("createAccountButton"),
+    signInButton: $("signInButton"),
+    signOutButton: $("signOutButton"),
+    addThisParentButton: $("addThisParentButton"),
+    authStatus: $("authStatus"),
+
+    exportDataButton: $("exportDataButton"),
+    clearAllDataButton: $("clearAllDataButton")
   };
 
-  const syncStatus = document.getElementById("syncStatus");
-  const coinTotalTop = document.getElementById("coinTotalTop");
-  const coinTotalMain = document.getElementById("coinTotalMain");
-  const coinProgress = document.getElementById("coinProgress");
-  const progressCharacter = document.getElementById("progressCharacter");
-  const treatCard = document.getElementById("treatCard");
-  const treatBoxIcon = document.getElementById("treatBoxIcon");
-  const specialTreatText = document.getElementById("specialTreatText");
-  const treatSubtitle = document.getElementById("treatSubtitle");
-  const treatResetNote = document.getElementById("treatResetNote");
-  const prizeDrop = document.getElementById("prizeDrop");
-  const prizeDropIcon = document.getElementById("prizeDropIcon");
-  const prizeDropName = document.getElementById("prizeDropName");
-  const collectPrizeButton = document.getElementById("collectPrizeButton");
-
-  const streakCount = document.getElementById("streakCount");
-  const bestStreak = document.getElementById("bestStreak");
-  const streakMessage = document.getElementById("streakMessage");
-
-  const redLight = document.getElementById("redLight");
-  const amberLight = document.getElementById("amberLight");
-  const greenLight = document.getElementById("greenLight");
-  const redLabel = document.getElementById("redLabel");
-  const amberLabel = document.getElementById("amberLabel");
-  const greenLabel = document.getElementById("greenLabel");
-
-  const deduct5Button = document.getElementById("deduct5Button");
-  const deduct10Button = document.getElementById("deduct10Button");
-  const deduct50Button = document.getElementById("deduct50Button");
-  const add5Button = document.getElementById("add5Button");
-  const add10Button = document.getElementById("add10Button");
-  const add50Button = document.getElementById("add50Button");
-  const resetCoinsButton = document.getElementById("resetCoinsButton");
-  const unlockControlsButton = document.getElementById("unlockControlsButton");
-  const lockControlsButton = document.getElementById("lockControlsButton");
-  const changePinButton = document.getElementById("changePinButton");
-  const resetTodayButton = document.getElementById("resetTodayButton");
-  const clearHistoryButton = document.getElementById("clearHistoryButton");
-  const enableNotificationsButton = document.getElementById("enableNotificationsButton");
-  const notificationStatus = document.getElementById("notificationStatus");
-
-  const parentPageCard = document.getElementById("parentPageCard");
-  const rewardsList = document.getElementById("rewardsList");
-  const rewardEditorList = document.getElementById("rewardEditorList");
-  const rewardIconInput = document.getElementById("rewardIconInput");
-  const rewardNameInput = document.getElementById("rewardNameInput");
-  const rewardCostInput = document.getElementById("rewardCostInput");
-  const addRewardButton = document.getElementById("addRewardButton");
-  const noteAuthor = document.getElementById("noteAuthor");
-  const parentNoteText = document.getElementById("parentNoteText");
-  const addParentNoteButton = document.getElementById("addParentNoteButton");
-  const parentNotesList = document.getElementById("parentNotesList");
-
-  function firebaseIsConfigured() {
-    return !Object.values(firebaseConfig).some(value => String(value).includes("PASTE_YOUR"));
-  }
-
-  function setSyncStatus(text, statusClass) {
-    if (!syncStatus) return;
-    syncStatus.textContent = text;
-    syncStatus.className = `sync-status ${statusClass}`;
-  }
-
-  function getToday() {
-    return new Date().toLocaleDateString("en-GB");
-  }
-
   function getDateISO(date = new Date()) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return date.toISOString().slice(0, 10);
   }
 
-  function getYesterdayISO() {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return getDateISO(yesterday);
-  }
-
-  function dateTextToISO(dateText) {
-    if (!dateText) return "";
-
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
-      return dateText;
-    }
-
-    const parts = String(dateText).split("/");
-
-    if (parts.length === 3) {
-      const [day, month, year] = parts;
-      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    }
-
-    return "";
-  }
-
-  function getLocalData() {
-    try {
-      let saved = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));
-
-      if (!saved) {
-        for (const oldKey of OLD_STORAGE_KEYS) {
-          const oldSaved = JSON.parse(localStorage.getItem(oldKey));
-
-          if (oldSaved) {
-            saved = oldSaved;
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(saved));
-            break;
-          }
-        }
-      }
-
-      return normalizeData(saved);
-    } catch {
-      return normalizeData(null);
-    }
-  }
-
-  function saveLocalData(data) {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalizeData(data)));
-  }
-
-  function normalizeData(data) {
-    const history = Array.isArray(data?.history) ? data.history : [];
-
-    return {
-      coinTotal: Math.max(0, Number(data?.coinTotal) || 0),
-      history,
-      streak: normalizeStreak(data?.streak, history),
-      celebration: normalizeCelebration(data?.celebration),
-      parentNotes: normalizeParentNotes(data?.parentNotes),
-      rewards: normalizeRewards(data?.rewards)
-    };
-  }
-
-  function normalizeParentNotes(parentNotes) {
-    if (!Array.isArray(parentNotes)) {
-      return [];
-    }
-
-    return parentNotes
-      .filter(note => note && typeof note === "object")
-      .map(note => ({
-        id: note.id || `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        author: String(note.author || "Parent").slice(0, 40),
-        text: String(note.text || "").slice(0, 1200),
-        dateText: note.dateText || "",
-        dateISO: note.dateISO || "",
-        savedAt: note.savedAt || ""
-      }))
-      .filter(note => note.text.trim().length > 0)
-      .slice(0, 100);
-  }
-
-  function normalizeRewards(rewards) {
-    const source = Array.isArray(rewards) && rewards.length > 0 ? rewards : DEFAULT_REWARDS;
-
-    return source
-      .filter(reward => reward && typeof reward === "object")
-      .map(reward => ({
-        id: reward.id || `reward-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        icon: String(reward.icon || "🎁").slice(0, 4),
-        name: String(reward.name || "Reward").slice(0, 60),
-        cost: Math.max(1, Math.min(10000, Number(reward.cost) || 100))
-      }))
-      .filter(reward => reward.name.trim().length > 0)
-      .slice(0, 50);
-  }
-
-  function normalizeCelebration(celebration) {
-    return {
-      active: Boolean(celebration?.active),
-      id: celebration?.id || "",
-      theme: celebration?.theme || "",
-      prizeName: celebration?.prizeName || "",
-      prizeEmoji: celebration?.prizeEmoji || "",
-      boxIcon: celebration?.boxIcon || "",
-      triggeredAt: celebration?.triggeredAt || "",
-      completedAt: celebration?.completedAt || ""
-    };
-  }
-
-  function normalizeStreak(streak, history) {
-    if (streak && typeof streak === "object") {
-      return {
-        current: Math.max(0, Number(streak.current) || 0),
-        best: Math.max(0, Number(streak.best) || 0),
-        lastGreenDateISO: streak.lastGreenDateISO || ""
-      };
-    }
-
-    return buildStreakFromHistory(history);
-  }
-
-  function dayReachedGreen(item) {
-    if (!item || item.type !== "day") return false;
-
-    if (item.colour === "green") {
-      return true;
-    }
-
-    if (Array.isArray(item.moves)) {
-      return item.moves.some(move => move.to === "green");
-    }
-
-    return false;
-  }
-
-  function entryToISO(item) {
-    return item?.dateISO || dateTextToISO(item?.date);
-  }
-
-  function buildStreakFromHistory(history) {
-    const greenDays = Array.from(
-      new Set(
-        history
-          .filter(dayReachedGreen)
-          .map(entryToISO)
-          .filter(Boolean)
-      )
-    ).sort();
-
-    let current = 0;
-    let best = 0;
-    let previousDate = null;
-
-    greenDays.forEach(dateISO => {
-      if (!previousDate) {
-        current = 1;
-      } else {
-        const previous = new Date(previousDate + "T12:00:00");
-        previous.setDate(previous.getDate() + 1);
-        current = getDateISO(previous) === dateISO ? current + 1 : 1;
-      }
-
-      best = Math.max(best, current);
-      previousDate = dateISO;
-    });
-
-    const lastGreenDateISO = greenDays[greenDays.length - 1] || "";
-
-    return {
-      current,
-      best,
-      lastGreenDateISO
-    };
-  }
-
-  function getVisibleStreak(streak) {
-    const todayISO = getDateISO();
-    const yesterdayISO = getYesterdayISO();
-
-    if (streak.lastGreenDateISO === todayISO || streak.lastGreenDateISO === yesterdayISO) {
-      return Math.max(0, Number(streak.current) || 0);
-    }
-
-    return 0;
-  }
-
-  function updateStreakForGreen(data) {
-    data.streak = normalizeStreak(data.streak, data.history);
-
-    const todayISO = getDateISO();
-    const yesterdayISO = getYesterdayISO();
-
-    if (data.streak.lastGreenDateISO === todayISO) {
-      return false;
-    }
-
-    const current = data.streak.lastGreenDateISO === yesterdayISO
-      ? getVisibleStreak(data.streak) + 1
-      : 1;
-
-    data.streak.current = current;
-    data.streak.best = Math.max(Number(data.streak.best) || 0, current);
-    data.streak.lastGreenDateISO = todayISO;
-
-    return true;
-  }
-
-  function recalculateStreak(data) {
-    data.streak = buildStreakFromHistory(data.history || []);
-  }
-
-  function getCurrentTheme() {
-    return document.documentElement.getAttribute("data-theme") || "mario";
-  }
-
-  function getPrizeDetails(themeName = "mario") {
-    const prizes = {
-      mario: {
-        boxIcon: "?",
-        prizeEmoji: "🌟",
-        prizeName: "SUPER STAR PRIZE!",
-        subtitle: "Goal reached! A Super Star drops in!",
-        resetNote: "Press collect to reset coins back to 0 for the next run."
-      },
-      space: {
-        boxIcon: "🚀",
-        prizeEmoji: "🪐",
-        prizeName: "SPACE TROPHY!",
-        subtitle: "Mission complete! A space prize drops in!",
-        resetNote: "Press collect to reset coins back to 0 for the next mission."
-      },
-      minecraft: {
-        boxIcon: "💎",
-        prizeEmoji: "💎",
-        prizeName: "DIAMOND PRIZE!",
-        subtitle: "Build complete! A diamond prize drops in!",
-        resetNote: "Press collect to reset coins back to 0 for the next build."
-      }
-    };
-
-    return prizes[themeName] || prizes.mario;
-  }
-
-  function setTreatTheme(themeName) {
-    if (!treatCard) return;
-
-    const prize = getPrizeDetails(themeName);
-    treatCard.setAttribute("data-prize-theme", themeName);
-
-    if (treatBoxIcon) treatBoxIcon.textContent = prize.boxIcon;
-    if (specialTreatText) specialTreatText.textContent = prize.prizeName;
-    if (treatSubtitle) treatSubtitle.textContent = prize.subtitle;
-    if (treatResetNote) treatResetNote.textContent = prize.resetNote;
-    if (prizeDropIcon) prizeDropIcon.textContent = prize.prizeEmoji;
-    if (prizeDropName) prizeDropName.textContent = prize.prizeName;
-  }
-
-  function activateCelebration(data, themeName = getCurrentTheme()) {
-    if (data.coinTotal < GOAL) {
-      return false;
-    }
-
-    const prize = getPrizeDetails(themeName);
-
-    data.coinTotal = GOAL;
-    data.celebration = {
-      active: true,
-      id: `celebration-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      theme: themeName,
-      prizeName: prize.prizeName,
-      prizeEmoji: prize.prizeEmoji,
-      boxIcon: prize.boxIcon,
-      triggeredAt: new Date().toISOString(),
-      completedAt: ""
-    };
-
-    addHistoryEntry(data, {
-      type: "prize",
-      date: getToday(),
-      dateISO: getDateISO(),
-      text: prize.prizeName + " unlocked",
-      emoji: prize.prizeEmoji,
-      coinChange: 0,
-      lastMoveCoinChange: 0,
-      coinsAfter: data.coinTotal,
-      savedAt: new Date().toISOString()
-    });
-
-    return true;
-  }
-
-  async function finishCelebration(celebrationId) {
-    if (!celebrationId) return;
-
-    if (celebrationTimer) {
-      clearTimeout(celebrationTimer);
-      celebrationTimer = null;
-    }
-
-    if (!isFirebaseReady || !appDoc) {
-      if (currentData.celebration?.active && currentData.celebration.id === celebrationId) {
-        const data = normalizeData(currentData);
-        const themeName = data.celebration.theme || getCurrentTheme();
-        data.coinTotal = 0;
-        data.celebration = {
-          active: false,
-          id: celebrationId,
-          theme: themeName,
-          prizeName: data.celebration.prizeName || getPrizeDetails(themeName).prizeName,
-          prizeEmoji: data.celebration.prizeEmoji || getPrizeDetails(themeName).prizeEmoji,
-          boxIcon: data.celebration.boxIcon || getPrizeDetails(themeName).boxIcon,
-          triggeredAt: data.celebration.triggeredAt || new Date().toISOString(),
-          completedAt: new Date().toISOString()
-        };
-
-        addHistoryEntry(data, {
-          type: "prize-reset",
-          date: getToday(),
-          dateISO: getDateISO(),
-          text: "Prize collected. Coins reset to 0",
-          emoji: "🎁",
-          coinChange: -GOAL,
-          lastMoveCoinChange: -GOAL,
-          coinsAfter: 0,
-          savedAt: new Date().toISOString()
-        });
-
-        currentCelebrationId = "";
-        await saveData(data);
-      }
-
-      return;
-    }
-
-    try {
-      await runTransaction(db, async transaction => {
-        const snapshot = await transaction.get(appDoc);
-
-        if (!snapshot.exists()) {
-          return;
-        }
-
-        const data = normalizeData(snapshot.data());
-
-        if (!data.celebration?.active || data.celebration.id !== celebrationId) {
-          return;
-        }
-
-        const themeName = data.celebration.theme || getCurrentTheme();
-        data.coinTotal = 0;
-        data.celebration = {
-          active: false,
-          id: celebrationId,
-          theme: themeName,
-          prizeName: data.celebration.prizeName || getPrizeDetails(themeName).prizeName,
-          prizeEmoji: data.celebration.prizeEmoji || getPrizeDetails(themeName).prizeEmoji,
-          boxIcon: data.celebration.boxIcon || getPrizeDetails(themeName).boxIcon,
-          triggeredAt: data.celebration.triggeredAt || new Date().toISOString(),
-          completedAt: new Date().toISOString()
-        };
-
-        addHistoryEntry(data, {
-          type: "prize-reset",
-          date: getToday(),
-          dateISO: getDateISO(),
-          text: "Prize collected. Coins reset to 0",
-          emoji: "🎁",
-          coinChange: -GOAL,
-          lastMoveCoinChange: -GOAL,
-          coinsAfter: 0,
-          savedAt: new Date().toISOString()
-        });
-
-        transaction.set(appDoc, {
-          ...data,
-          lastUpdatedAt: new Date().toISOString(),
-          serverUpdatedAt: serverTimestamp()
-        }, { merge: true });
-      });
-    } catch (error) {
-      console.error(error);
-      setSyncStatus("Prize reset failed - try again", "error");
-    }
-  }
-
-  function maybeStartCelebration(data) {
-    const celebration = data.celebration || {};
-
-    if (!celebration.active || !celebration.id) {
-      if (celebrationTimer) {
-        clearTimeout(celebrationTimer);
-        celebrationTimer = null;
-      }
-
-      currentCelebrationId = "";
-      if (prizeDrop) prizeDrop.classList.remove("animate");
-      if (treatCard) treatCard.classList.remove("show");
-      return;
-    }
-
-    const themeName = celebration.theme || getCurrentTheme();
-    setTreatTheme(themeName);
-    if (treatCard) treatCard.classList.add("show");
-
-    if (currentCelebrationId === celebration.id) {
-      return;
-    }
-
-    currentCelebrationId = celebration.id;
-
-    if (prizeDrop) {
-      prizeDrop.classList.remove("animate");
-      void prizeDrop.offsetWidth;
-      prizeDrop.classList.add("animate");
-    }
-
-    if (celebrationTimer) {
-      clearTimeout(celebrationTimer);
-      celebrationTimer = null;
-    }
-  }
-
-  let serviceWorkerRegistration = null;
-
-  function formatNoteDate(date = new Date()) {
+  function formatDateTime(date = new Date()) {
     return date.toLocaleString("en-GB", {
       weekday: "short",
       day: "2-digit",
@@ -583,20 +191,572 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function loadSavedNoteAuthor() {
-    if (!noteAuthor) {
-      return;
-    }
+  function getDefaultData() {
+    const today = getDateISO();
 
-    noteAuthor.value = localStorage.getItem(NOTE_AUTHOR_KEY) || "";
+    return {
+      coinTotal: 0,
+      today: {
+        date: today,
+        level: "amber",
+        category: "General",
+        reason: ""
+      },
+      history: [],
+      parentNotes: [],
+      rewards: DEFAULT_REWARDS,
+      categories: DEFAULT_CATEGORIES,
+      streak: {
+        current: 0,
+        best: 0,
+        lastGreenDate: ""
+      },
+      settings: {
+        goal: 1000,
+        greenCoins: 50,
+        redCoins: 50,
+        dailyResetLevel: "amber"
+      },
+      celebration: {
+        active: false,
+        id: "",
+        theme: "mario"
+      },
+      memberUids: {}
+    };
   }
 
-  function saveNoteAuthorName() {
-    if (!noteAuthor) {
+  function normalizeSettings(settings = {}) {
+    return {
+      goal: Math.max(50, Math.min(10000, Number(settings.goal) || 1000)),
+      greenCoins: Math.max(0, Math.min(1000, Number(settings.greenCoins) || 50)),
+      redCoins: Math.max(0, Math.min(1000, Number(settings.redCoins) || 50)),
+      dailyResetLevel: ["red", "amber", "green"].includes(settings.dailyResetLevel) ? settings.dailyResetLevel : "amber"
+    };
+  }
+
+  function normalizeRewards(rewards) {
+    const source = Array.isArray(rewards) && rewards.length ? rewards : DEFAULT_REWARDS;
+
+    return source
+      .filter(reward => reward && typeof reward === "object")
+      .map(reward => ({
+        id: reward.id || `reward-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        icon: String(reward.icon || "🎁").slice(0, 4),
+        name: String(reward.name || "Reward").slice(0, 60),
+        cost: Math.max(1, Math.min(10000, Number(reward.cost) || 100))
+      }))
+      .filter(reward => reward.name.trim())
+      .slice(0, 50);
+  }
+
+  function normalizeCategories(categories) {
+    const list = Array.isArray(categories) && categories.length ? categories : DEFAULT_CATEGORIES;
+    const clean = list
+      .map(category => String(category || "").trim())
+      .filter(Boolean)
+      .slice(0, 60);
+
+    return [...new Set(clean.length ? clean : DEFAULT_CATEGORIES)];
+  }
+
+  function normalizeNotes(notes) {
+    if (!Array.isArray(notes)) {
+      return [];
+    }
+
+    return notes
+      .filter(note => note && typeof note === "object")
+      .map(note => ({
+        id: note.id || `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        author: String(note.author || "Parent").slice(0, 40),
+        category: String(note.category || "General").slice(0, 40),
+        text: String(note.text || "").slice(0, 1500),
+        dateText: note.dateText || "",
+        dateISO: note.dateISO || "",
+        savedAt: note.savedAt || ""
+      }))
+      .filter(note => note.text.trim())
+      .slice(0, 250);
+  }
+
+  function normalizeHistory(history) {
+    if (!Array.isArray(history)) {
+      return [];
+    }
+
+    return history
+      .filter(item => item && typeof item === "object")
+      .map(item => ({
+        id: item.id || `history-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type: item.type || "general",
+        level: item.level || "",
+        category: item.category || "",
+        text: String(item.text || "").slice(0, 500),
+        coinChange: Number(item.coinChange) || 0,
+        coinsAfter: Math.max(0, Number(item.coinsAfter) || 0),
+        dateISO: item.dateISO || getDateISO(),
+        dateText: item.dateText || "",
+        savedAt: item.savedAt || ""
+      }))
+      .slice(0, 500);
+  }
+
+  function normalizeData(data) {
+    const defaults = getDefaultData();
+    const settings = normalizeSettings(data?.settings || defaults.settings);
+    const todayDate = data?.today?.date || getDateISO();
+
+    return {
+      coinTotal: Math.max(0, Number(data?.coinTotal) || 0),
+      today: {
+        date: todayDate,
+        level: ["red", "amber", "green"].includes(data?.today?.level) ? data.today.level : "amber",
+        category: data?.today?.category || "General",
+        reason: data?.today?.reason || ""
+      },
+      history: normalizeHistory(data?.history),
+      parentNotes: normalizeNotes(data?.parentNotes),
+      rewards: normalizeRewards(data?.rewards),
+      categories: normalizeCategories(data?.categories),
+      streak: {
+        current: Math.max(0, Number(data?.streak?.current) || 0),
+        best: Math.max(0, Number(data?.streak?.best) || 0),
+        lastGreenDate: data?.streak?.lastGreenDate || ""
+      },
+      settings,
+      celebration: {
+        active: Boolean(data?.celebration?.active),
+        id: data?.celebration?.id || "",
+        theme: data?.celebration?.theme || getCurrentTheme()
+      },
+      memberUids: data?.memberUids && typeof data.memberUids === "object" ? data.memberUids : {}
+    };
+  }
+
+  function getLocalData() {
+    try {
+      const raw = localStorage.getItem(DATA_KEY);
+      return normalizeData(raw ? JSON.parse(raw) : getDefaultData());
+    } catch (error) {
+      console.error(error);
+      return getDefaultData();
+    }
+  }
+
+  function storeLocalData(data) {
+    localStorage.setItem(DATA_KEY, JSON.stringify(normalizeData(data)));
+  }
+
+  function getParentPin() {
+    return localStorage.getItem(PIN_KEY) || DEFAULT_PIN;
+  }
+
+  function verifyParentPin(actionText = "continue") {
+    if (parentUnlocked) {
+      return true;
+    }
+
+    const pin = prompt(`Enter parent PIN to ${actionText}:`);
+
+    if (pin === null) {
+      return false;
+    }
+
+    if (pin === getParentPin()) {
+      parentUnlocked = true;
+      updateParentLockDisplay();
+      return true;
+    }
+
+    alert("Wrong PIN.");
+    return false;
+  }
+
+  function getCurrentTheme() {
+    return localStorage.getItem(THEME_KEY) || "mario";
+  }
+
+  function setTheme(theme) {
+    const allowed = ["mario", "space", "minecraft"];
+    const safeTheme = allowed.includes(theme) ? theme : "mario";
+    document.documentElement.dataset.theme = safeTheme;
+    localStorage.setItem(THEME_KEY, safeTheme);
+
+    if (elements.themeSelect) {
+      elements.themeSelect.value = safeTheme;
+    }
+
+    updateProgressCharacter();
+    updatePrizeDetails();
+  }
+
+  function applyDailyReset(data) {
+    const today = getDateISO();
+    const next = normalizeData(data);
+
+    if (next.today.date !== today) {
+      next.today = {
+        date: today,
+        level: next.settings.dailyResetLevel,
+        category: "General",
+        reason: ""
+      };
+    }
+
+    return next;
+  }
+
+  async function saveData(data) {
+    let next = applyDailyReset(normalizeData(data));
+
+    if (currentUser?.uid) {
+      next.memberUids = {
+        ...(next.memberUids || {}),
+        [currentUser.uid]: true
+      };
+    }
+
+    currentData = next;
+    storeLocalData(next);
+    updateDisplay();
+
+    if (!appDoc) {
+      setSyncStatus("Local only", "offline");
       return;
     }
 
-    localStorage.setItem(NOTE_AUTHOR_KEY, noteAuthor.value.trim());
+    try {
+      await setDoc(appDoc, {
+        ...next,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      setSyncStatus(navigator.onLine ? "Sync connected" : "Saved offline", navigator.onLine ? "online" : "offline");
+    } catch (error) {
+      console.error(error);
+      setSyncStatus("Sync failed - saved on this phone", "error");
+    }
+  }
+
+  async function getLatestData() {
+    if (!appDoc) {
+      return normalizeData(currentData);
+    }
+
+    try {
+      const snapshot = await getDoc(appDoc);
+
+      if (snapshot.exists()) {
+        return applyDailyReset(normalizeData(snapshot.data()));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    return normalizeData(currentData);
+  }
+
+  function setSyncStatus(text, className = "") {
+    if (!elements.syncStatus) {
+      return;
+    }
+
+    elements.syncStatus.textContent = text;
+    elements.syncStatus.className = `sync-pill ${className}`.trim();
+  }
+
+  function addHistoryEntry(data, entry) {
+    const now = new Date();
+    data.history = normalizeHistory(data.history);
+    data.history.unshift({
+      id: `history-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      type: entry.type || "general",
+      level: entry.level || "",
+      category: entry.category || "",
+      text: entry.text || "",
+      coinChange: Number(entry.coinChange) || 0,
+      coinsAfter: Math.max(0, Number(entry.coinsAfter) || 0),
+      dateISO: getDateISO(now),
+      dateText: formatDateTime(now),
+      savedAt: now.toISOString()
+    });
+    data.history = data.history.slice(0, 500);
+  }
+
+  function getPrizeDetails(theme = getCurrentTheme()) {
+    if (theme === "space") {
+      return {
+        icon: "🪐",
+        name: "SPACE TROPHY",
+        subtitle: "Mission complete!"
+      };
+    }
+
+    if (theme === "minecraft") {
+      return {
+        icon: "💎",
+        name: "DIAMOND PRIZE",
+        subtitle: "Build complete!"
+      };
+    }
+
+    return {
+      icon: "🌟",
+      name: "SUPER STAR PRIZE",
+      subtitle: "Goal reached!"
+    };
+  }
+
+  function startCelebrationIfNeeded(data) {
+    const goal = data.settings.goal;
+
+    if (data.coinTotal >= goal && !data.celebration.active) {
+      data.celebration = {
+        active: true,
+        id: `celebration-${Date.now()}`,
+        theme: getCurrentTheme()
+      };
+
+      addHistoryEntry(data, {
+        type: "prize",
+        level: "prize",
+        text: `Prize reached at ${goal} coins`,
+        coinChange: 0,
+        coinsAfter: data.coinTotal
+      });
+
+      showPhoneNotification("Prize reached!", {
+        body: `Cameron reached ${goal} coins.`,
+        tag: "cameron-prize"
+      }).catch(console.error);
+    }
+  }
+
+  async function adjustCoins(amount) {
+    if (!verifyParentPin("change coins")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    const before = data.coinTotal;
+    data.coinTotal = Math.max(0, before + amount);
+    const actualChange = data.coinTotal - before;
+
+    if (actualChange === 0) {
+      return;
+    }
+
+    addHistoryEntry(data, {
+      type: "coin",
+      level: actualChange > 0 ? "gain" : "loss",
+      text: actualChange > 0 ? `Manual coin gain: +${actualChange}` : `Manual coin loss: ${actualChange}`,
+      coinChange: actualChange,
+      coinsAfter: data.coinTotal
+    });
+
+    startCelebrationIfNeeded(data);
+    await saveData(data);
+  }
+
+  async function setLevel(level) {
+    if (!verifyParentPin("change today's level")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    const today = getDateISO();
+
+    if (data.today.date !== today) {
+      data.today = {
+        date: today,
+        level: "amber",
+        category: "General",
+        reason: ""
+      };
+    }
+
+    const previousLevel = data.today.level;
+
+    if (previousLevel === level) {
+      return;
+    }
+
+    if (level === "green" && previousLevel !== "amber") {
+      alert("Go to amber before green.");
+      return;
+    }
+
+    const category = elements.behaviourCategorySelect?.value || "General";
+    const reason = elements.behaviourReasonText?.value.trim() || "";
+    let coinChange = 0;
+    let text = "";
+
+    if (level === "green" && previousLevel === "amber") {
+      coinChange = data.settings.greenCoins;
+      text = `Moved to GREEN: +${coinChange} coins`;
+    } else if (level === "red" && previousLevel !== "red") {
+      coinChange = -data.settings.redCoins;
+      text = `Moved to RED: -${data.settings.redCoins} coins`;
+    } else if (level === "amber") {
+      text = "Moved to AMBER";
+    } else {
+      text = `Moved to ${level.toUpperCase()}`;
+    }
+
+    const before = data.coinTotal;
+    data.coinTotal = Math.max(0, before + coinChange);
+    const actualChange = data.coinTotal - before;
+
+    data.today = {
+      date: today,
+      level,
+      category,
+      reason
+    };
+
+    if (level === "green" && data.streak.lastGreenDate !== today) {
+      data.streak.current += 1;
+      data.streak.best = Math.max(data.streak.best, data.streak.current);
+      data.streak.lastGreenDate = today;
+    }
+
+    if (level === "red") {
+      data.streak.current = 0;
+    }
+
+    addHistoryEntry(data, {
+      type: "level",
+      level,
+      category,
+      text: reason ? `${text}. ${reason}` : text,
+      coinChange: actualChange,
+      coinsAfter: data.coinTotal
+    });
+
+    if (elements.behaviourReasonText) {
+      elements.behaviourReasonText.value = "";
+    }
+
+    startCelebrationIfNeeded(data);
+    await saveData(data);
+  }
+
+  async function resetToday() {
+    if (!verifyParentPin("reset today")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.today = {
+      date: getDateISO(),
+      level: "amber",
+      category: "General",
+      reason: ""
+    };
+
+    addHistoryEntry(data, {
+      type: "level",
+      level: "amber",
+      category: "General",
+      text: "Today reset to amber",
+      coinChange: 0,
+      coinsAfter: data.coinTotal
+    });
+
+    await saveData(data);
+  }
+
+  async function resetCoins() {
+    if (!verifyParentPin("reset coins")) {
+      return;
+    }
+
+    if (!confirm("Reset coins to 0?")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    const before = data.coinTotal;
+    data.coinTotal = 0;
+    data.celebration = {
+      active: false,
+      id: "",
+      theme: getCurrentTheme()
+    };
+
+    addHistoryEntry(data, {
+      type: "coin",
+      level: "reset",
+      text: "Coins reset to 0",
+      coinChange: -before,
+      coinsAfter: 0
+    });
+
+    await saveData(data);
+  }
+
+  async function collectPrize() {
+    if (!verifyParentPin("collect the prize")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    const before = data.coinTotal;
+    data.coinTotal = 0;
+    data.celebration = {
+      active: false,
+      id: "",
+      theme: getCurrentTheme()
+    };
+
+    addHistoryEntry(data, {
+      type: "reward",
+      level: "prize",
+      text: "Prize collected. Coins reset to 0",
+      coinChange: -before,
+      coinsAfter: 0
+    });
+
+    await saveData(data);
+  }
+
+  async function claimReward(rewardId) {
+    if (!verifyParentPin("claim this reward")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    const reward = normalizeRewards(data.rewards).find(item => item.id === rewardId);
+
+    if (!reward) {
+      return;
+    }
+
+    if (data.coinTotal < reward.cost) {
+      alert("Not enough coins for this reward yet.");
+      return;
+    }
+
+    if (!confirm(`Claim "${reward.name}" for ${reward.cost} coins?`)) {
+      return;
+    }
+
+    data.coinTotal -= reward.cost;
+
+    addHistoryEntry(data, {
+      type: "reward",
+      level: "claimed",
+      text: `Reward claimed: ${reward.icon} ${reward.name}`,
+      coinChange: -reward.cost,
+      coinsAfter: data.coinTotal
+    });
+
+    await saveData(data);
+
+    showPhoneNotification("Reward claimed", {
+      body: `${reward.name} claimed for ${reward.cost} coins.`,
+      tag: `reward-${rewardId}`
+    }).catch(console.error);
   }
 
   async function addReward() {
@@ -604,33 +764,32 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const icon = rewardIconInput ? rewardIconInput.value.trim() : "";
-    const name = rewardNameInput ? rewardNameInput.value.trim() : "";
-    const cost = rewardCostInput ? Number(rewardCostInput.value) : 0;
+    const icon = elements.rewardIconInput?.value.trim() || "🎁";
+    const name = elements.rewardNameInput?.value.trim() || "";
+    const cost = Math.round(Number(elements.rewardCostInput?.value) || 0);
 
     if (!name) {
       alert("Add a reward name first.");
       return;
     }
 
-    if (!cost || cost < 1) {
-      alert("Add a valid coin cost first.");
+    if (cost < 1) {
+      alert("Add a valid coin cost.");
       return;
     }
 
     const data = await getLatestData();
     data.rewards = normalizeRewards(data.rewards);
-
     data.rewards.push({
       id: `reward-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      icon: icon || "🎁",
+      icon,
       name,
-      cost: Math.max(1, Math.min(10000, Math.round(cost)))
+      cost: Math.max(1, Math.min(10000, cost))
     });
 
-    if (rewardIconInput) rewardIconInput.value = "";
-    if (rewardNameInput) rewardNameInput.value = "";
-    if (rewardCostInput) rewardCostInput.value = "";
+    elements.rewardIconInput.value = "";
+    elements.rewardNameInput.value = "";
+    elements.rewardCostInput.value = "";
 
     await saveData(data);
   }
@@ -640,27 +799,18 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const item = document.querySelector(`[data-reward-editor-id="${rewardId}"]`);
+    const row = document.querySelector(`[data-reward-editor-id="${rewardId}"]`);
 
-    if (!item) {
+    if (!row) {
       return;
     }
 
-    const iconInput = item.querySelector(".reward-edit-icon");
-    const nameInput = item.querySelector(".reward-edit-name");
-    const costInput = item.querySelector(".reward-edit-cost");
+    const icon = row.querySelector(".reward-edit-icon").value.trim() || "🎁";
+    const name = row.querySelector(".reward-edit-name").value.trim();
+    const cost = Math.round(Number(row.querySelector(".reward-edit-cost").value) || 0);
 
-    const icon = iconInput ? iconInput.value.trim() : "";
-    const name = nameInput ? nameInput.value.trim() : "";
-    const cost = costInput ? Number(costInput.value) : 0;
-
-    if (!name) {
-      alert("Reward needs a name.");
-      return;
-    }
-
-    if (!cost || cost < 1) {
-      alert("Reward needs a valid coin cost.");
+    if (!name || cost < 1) {
+      alert("Reward needs a name and valid cost.");
       return;
     }
 
@@ -672,9 +822,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       return {
         ...reward,
-        icon: icon || "🎁",
+        icon,
         name,
-        cost: Math.max(1, Math.min(10000, Math.round(cost)))
+        cost: Math.max(1, Math.min(10000, cost))
       };
     });
 
@@ -686,74 +836,430 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const confirmed = confirm("Delete this reward?");
-
-    if (!confirmed) {
+    if (!confirm("Delete this reward?")) {
       return;
     }
 
     const data = await getLatestData();
     data.rewards = normalizeRewards(data.rewards).filter(reward => reward.id !== rewardId);
-
     await saveData(data);
   }
 
-  async function claimReward(rewardId) {
-    if (!verifyParentPin("claim this reward")) {
+  async function addOrUpdateNote() {
+    if (!verifyParentPin("add a parent note")) {
+      return;
+    }
+
+    const author = elements.noteAuthor?.value.trim() || "";
+    const category = elements.noteCategorySelect?.value || "General";
+    const text = elements.parentNoteText?.value.trim() || "";
+
+    if (!author) {
+      alert("Add who wrote the note first.");
+      return;
+    }
+
+    if (!text) {
+      alert("Write a note first.");
+      return;
+    }
+
+    localStorage.setItem(NOTE_AUTHOR_KEY, author);
+
+    const data = await getLatestData();
+    data.parentNotes = normalizeNotes(data.parentNotes);
+
+    if (editingNoteId) {
+      data.parentNotes = data.parentNotes.map(note => {
+        if (note.id !== editingNoteId) {
+          return note;
+        }
+
+        return {
+          ...note,
+          author,
+          category,
+          text
+        };
+      });
+      editingNoteId = "";
+      elements.addParentNoteButton.textContent = "Add Note";
+    } else {
+      const now = new Date();
+      data.parentNotes.unshift({
+        id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        author,
+        category,
+        text,
+        dateText: formatDateTime(now),
+        dateISO: getDateISO(now),
+        savedAt: now.toISOString()
+      });
+
+      addHistoryEntry(data, {
+        type: "note",
+        level: "note",
+        category,
+        text: `Parent note added by ${author}: ${text.slice(0, 120)}`,
+        coinChange: 0,
+        coinsAfter: data.coinTotal
+      });
+    }
+
+    elements.parentNoteText.value = "";
+    await saveData(data);
+  }
+
+  function editNote(noteId) {
+    if (!verifyParentPin("edit this note")) {
+      return;
+    }
+
+    const note = currentData.parentNotes.find(item => item.id === noteId);
+
+    if (!note) {
+      return;
+    }
+
+    editingNoteId = noteId;
+    elements.noteAuthor.value = note.author;
+    elements.noteCategorySelect.value = note.category || "General";
+    elements.parentNoteText.value = note.text;
+    elements.addParentNoteButton.textContent = "Save Note";
+    switchPage("parent");
+  }
+
+  async function deleteNote(noteId) {
+    if (!verifyParentPin("delete this note")) {
+      return;
+    }
+
+    if (!confirm("Delete this parent note?")) {
       return;
     }
 
     const data = await getLatestData();
-    data.rewards = normalizeRewards(data.rewards);
+    data.parentNotes = normalizeNotes(data.parentNotes).filter(note => note.id !== noteId);
+    await saveData(data);
+  }
 
-    const reward = data.rewards.find(item => item.id === rewardId);
-
-    if (!reward) {
+  async function addCategory() {
+    if (!verifyParentPin("add a category")) {
       return;
     }
 
-    if ((Number(data.coinTotal) || 0) < reward.cost) {
-      alert("Not enough coins for this reward yet.");
+    const value = elements.newCategoryInput?.value.trim();
+
+    if (!value) {
       return;
     }
 
-    const confirmed = confirm(`Claim "${reward.name}" for ${reward.cost} coins?`);
+    const data = await getLatestData();
+    data.categories = normalizeCategories([...normalizeCategories(data.categories), value]);
+    elements.newCategoryInput.value = "";
+    await saveData(data);
+  }
 
-    if (!confirmed) {
+  async function deleteCategory(category) {
+    if (!verifyParentPin("delete this category")) {
       return;
     }
 
-    data.coinTotal = Math.max(0, (Number(data.coinTotal) || 0) - reward.cost);
+    if (DEFAULT_CATEGORIES.includes(category)) {
+      alert("Default categories are kept so reports stay consistent.");
+      return;
+    }
 
-    addHistoryEntry(data, {
-      type: "reward-claimed",
-      text: `Reward claimed: ${reward.icon} ${reward.name}`,
-      level: "reward",
-      coinChange: -reward.cost,
-      coinsAfter: data.coinTotal
+    const data = await getLatestData();
+    data.categories = normalizeCategories(data.categories).filter(item => item !== category);
+    await saveData(data);
+  }
+
+  async function saveCoinSettings() {
+    if (!verifyParentPin("save settings")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.settings = normalizeSettings({
+      goal: Number(elements.goalInput.value),
+      greenCoins: Number(elements.greenCoinsInput.value),
+      redCoins: Number(elements.redCoinsInput.value),
+      dailyResetLevel: "amber"
     });
 
     await saveData(data);
   }
 
-  function updateRewardsList(data) {
-    if (!rewardsList) {
+  function changePin() {
+    if (!verifyParentPin("change the PIN")) {
       return;
     }
 
-    const rewards = normalizeRewards(data?.rewards);
-    const coinTotal = Number(data?.coinTotal) || 0;
+    const newPin = elements.newPinInput?.value.trim() || "";
 
-    if (rewards.length === 0) {
-      rewardsList.innerHTML = "<p class='empty-notes'>No rewards set yet.</p>";
+    if (newPin.length < 3) {
+      alert("Use at least 3 numbers.");
       return;
     }
 
-    rewardsList.innerHTML = "";
+    localStorage.setItem(PIN_KEY, newPin);
+    elements.newPinInput.value = "";
+    alert("Parent PIN changed on this phone.");
+  }
+
+  async function clearHistory() {
+    if (!verifyParentPin("clear history")) {
+      return;
+    }
+
+    if (!confirm("Clear all history?")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.history = [];
+    await saveData(data);
+  }
+
+  async function clearAllData() {
+    if (!verifyParentPin("clear all data")) {
+      return;
+    }
+
+    if (!confirm("This clears coins, rewards, notes, history and settings. Are you sure?")) {
+      return;
+    }
+
+    await saveData(getDefaultData());
+  }
+
+  function exportData() {
+    if (!verifyParentPin("export data")) {
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(currentData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `cameron-app-export-${getDateISO()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function switchPage(page) {
+    document.querySelectorAll(".page").forEach(section => {
+      section.classList.toggle("active", section.id === `page-${page}`);
+    });
+
+    document.querySelectorAll(".nav-button").forEach(button => {
+      button.classList.toggle("active", button.dataset.page === page);
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function updateParentLockDisplay() {
+    const locked = !parentUnlocked;
+
+    if (elements.lockStatus) {
+      elements.lockStatus.textContent = parentUnlocked ? "Parent controls unlocked" : "Parent controls locked";
+    }
+
+    if (elements.headerUnlockButton) {
+      elements.headerUnlockButton.textContent = parentUnlocked ? "Lock" : "Unlock";
+    }
+
+    if (elements.parentLockedPanel) {
+      elements.parentLockedPanel.hidden = parentUnlocked;
+    }
+
+    if (elements.parentUnlockedContent) {
+      elements.parentUnlockedContent.hidden = locked;
+    }
+
+    if (elements.settingsLockedPanel) {
+      elements.settingsLockedPanel.hidden = parentUnlocked;
+    }
+
+    if (elements.settingsUnlockedContent) {
+      elements.settingsUnlockedContent.hidden = locked;
+    }
+
+    updateParentOnlyButtons();
+    updateParentNotes();
+    updateRewardEditor();
+    updateCategoryList();
+  }
+
+  function updateParentOnlyButtons() {
+    const parentButtons = [
+      elements.deduct5Button,
+      elements.deduct10Button,
+      elements.deduct50Button,
+      elements.add5Button,
+      elements.add10Button,
+      elements.add50Button,
+      elements.resetTodayButton,
+      elements.clearHistoryButton,
+      elements.resetCoinsButton,
+      elements.clearAllDataButton
+    ];
+
+    parentButtons.forEach(button => {
+      if (button) {
+        button.disabled = !parentUnlocked;
+      }
+    });
+  }
+
+  function updateDisplay() {
+    currentData = applyDailyReset(normalizeData(currentData));
+    storeLocalData(currentData);
+
+    updateThemeText();
+    updateCoinDisplay();
+    updateLevelDisplay();
+    updateStreakDisplay();
+    updateRewardsShop();
+    updateParentNotes();
+    updateRewardEditor();
+    updateCategoryOptions();
+    updateCategoryList();
+    updateHistory();
+    updateReports();
+    updateSettingsInputs();
+    updateCelebration();
+    updateParentLockDisplay();
+    updateNotificationStatus();
+    maybeSendLatestNotification(currentData).catch(console.error);
+  }
+
+  function updateThemeText() {
+    updateProgressCharacter();
+
+    const themeColor = getCurrentTheme() === "space"
+      ? "#0e1244"
+      : getCurrentTheme() === "minecraft"
+        ? "#5cae40"
+        : "#4ab7ff";
+
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", themeColor);
+  }
+
+  function updateProgressCharacter() {
+    if (!elements.progressCharacter) {
+      return;
+    }
+
+    const theme = getCurrentTheme();
+
+    elements.progressCharacter.textContent = theme === "space" ? "🚀" : theme === "minecraft" ? "⛏️" : "🍄";
+  }
+
+  function updateCoinDisplay() {
+    const goal = currentData.settings.goal;
+    const total = currentData.coinTotal;
+    const percent = Math.max(0, Math.min(100, (total / goal) * 100));
+
+    elements.coinTotalMain.textContent = total;
+    elements.goalDisplay.textContent = goal;
+    elements.finishGoal.textContent = goal;
+    elements.coinProgress.style.width = `${percent}%`;
+    elements.progressCharacter.style.left = `calc(${percent}% - 18px)`;
+    elements.greenCoinValue.textContent = `+${currentData.settings.greenCoins} coins`;
+    elements.redCoinValue.textContent = `-${currentData.settings.redCoins} coins`;
+
+    const rewards = normalizeRewards(currentData.rewards).sort((a, b) => a.cost - b.cost);
+    const nextReward = rewards.find(reward => reward.cost > total);
+
+    if (nextReward) {
+      elements.nextRewardText.textContent = `Next reward: ${nextReward.icon} ${nextReward.name} - ${nextReward.cost - total} coins to go`;
+    } else if (rewards.length) {
+      elements.nextRewardText.textContent = "All rewards are affordable!";
+    } else {
+      elements.nextRewardText.textContent = "Add rewards in the Parent Page.";
+    }
+  }
+
+  function updateLevelDisplay() {
+    const level = currentData.today.level;
+    const label = level.toUpperCase();
+
+    elements.todayLevelPill.textContent = label;
+    elements.todayLevelPill.style.background = level === "red" ? "var(--red)" : level === "green" ? "var(--green)" : "var(--amber)";
+
+    elements.redLight.classList.toggle("active", level === "red");
+    elements.amberLight.classList.toggle("active", level === "amber");
+    elements.greenLight.classList.toggle("active", level === "green");
+  }
+
+  function updateStreakDisplay() {
+    elements.streakCount.textContent = currentData.streak.current;
+    elements.bestStreak.textContent = currentData.streak.best;
+
+    if (currentData.streak.current > 0) {
+      elements.streakMessage.textContent = `Great work. Cameron has reached green ${currentData.streak.current} day(s) in a row.`;
+    } else {
+      elements.streakMessage.textContent = "Reach green today to start a streak.";
+    }
+  }
+
+  function updateCategoryOptions() {
+    const categories = normalizeCategories(currentData.categories);
+    const selects = [
+      elements.behaviourCategorySelect,
+      elements.noteCategorySelect,
+      elements.noteFilterSelect
+    ];
+
+    selects.forEach(select => {
+      if (!select) {
+        return;
+      }
+
+      const current = select.value;
+      select.innerHTML = "";
+
+      if (select === elements.noteFilterSelect) {
+        const all = document.createElement("option");
+        all.value = "all";
+        all.textContent = "All notes";
+        select.appendChild(all);
+      }
+
+      categories.forEach(category => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        select.appendChild(option);
+      });
+
+      if ([...select.options].some(option => option.value === current)) {
+        select.value = current;
+      }
+    });
+  }
+
+  function updateRewardsShop() {
+    const list = elements.rewardsList;
+
+    if (!list) {
+      return;
+    }
+
+    const rewards = normalizeRewards(currentData.rewards).sort((a, b) => a.cost - b.cost);
+    const total = currentData.coinTotal;
+    list.innerHTML = "";
+
+    if (!rewards.length) {
+      list.innerHTML = "<p class='empty-notes'>No rewards set yet.</p>";
+      return;
+    }
 
     rewards.forEach(reward => {
-      const affordable = coinTotal >= reward.cost;
-
+      const affordable = total >= reward.cost;
       const item = document.createElement("article");
       item.className = "reward-shop-item";
       item.classList.toggle("reward-affordable", affordable);
@@ -772,181 +1278,90 @@ document.addEventListener("DOMContentLoaded", () => {
       cost.textContent = `${reward.cost} coins`;
 
       const status = document.createElement("small");
-      status.textContent = affordable ? "Ready to claim" : `${Math.max(0, reward.cost - coinTotal)} coins to go`;
+      status.textContent = affordable ? "Ready to claim" : `${reward.cost - total} coins to go`;
 
       info.appendChild(name);
       info.appendChild(cost);
       info.appendChild(status);
 
-      const claimButton = document.createElement("button");
-      claimButton.type = "button";
-      claimButton.className = "claim-reward-button";
-      claimButton.textContent = "Claim";
-      claimButton.disabled = !affordable;
-      claimButton.addEventListener("click", () => claimReward(reward.id));
+      const claim = document.createElement("button");
+      claim.type = "button";
+      claim.className = "claim-reward-button";
+      claim.textContent = "Claim";
+      claim.disabled = !affordable || !parentUnlocked;
+      claim.addEventListener("click", () => claimReward(reward.id));
 
       item.appendChild(icon);
       item.appendChild(info);
-      item.appendChild(claimButton);
-      rewardsList.appendChild(item);
+      item.appendChild(claim);
+      list.appendChild(item);
     });
   }
 
-  function updateRewardEditor(data) {
-    if (!rewardEditorList) {
+  function updateRewardEditor() {
+    const list = elements.rewardEditorList;
+
+    if (!list) {
       return;
     }
 
     if (!parentUnlocked) {
-      rewardEditorList.innerHTML = "<p class='empty-notes'>Unlock parent controls to edit rewards.</p>";
+      list.innerHTML = "<p class='empty-notes'>Unlock parent controls to edit rewards.</p>";
       return;
     }
 
-    const rewards = normalizeRewards(data?.rewards);
-
-    if (rewards.length === 0) {
-      rewardEditorList.innerHTML = "<p class='empty-notes'>No rewards yet.</p>";
-      return;
-    }
-
-    rewardEditorList.innerHTML = "";
+    const rewards = normalizeRewards(currentData.rewards);
+    list.innerHTML = "";
 
     rewards.forEach(reward => {
       const item = document.createElement("article");
       item.className = "reward-editor-item";
       item.dataset.rewardEditorId = reward.id;
 
-      const iconLabel = document.createElement("label");
-      iconLabel.textContent = "Icon";
-      const iconInput = document.createElement("input");
-      iconInput.className = "reward-edit-icon";
-      iconInput.value = reward.icon;
-      iconInput.maxLength = 4;
+      item.innerHTML = `
+        <label>Icon</label>
+        <input class="reward-edit-icon" maxlength="4" value="${escapeAttr(reward.icon)}" />
+        <label>Reward</label>
+        <input class="reward-edit-name" maxlength="60" value="${escapeAttr(reward.name)}" />
+        <label>Cost</label>
+        <input class="reward-edit-cost" type="number" min="1" max="10000" step="1" value="${reward.cost}" />
+        <div class="reward-editor-buttons">
+          <button type="button" class="save-reward-button">Save</button>
+          <button type="button" class="delete-reward-button">Delete</button>
+        </div>
+      `;
 
-      const nameLabel = document.createElement("label");
-      nameLabel.textContent = "Reward";
-      const nameInput = document.createElement("input");
-      nameInput.className = "reward-edit-name";
-      nameInput.value = reward.name;
-      nameInput.maxLength = 60;
-
-      const costLabel = document.createElement("label");
-      costLabel.textContent = "Cost";
-      const costInput = document.createElement("input");
-      costInput.className = "reward-edit-cost";
-      costInput.type = "number";
-      costInput.min = "1";
-      costInput.max = "10000";
-      costInput.step = "1";
-      costInput.value = reward.cost;
-
-      const buttonRow = document.createElement("div");
-      buttonRow.className = "reward-editor-buttons";
-
-      const saveButton = document.createElement("button");
-      saveButton.type = "button";
-      saveButton.textContent = "Save";
-      saveButton.addEventListener("click", () => saveReward(reward.id));
-
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.textContent = "Delete";
-      deleteButton.className = "delete-reward-button";
-      deleteButton.addEventListener("click", () => deleteReward(reward.id));
-
-      buttonRow.appendChild(saveButton);
-      buttonRow.appendChild(deleteButton);
-
-      item.appendChild(iconLabel);
-      item.appendChild(iconInput);
-      item.appendChild(nameLabel);
-      item.appendChild(nameInput);
-      item.appendChild(costLabel);
-      item.appendChild(costInput);
-      item.appendChild(buttonRow);
-
-      rewardEditorList.appendChild(item);
+      item.querySelector(".save-reward-button").addEventListener("click", () => saveReward(reward.id));
+      item.querySelector(".delete-reward-button").addEventListener("click", () => deleteReward(reward.id));
+      list.appendChild(item);
     });
   }
 
-  async function addParentNote() {
-    if (!verifyParentPin("add a parent note")) {
-      return;
-    }
+  function updateParentNotes() {
+    const list = elements.parentNotesList;
 
-    const author = noteAuthor ? noteAuthor.value.trim() : "";
-    const text = parentNoteText ? parentNoteText.value.trim() : "";
-
-    if (!author) {
-      alert("Add who wrote the note first.");
-      return;
-    }
-
-    if (!text) {
-      alert("Write a note first.");
-      return;
-    }
-
-    saveNoteAuthorName();
-
-    const data = await getLatestData();
-    const now = new Date();
-
-    data.parentNotes = normalizeParentNotes(data.parentNotes);
-
-    data.parentNotes.unshift({
-      id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      author,
-      text,
-      dateText: formatNoteDate(now),
-      dateISO: getDateISO(now),
-      savedAt: now.toISOString()
-    });
-
-    data.parentNotes = data.parentNotes.slice(0, 100);
-
-    if (parentNoteText) {
-      parentNoteText.value = "";
-    }
-
-    await saveData(data);
-  }
-
-  async function deleteParentNote(noteId) {
-    if (!verifyParentPin("delete this parent note")) {
-      return;
-    }
-
-    const confirmed = confirm("Delete this parent note?");
-
-    if (!confirmed) {
-      return;
-    }
-
-    const data = await getLatestData();
-    data.parentNotes = normalizeParentNotes(data.parentNotes).filter(note => note.id !== noteId);
-
-    await saveData(data);
-  }
-
-  function updateParentNotesDisplay(data) {
-    if (!parentNotesList) {
+    if (!list) {
       return;
     }
 
     if (!parentUnlocked) {
-      parentNotesList.innerHTML = "<p class='empty-notes'>Unlock parent controls to view notes.</p>";
+      list.innerHTML = "<p class='empty-notes'>Unlock parent controls to view notes.</p>";
       return;
     }
 
-    const notes = normalizeParentNotes(data?.parentNotes);
+    const filter = elements.noteFilterSelect?.value || "all";
+    let notes = normalizeNotes(currentData.parentNotes);
 
-    if (notes.length === 0) {
-      parentNotesList.innerHTML = "<p class='empty-notes'>No parent notes yet.</p>";
-      return;
+    if (filter !== "all") {
+      notes = notes.filter(note => note.category === filter);
     }
 
-    parentNotesList.innerHTML = "";
+    list.innerHTML = "";
+
+    if (!notes.length) {
+      list.innerHTML = "<p class='empty-notes'>No parent notes yet.</p>";
+      return;
+    }
 
     notes.forEach(note => {
       const item = document.createElement("article");
@@ -954,23 +1369,280 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const meta = document.createElement("div");
       meta.className = "parent-note-meta";
-      meta.textContent = `${note.dateText || "No date"} - ${note.author}`;
+      meta.textContent = `${note.dateText || "No date"} - ${note.author} - ${note.category || "General"}`;
 
       const text = document.createElement("p");
       text.className = "parent-note-text";
       text.textContent = note.text;
 
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.className = "delete-note-button";
-      deleteButton.textContent = "Delete Note";
-      deleteButton.addEventListener("click", () => deleteParentNote(note.id));
+      const actions = document.createElement("div");
+      actions.className = "note-actions";
+
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "edit-note-button";
+      edit.textContent = "Edit";
+      edit.addEventListener("click", () => editNote(note.id));
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "delete-note-button";
+      del.textContent = "Delete";
+      del.addEventListener("click", () => deleteNote(note.id));
+
+      actions.appendChild(edit);
+      actions.appendChild(del);
 
       item.appendChild(meta);
       item.appendChild(text);
-      item.appendChild(deleteButton);
-      parentNotesList.appendChild(item);
+      item.appendChild(actions);
+      list.appendChild(item);
     });
+  }
+
+  function updateCategoryList() {
+    const list = elements.categoryList;
+
+    if (!list) {
+      return;
+    }
+
+    if (!parentUnlocked) {
+      list.innerHTML = "<p class='empty-notes'>Unlock parent controls to edit categories.</p>";
+      return;
+    }
+
+    list.innerHTML = "";
+
+    normalizeCategories(currentData.categories).forEach(category => {
+      const item = document.createElement("div");
+      item.className = "category-item";
+
+      const text = document.createElement("strong");
+      text.textContent = category;
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = DEFAULT_CATEGORIES.includes(category) ? "Default" : "Delete";
+      button.disabled = DEFAULT_CATEGORIES.includes(category);
+      button.addEventListener("click", () => deleteCategory(category));
+
+      item.appendChild(text);
+      item.appendChild(button);
+      list.appendChild(item);
+    });
+  }
+
+  function updateHistory() {
+    const list = elements.historyList;
+
+    if (!list) {
+      return;
+    }
+
+    const filter = elements.historyFilterSelect?.value || "all";
+    let history = normalizeHistory(currentData.history);
+
+    if (filter !== "all") {
+      history = history.filter(item => item.type === filter || (filter === "reward" && item.type === "prize"));
+    }
+
+    list.innerHTML = "";
+
+    if (!history.length) {
+      list.innerHTML = "<p class='empty-notes'>No history yet.</p>";
+      return;
+    }
+
+    history.forEach(item => {
+      const row = document.createElement("article");
+      row.className = "history-item";
+
+      const meta = document.createElement("div");
+      meta.className = "history-meta";
+      meta.textContent = `${item.dateText || "No date"}${item.category ? " - " + item.category : ""}`;
+
+      const text = document.createElement("p");
+      text.className = "history-text";
+      text.textContent = item.text;
+
+      const coins = document.createElement("strong");
+      coins.textContent = `${item.coinChange > 0 ? "+" : ""}${item.coinChange} coins | Total: ${item.coinsAfter}`;
+
+      row.appendChild(meta);
+      row.appendChild(text);
+      row.appendChild(coins);
+      list.appendChild(row);
+    });
+  }
+
+  function getRecentHistory(days = 7) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days + 1);
+    cutoff.setHours(0, 0, 0, 0);
+
+    return normalizeHistory(currentData.history).filter(item => {
+      const date = item.savedAt ? new Date(item.savedAt) : new Date(`${item.dateISO}T00:00:00`);
+      return date >= cutoff;
+    });
+  }
+
+  function updateReports() {
+    const recent = getRecentHistory(7);
+    const greenDays = new Set(recent.filter(i => i.level === "green").map(i => i.dateISO)).size;
+    const redItems = recent.filter(i => i.level === "red").length;
+    const amberItems = recent.filter(i => i.level === "amber").length;
+    const coinsGained = recent.reduce((sum, item) => sum + Math.max(0, item.coinChange), 0);
+    const coinsLost = Math.abs(recent.reduce((sum, item) => sum + Math.min(0, item.coinChange), 0));
+    const rewardsClaimed = recent.filter(i => i.type === "reward").length;
+    const notes = normalizeNotes(currentData.parentNotes).filter(note => {
+      const date = note.savedAt ? new Date(note.savedAt) : new Date(`${note.dateISO}T00:00:00`);
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 6);
+      cutoff.setHours(0, 0, 0, 0);
+      return date >= cutoff;
+    });
+
+    if (elements.reportSummary) {
+      elements.reportSummary.innerHTML = "";
+      [
+        ["Green days", greenDays],
+        ["Red logs", redItems],
+        ["Amber logs", amberItems],
+        ["Coins gained", coinsGained],
+        ["Coins lost", coinsLost],
+        ["Rewards claimed", rewardsClaimed],
+        ["Parent notes", notes.length],
+        ["Best streak", currentData.streak.best]
+      ].forEach(([label, value]) => {
+        const card = document.createElement("div");
+        card.className = "report-stat";
+        card.innerHTML = `<strong>${value}</strong><span>${label}</span>`;
+        elements.reportSummary.appendChild(card);
+      });
+    }
+
+    drawChart(elements.levelChart, {
+      Green: recent.filter(i => i.level === "green").length,
+      Amber: amberItems,
+      Red: redItems
+    });
+
+    drawChart(elements.coinChart, {
+      Gained: coinsGained,
+      Lost: coinsLost
+    });
+
+    const notesByCategory = {};
+    notes.forEach(note => {
+      notesByCategory[note.category || "General"] = (notesByCategory[note.category || "General"] || 0) + 1;
+    });
+    drawChart(elements.noteChart, Object.keys(notesByCategory).length ? notesByCategory : { Notes: 0 });
+  }
+
+  function drawChart(container, data) {
+    if (!container) {
+      return;
+    }
+
+    const entries = Object.entries(data);
+    const max = Math.max(1, ...entries.map(([, value]) => Number(value) || 0));
+    container.innerHTML = "";
+
+    entries.forEach(([label, value]) => {
+      const row = document.createElement("div");
+      row.className = "bar-row";
+
+      const name = document.createElement("span");
+      name.textContent = label;
+
+      const track = document.createElement("div");
+      track.className = "bar-track";
+
+      const fill = document.createElement("div");
+      fill.className = "bar-fill";
+      fill.style.width = `${Math.max(2, (Number(value) / max) * 100)}%`;
+
+      const count = document.createElement("strong");
+      count.textContent = value;
+
+      track.appendChild(fill);
+      row.appendChild(name);
+      row.appendChild(track);
+      row.appendChild(count);
+      container.appendChild(row);
+    });
+  }
+
+  function buildWeeklyReportText() {
+    const recent = getRecentHistory(7);
+    const coinsGained = recent.reduce((sum, item) => sum + Math.max(0, item.coinChange), 0);
+    const coinsLost = Math.abs(recent.reduce((sum, item) => sum + Math.min(0, item.coinChange), 0));
+
+    return [
+      "Cameron's weekly report",
+      "",
+      `Green logs: ${recent.filter(i => i.level === "green").length}`,
+      `Amber logs: ${recent.filter(i => i.level === "amber").length}`,
+      `Red logs: ${recent.filter(i => i.level === "red").length}`,
+      `Coins gained: ${coinsGained}`,
+      `Coins lost: ${coinsLost}`,
+      `Rewards claimed: ${recent.filter(i => i.type === "reward").length}`,
+      `Current streak: ${currentData.streak.current}`,
+      `Best streak: ${currentData.streak.best}`,
+      "",
+      "Recent notes:",
+      ...normalizeNotes(currentData.parentNotes).slice(0, 5).map(note => `- ${note.dateText} - ${note.author} - ${note.category}: ${note.text}`)
+    ].join("\n");
+  }
+
+  async function copyWeeklyReport() {
+    const report = buildWeeklyReportText();
+
+    try {
+      await navigator.clipboard.writeText(report);
+      alert("Weekly report copied.");
+    } catch {
+      prompt("Copy this report:", report);
+    }
+  }
+
+  function updateSettingsInputs() {
+    if (!elements.goalInput) {
+      return;
+    }
+
+    elements.goalInput.value = currentData.settings.goal;
+    elements.greenCoinsInput.value = currentData.settings.greenCoins;
+    elements.redCoinsInput.value = currentData.settings.redCoins;
+  }
+
+  function updateCelebration() {
+    if (!elements.treatCard) {
+      return;
+    }
+
+    elements.treatCard.classList.toggle("show", Boolean(currentData.celebration.active));
+    updatePrizeDetails();
+  }
+
+  function updatePrizeDetails() {
+    if (!elements.prizeDropIcon) {
+      return;
+    }
+
+    const details = getPrizeDetails(currentData.celebration.theme || getCurrentTheme());
+    elements.prizeDropIcon.textContent = details.icon;
+    elements.prizeDropName.textContent = details.name;
+    elements.treatSubtitle.textContent = details.subtitle;
+  }
+
+  function escapeAttr(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
   }
 
   function notificationSupported() {
@@ -983,7 +1655,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      serviceWorkerRegistration = await navigator.serviceWorker.register("./sw.js?v=1");
+      serviceWorkerRegistration = await navigator.serviceWorker.register("./sw.js?v=2");
       await navigator.serviceWorker.ready;
       return serviceWorkerRegistration;
     } catch (error) {
@@ -993,33 +1665,50 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateNotificationStatus() {
-    if (!notificationStatus || !enableNotificationsButton) {
-      return;
-    }
+    const statusText = !notificationSupported()
+      ? "Notifications are not supported on this phone/browser."
+      : Notification.permission === "granted"
+        ? "Notifications are on."
+        : Notification.permission === "denied"
+          ? "Notifications are blocked in browser settings."
+          : "Notifications are off.";
 
+    [elements.notificationStatus, elements.settingsNotificationStatus].forEach(el => {
+      if (el) {
+        el.textContent = statusText;
+      }
+    });
+
+    [elements.enableNotificationsButton, elements.settingsEnableNotificationsButton].forEach(button => {
+      if (button) {
+        button.disabled = notificationSupported() && Notification.permission === "granted";
+        button.textContent = Notification.permission === "granted" ? "Notifications On" : "Enable Notifications";
+      }
+    });
+  }
+
+  async function enableNotifications() {
     if (!notificationSupported()) {
-      notificationStatus.textContent = "Notifications are not supported on this phone/browser.";
-      enableNotificationsButton.disabled = true;
+      updateNotificationStatus();
       return;
     }
 
-    if (Notification.permission === "granted") {
-      notificationStatus.textContent = "Notifications are on.";
-      enableNotificationsButton.textContent = "Notifications On";
-      enableNotificationsButton.disabled = true;
+    const registration = await setupServiceWorker();
+
+    if (!registration) {
+      alert("Could not set up notifications. Refresh and try again.");
       return;
     }
 
-    if (Notification.permission === "denied") {
-      notificationStatus.textContent = "Notifications are blocked in browser settings.";
-      enableNotificationsButton.textContent = "Notifications Blocked";
-      enableNotificationsButton.disabled = true;
-      return;
-    }
+    const permission = await Notification.requestPermission();
+    updateNotificationStatus();
 
-    notificationStatus.textContent = "Notifications are off.";
-    enableNotificationsButton.textContent = "Enable Notifications";
-    enableNotificationsButton.disabled = false;
+    if (permission === "granted") {
+      await showPhoneNotification("Cameron notifications enabled", {
+        body: "You will be notified when coins, rewards, and important logs change.",
+        tag: "notifications-enabled"
+      });
+    }
   }
 
   async function showPhoneNotification(title, options = {}) {
@@ -1029,17 +1718,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const registration = serviceWorkerRegistration || await navigator.serviceWorker.ready;
-
-      if (!registration || !registration.showNotification) {
-        return false;
-      }
-
       await registration.showNotification(title, {
         icon: "icon.png",
         badge: "icon-192.png",
+        vibrate: [120, 80, 120],
+        data: { url: "./index.html" },
         ...options
       });
-
       return true;
     } catch (error) {
       console.error(error);
@@ -1047,785 +1732,218 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  async function enableNotifications() {
-    if (!notificationSupported()) {
-      setupServiceWorker().finally(updateNotificationStatus);
-      return;
-    }
-
-    try {
-      const registration = await setupServiceWorker();
-
-      if (!registration) {
-        if (notificationStatus) {
-          notificationStatus.textContent = "Could not set up notifications. Refresh and try again.";
-        }
-
-        return;
+  function latestNotifyItem(data) {
+    return normalizeHistory(data.history).find(item => {
+      if (item.type === "coin" || item.type === "reward" || item.type === "prize") {
+        return true;
       }
 
-      const permission = await Notification.requestPermission();
-      setupServiceWorker().finally(updateNotificationStatus);
-
-      if (permission === "granted") {
-        await showPhoneNotification("Cameron notifications enabled", {
-          body: "You will be notified when coins are gained or lost.",
-          tag: "cameron-notifications-enabled",
-          renotify: true
-        });
-      }
-    } catch (error) {
-      console.error(error);
-
-      if (notificationStatus) {
-        notificationStatus.textContent = "Could not enable notifications. Check Chrome notification settings.";
-      }
-    }
-  }
-
-  function getNotificationId(item) {
-    return [
-      item.savedAt || "",
-      item.date || "",
-      item.text || "",
-      item.coinChange || 0,
-      item.coinsAfter ?? ""
-    ].join("|");
-  }
-
-  function getLatestCoinChangeItem(history = []) {
-    return history.find(item => {
-      const coinChange = Number(item?.coinChange) || 0;
-
-      if (coinChange === 0) {
-        return false;
-      }
-
-      // Do not send a "lost 1000 coins" notification after a prize is collected.
-      if (item.type === "prize-reset") {
-        return false;
-      }
-
-      return true;
+      return item.coinChange !== 0;
     });
   }
 
-  async function maybeSendCoinNotification(data) {
-    const latest = getLatestCoinChangeItem(data.history || []);
+  async function maybeSendLatestNotification(data) {
+    const item = latestNotifyItem(data);
 
-    if (!latest) {
+    if (!item) {
       return;
     }
 
-    const notificationId = getNotificationId(latest);
-    const lastNotificationId = localStorage.getItem(LAST_NOTIFICATION_KEY);
+    const id = `${item.id}|${item.savedAt}|${item.coinChange}|${item.coinsAfter}`;
+    const last = localStorage.getItem(LAST_NOTIFICATION_KEY);
 
     if (!notificationsReady) {
-      localStorage.setItem(LAST_NOTIFICATION_KEY, notificationId);
+      localStorage.setItem(LAST_NOTIFICATION_KEY, id);
       notificationsReady = true;
       return;
     }
 
-    if (notificationId === lastNotificationId) {
+    if (id === last) {
       return;
     }
 
-    localStorage.setItem(LAST_NOTIFICATION_KEY, notificationId);
-
-    if (!notificationSupported() || Notification.permission !== "granted") {
-      return;
-    }
-
-    const coinChange = Number(latest.coinChange) || 0;
-    const amount = Math.abs(coinChange);
-    const title = coinChange > 0
-      ? `Cameron gained ${amount} coins`
-      : `Cameron lost ${amount} coins`;
-
-    const body = `${latest.text || "Coin total changed"}. Total: ${latest.coinsAfter ?? 0}`;
-
-    await showPhoneNotification(title, {
-      body,
-      tag: "cameron-coin-change-" + notificationId,
-      renotify: true,
-      vibrate: [120, 80, 120],
-      data: {
-        url: "./index.html"
-      }
-    });
-  }
-
-  function getParentPin() {
-    return localStorage.getItem(PARENT_PIN_KEY) || DEFAULT_PARENT_PIN;
-  }
-
-  function updateLockDisplay() {
-    const lockStatus = document.getElementById("lockStatus");
-    const unlockControlsButton = document.getElementById("unlockControlsButton");
-    const lockControlsButton = document.getElementById("lockControlsButton");
-
-    if (lockStatus) {
-      lockStatus.textContent = parentUnlocked
-        ? "Parent controls unlocked"
-        : "Parent controls locked";
-
-      lockStatus.classList.toggle("unlocked", parentUnlocked);
-      lockStatus.classList.toggle("locked", !parentUnlocked);
-    }
-
-    if (unlockControlsButton) {
-      unlockControlsButton.disabled = parentUnlocked;
-    }
-
-    if (lockControlsButton) {
-      lockControlsButton.disabled = !parentUnlocked;
-    }
-
-    if (parentPageCard) {
-      parentPageCard.hidden = !parentUnlocked;
-    }
-
-    updateParentNotesDisplay(currentData);
-    updateRewardEditor(currentData);
-  }
-
-  function unlockParentControls(actionText = "use parent controls") {
-    if (parentUnlocked) {
-      return true;
-    }
-
-    const typedPin = prompt(`Parent PIN needed to ${actionText}.`);
-
-    if (typedPin === null) {
-      return false;
-    }
-
-    if (typedPin === getParentPin()) {
-      parentUnlocked = true;
-      updateLockDisplay();
-      return true;
-    }
-
-    alert("Wrong PIN. Parent controls stayed locked.");
-    updateLockDisplay();
-    return false;
-  }
-
-  function lockParentControls() {
-    parentUnlocked = false;
-    updateLockDisplay();
-  }
-
-  function manualUnlockParentControls() {
-    unlockParentControls("unlock parent controls");
-  }
-
-  function verifyParentPin(actionText) {
-    if (parentUnlocked) {
-      return true;
-    }
-
-    alert("Parent controls are locked. Press Unlock first.");
-    return false;
-  }
-
-  function changeParentPin() {
-    const currentPin = prompt("Enter current parent PIN.");
-
-    if (currentPin === null) {
-      return;
-    }
-
-    if (currentPin !== getParentPin()) {
-      alert("Wrong PIN. The PIN was not changed.");
-      return;
-    }
-
-    parentUnlocked = true;
-
-    const newPin = prompt("Enter a new parent PIN. Use 4 to 8 numbers.");
-
-    if (newPin === null) {
-      return;
-    }
-
-    if (!/^\d{4,8}$/.test(newPin)) {
-      alert("PIN not changed. Use 4 to 8 numbers only.");
-      return;
-    }
-
-    const repeatPin = prompt("Enter the new PIN again.");
-
-    if (repeatPin !== newPin) {
-      alert("PINs did not match. The PIN was not changed.");
-      return;
-    }
-
-    localStorage.setItem(PARENT_PIN_KEY, newPin);
-    parentUnlocked = true;
-    updateLockDisplay();
-    alert("Parent PIN changed on this phone.");
-  }
-
-  async function getLatestData() {
-    if (!isFirebaseReady || !appDoc) {
-      return normalizeData(currentData);
-    }
-
-    try {
-      const snapshot = await getDoc(appDoc);
-
-      if (snapshot.exists()) {
-        return normalizeData(snapshot.data());
-      }
-
-      return normalizeData(currentData);
-    } catch (error) {
-      console.error(error);
-      setSyncStatus("Sync read failed - using this phone", "error");
-      return normalizeData(currentData);
-    }
-  }
-
-  async function saveData(data) {
-    const cleanData = normalizeData(data);
-    currentData = cleanData;
-    saveLocalData(cleanData);
-    updateDisplay();
-
-    if (!isFirebaseReady || !appDoc) {
-      return;
-    }
-
-    try {
-      await setDoc(appDoc, {
-        ...cleanData,
-        lastUpdatedAt: new Date().toISOString(),
-        serverUpdatedAt: serverTimestamp()
-      }, { merge: true });
-    } catch (error) {
-      console.error(error);
-      setSyncStatus("Sync write failed - saved on this phone", "error");
-    }
-  }
-
-  function clampCoins(amount) {
-    return Math.max(0, Number(amount) || 0);
-  }
-
-  function addHistoryEntry(data, entry) {
-    data.history.unshift(entry);
-    data.history = data.history.slice(0, 250);
-  }
-
-  function getTodayEntry(data) {
-    const today = getToday();
-    return data.history.find(item => item.type === "day" && item.date === today);
-  }
-
-  function canMoveToColour(currentColour, newColour) {
-    if (currentColour === newColour) {
-      return true;
-    }
-
-    if (newColour === "green" && currentColour !== "amber") {
-      return false;
-    }
-
-    return true;
-  }
-
-  function showLockedGreenMessage() {
-    document.getElementById("message").textContent = "AMBER FIRST";
-    document.getElementById("subMessage").textContent = "Cameron needs to go amber before he can move up to green.";
-  }
-
-  function getCoinChangeForMove(currentColour, newColour) {
-    if (currentColour === "amber" && newColour === "green") {
-      return GREEN_REWARD;
-    }
-
-    if (currentColour !== "red" && newColour === "red") {
-      return RED_PENALTY;
-    }
-
-    return 0;
-  }
-
-  async function setDay(colour, options = {}) {
-    const today = getToday();
-    const todayISO = getDateISO();
-    const data = await getLatestData();
-
-    ensureTodayStartsAmberInData(data);
-
-    const existingToday = getTodayEntry(data);
-    const currentColour = existingToday?.colour || null;
-
-    if (!options.force && !canMoveToColour(currentColour, colour)) {
-      showLockedGreenMessage();
-      return;
-    }
-
-    const coinChange = options.automatic ? 0 : getCoinChangeForMove(currentColour, colour);
-
-    if (coinChange !== 0 && !verifyParentPin("change Cameron's coins")) {
-      return;
-    }
-
-    let streakChanged = false;
-
-    if (!options.automatic && colour === "green") {
-      streakChanged = updateStreakForGreen(data);
-    }
-
-    data.coinTotal = clampCoins(data.coinTotal + coinChange);
-
-    data.history = data.history.filter(item => !(item.type === "day" && item.date === today));
-
-    const previousDailyMoves = Array.isArray(existingToday?.moves) ? existingToday.moves : [];
-    const newMove = {
-      from: currentColour || "none",
-      to: colour,
-      coinChange,
-      time: new Date().toISOString()
-    };
-
-    addHistoryEntry(data, {
-      type: "day",
-      date: today,
-      dateISO: todayISO,
-      colour,
-      text: messages[colour].main,
-      emoji: messages[colour].emoji,
-      coinChange: (Number(existingToday?.coinChange) || 0) + coinChange,
-      lastMoveCoinChange: coinChange,
-      coinsAfter: data.coinTotal,
-      moves: [...previousDailyMoves, newMove],
-      streakAfter: getVisibleStreak(data.streak),
-      streakChanged,
-      automatic: options.automatic || false,
-      savedAt: new Date().toISOString()
-    });
-
-    if (data.coinTotal >= GOAL) {
-      activateCelebration(data);
-    }
-
-    await saveData(data);
-  }
-
-  function ensureTodayStartsAmberInData(data) {
-    const today = getToday();
-    const todayISO = getDateISO();
-    const existingToday = data.history.find(item => item.type === "day" && item.date === today);
-
-    if (existingToday) {
-      return false;
-    }
-
-    addHistoryEntry(data, {
-      type: "day",
-      date: today,
-      dateISO: todayISO,
-      colour: "amber",
-      text: messages.amber.main,
-      emoji: messages.amber.emoji,
-      coinChange: 0,
-      lastMoveCoinChange: 0,
-      coinsAfter: data.coinTotal,
-      moves: [
-        {
-          from: "new day",
-          to: "amber",
-          coinChange: 0,
-          time: new Date().toISOString()
-        }
-      ],
-      automatic: true,
-      savedAt: new Date().toISOString()
-    });
-
-    return true;
-  }
-
-  async function ensureTodayStartsAmber() {
-    const data = await getLatestData();
-    const changed = ensureTodayStartsAmberInData(data);
-
-    if (changed) {
-      await saveData(data);
-    } else {
-      currentData = data;
-      saveLocalData(data);
-      updateDisplay();
-    }
-  }
-
-  function scheduleMidnightAmberReset() {
-    const now = new Date();
-    const midnight = new Date(now);
-    midnight.setDate(now.getDate() + 1);
-    midnight.setHours(0, 0, 0, 0);
-
-    const msUntilMidnight = midnight.getTime() - now.getTime();
-
-    setTimeout(async () => {
-      await ensureTodayStartsAmber();
-      scheduleMidnightAmberReset();
-    }, msUntilMidnight + 1000);
-  }
-
-  async function resetToday() {
-    if (!verifyParentPin("reset today")) {
-      return;
-    }
-
-    const today = getToday();
-    const todayISO = getDateISO();
-    const data = await getLatestData();
-
-    const existingToday = getTodayEntry(data);
-    const oldNetCoinChange = Number(existingToday?.coinChange) || 0;
-
-    data.coinTotal = clampCoins(data.coinTotal - oldNetCoinChange);
-    data.history = data.history.filter(item => !(item.type === "day" && item.date === today));
-
-    addHistoryEntry(data, {
-      type: "day",
-      date: today,
-      dateISO: todayISO,
-      colour: "amber",
-      text: messages.amber.main,
-      emoji: messages.amber.emoji,
-      coinChange: 0,
-      lastMoveCoinChange: -oldNetCoinChange,
-      coinsAfter: data.coinTotal,
-      moves: [
-        {
-          from: existingToday?.colour || "none",
-          to: "amber",
-          coinChange: -oldNetCoinChange,
-          time: new Date().toISOString()
-        }
-      ],
-      automatic: false,
-      savedAt: new Date().toISOString()
-    });
-
-    recalculateStreak(data);
-    await saveData(data);
-  }
-
-  async function adjustCoins(amount, reason) {
-    if (!verifyParentPin("change Cameron's coins")) {
-      return;
-    }
-
-    const data = await getLatestData();
-
-    const oldTotal = data.coinTotal;
-    data.coinTotal = clampCoins(data.coinTotal + amount);
-    const actualChange = data.coinTotal - oldTotal;
-
-    addHistoryEntry(data, {
-      type: "coins",
-      date: getToday(),
-      dateISO: getDateISO(),
-      text: reason,
-      emoji: actualChange >= 0 ? "🪙" : "➖",
-      coinChange: actualChange,
-      lastMoveCoinChange: actualChange,
-      coinsAfter: data.coinTotal,
-      savedAt: new Date().toISOString()
-    });
-
-    if (data.coinTotal >= GOAL) {
-      activateCelebration(data);
-    }
-
-    await saveData(data);
-  }
-
-  async function resetCoins() {
-    if (!verifyParentPin("reset Cameron's coins")) {
-      return;
-    }
-
-    const confirmed = confirm("Reset Cameron's coins to 0?");
-
-    if (!confirmed) {
-      return;
-    }
-
-    const data = await getLatestData();
-
-    const oldTotal = data.coinTotal;
-    data.coinTotal = 0;
-
-    addHistoryEntry(data, {
-      type: "coins",
-      date: getToday(),
-      dateISO: getDateISO(),
-      text: "Coin total reset",
-      emoji: "🔄",
-      coinChange: -oldTotal,
-      lastMoveCoinChange: -oldTotal,
-      coinsAfter: 0,
-      savedAt: new Date().toISOString()
-    });
-
-    await saveData(data);
-  }
-
-  async function clearHistory() {
-    if (!verifyParentPin("clear history")) {
-      return;
-    }
-
-    const confirmed = confirm("Clear the saved history? Coin total will stay the same.");
-
-    if (!confirmed) {
-      return;
-    }
-
-    const data = await getLatestData();
-    data.history = [];
-
-    ensureTodayStartsAmberInData(data);
-    recalculateStreak(data);
-    await saveData(data);
-  }
-
-  function updateDisplay() {
-    const data = normalizeData(currentData);
-    const todayEntry = getTodayEntry(data);
-
-    document.querySelectorAll(".light").forEach(light => {
-      light.classList.remove("active");
-    });
-
-    if (todayEntry) {
-      const activeLight = document.querySelector("." + todayEntry.colour);
-
-      if (activeLight) {
-        activeLight.classList.add("active");
-      }
-
-      document.getElementById("message").textContent = messages[todayEntry.colour].main;
-
-      if (todayEntry.lastMoveCoinChange === GREEN_REWARD) {
-        const visibleStreak = getVisibleStreak(data.streak);
-        document.getElementById("subMessage").textContent = `Amber to green. 50 coins earned. Streak: ${visibleStreak} day${visibleStreak === 1 ? "" : "s"}.`;
-      } else if (todayEntry.lastMoveCoinChange === RED_PENALTY) {
-        document.getElementById("subMessage").textContent = "Moved onto red. 50 coins lost.";
-      } else if (todayEntry.colour === "green") {
-        document.getElementById("subMessage").textContent = "Already green. No extra coins added.";
-      } else {
-        document.getElementById("subMessage").textContent = messages[todayEntry.colour].sub;
-      }
-    } else {
-      document.getElementById("message").textContent = "AMBER START";
-      document.getElementById("subMessage").textContent = "Each new day starts on amber.";
-    }
-
-    coinTotalTop.textContent = data.coinTotal;
-    coinTotalMain.textContent = data.coinTotal;
-
-    const progress = Math.min(100, (data.coinTotal / GOAL) * 100);
-    coinProgress.style.width = `${progress}%`;
-
-    if (progressCharacter) {
-      const characterProgress = Math.min(90, progress);
-      progressCharacter.style.left = `${characterProgress}%`;
-    }
-
-    maybeStartCelebration(data);
-
-    updateStreakDisplay(data);
-    updateHistoryList(data.history);
-    updateParentNotesDisplay(data);
-    updateRewardsList(data);
-    updateRewardEditor(data);
-    maybeSendCoinNotification(data).catch(error => console.error(error));
-  }
-
-  function updateStreakDisplay(data) {
-    if (!streakCount || !bestStreak || !streakMessage) {
-      return;
-    }
-
-    const visibleStreak = getVisibleStreak(data.streak);
-    const todayISO = getDateISO();
-
-    streakCount.textContent = visibleStreak;
-    bestStreak.textContent = Math.max(Number(data.streak.best) || 0, visibleStreak);
-
-    if (data.streak.lastGreenDateISO === todayISO) {
-      streakMessage.textContent = "Green reached today. The streak is safe.";
-    } else if (visibleStreak > 0) {
-      streakMessage.textContent = "Reach green today to keep the streak going.";
-    } else {
-      streakMessage.textContent = "Reach green today to start a streak.";
-    }
-  }
-
-  function formatCoinChange(value) {
-    if (!value) {
-      return "0 coins";
-    }
-
-    return value > 0 ? `+${value} coins` : `${value} coins`;
-  }
-
-  function updateHistoryList(history) {
-    const historyList = document.getElementById("historyList");
-    historyList.innerHTML = "";
-
-    if (!history || history.length === 0) {
-      historyList.innerHTML = "<p class='empty-history'>No saved history yet.</p>";
-      return;
-    }
-
-    history.forEach(item => {
-      const div = document.createElement("div");
-      div.className = "history-item";
-
-      const coinText = formatCoinChange(item.coinChange);
-      const totalText = `Total: ${item.coinsAfter ?? 0}`;
-      const streakText = item.streakAfter ? ` - Streak: ${item.streakAfter}` : "";
-      const autoText = item.automatic ? " - auto" : "";
-
-      div.textContent = `${item.emoji || ""} ${item.date} - ${item.text}${autoText} - ${coinText} - ${totalText}${streakText}`;
-
-      historyList.appendChild(div);
-    });
-  }
-
-  function connectButtons() {
-    redLight.addEventListener("click", () => setDay("red"));
-    amberLight.addEventListener("click", () => setDay("amber"));
-    greenLight.addEventListener("click", () => setDay("green"));
-
-    redLabel.addEventListener("click", () => setDay("red"));
-    amberLabel.addEventListener("click", () => setDay("amber"));
-    greenLabel.addEventListener("click", () => setDay("green"));
-
-    deduct10Button.addEventListener("click", () => adjustCoins(-10, "10 coins deducted"));
-    deduct50Button.addEventListener("click", () => adjustCoins(-50, "50 coins deducted"));
-    add10Button.addEventListener("click", () => adjustCoins(10, "10 coins added manually"));
-    add50Button.addEventListener("click", () => adjustCoins(50, "50 coins added manually"));
-    resetCoinsButton.addEventListener("click", resetCoins);
-
-    if (unlockControlsButton) {
-      unlockControlsButton.addEventListener("click", manualUnlockParentControls);
-    }
-
-    if (lockControlsButton) {
-      lockControlsButton.addEventListener("click", lockParentControls);
-    }
-
-    changePinButton.addEventListener("click", changeParentPin);
-
-    if (enableNotificationsButton) {
-      enableNotificationsButton.addEventListener("click", enableNotifications);
-    }
-
-    if (addParentNoteButton) {
-      addParentNoteButton.addEventListener("click", addParentNote);
-    }
-
-    if (addRewardButton) {
-      addRewardButton.addEventListener("click", addReward);
-    }
-
-    if (noteAuthor) {
-      noteAuthor.addEventListener("input", saveNoteAuthorName);
-    }
-
-    if (collectPrizeButton) {
-      collectPrizeButton.addEventListener("click", () => {
-        const celebrationId = currentData?.celebration?.id || currentCelebrationId;
-
-        if (!celebrationId) {
-          return;
-        }
-
-        finishCelebration(celebrationId);
+    localStorage.setItem(LAST_NOTIFICATION_KEY, id);
+
+    if (item.coinChange !== 0) {
+      const amount = Math.abs(item.coinChange);
+      const title = item.coinChange > 0
+        ? `Cameron gained ${amount} coins`
+        : `Cameron lost ${amount} coins`;
+
+      await showPhoneNotification(title, {
+        body: `${item.text}. Total: ${item.coinsAfter}`,
+        tag: `coin-${item.id}`
       });
     }
-
-    resetTodayButton.addEventListener("click", resetToday);
-    clearHistoryButton.addEventListener("click", clearHistory);
   }
 
-  async function startFirebaseSync() {
-    if (!firebaseIsConfigured()) {
-      isFirebaseReady = false;
-      setSyncStatus("Set up Firebase to sync phones", "offline");
-      await ensureTodayStartsAmber();
+  async function createAccount() {
+    try {
+      const email = elements.authEmailInput.value.trim();
+      const password = elements.authPasswordInput.value;
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  async function signInParent() {
+    try {
+      const email = elements.authEmailInput.value.trim();
+      const password = elements.authPasswordInput.value;
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  async function signOutParent() {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  async function addThisParent() {
+    if (!currentUser?.uid) {
+      alert("Sign in first.");
       return;
     }
 
+    if (!verifyParentPin("add this signed-in parent")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.memberUids = {
+      ...(data.memberUids || {}),
+      [currentUser.uid]: true
+    };
+
+    await saveData(data);
+    alert("This signed-in parent has been added to the family record.");
+  }
+
+  function updateAuthStatus() {
+    if (!elements.authStatus) {
+      return;
+    }
+
+    elements.authStatus.textContent = currentUser
+      ? `Signed in as ${currentUser.email || currentUser.uid}`
+      : "Not signed in.";
+  }
+
+  async function initFirebase() {
     try {
-      const app = initializeApp(firebaseConfig);
+      app = initializeApp(firebaseConfig);
       db = getFirestore(app);
+      auth = getAuth(app);
+
+      enableIndexedDbPersistence(db).catch(() => {
+        // Fine to ignore if another tab already has persistence.
+      });
+
       appDoc = doc(db, "families", FAMILY_RECORD_ID);
-      isFirebaseReady = true;
 
-      setSyncStatus("Sync connected", "online");
+      onAuthStateChanged(auth, user => {
+        currentUser = user;
+        updateAuthStatus();
+      });
 
-      const snapshot = await getDoc(appDoc);
-
-      if (!snapshot.exists()) {
-        const data = getLocalData();
-        ensureTodayStartsAmberInData(data);
-        await setDoc(appDoc, {
-          ...data,
-          lastUpdatedAt: new Date().toISOString(),
-          serverUpdatedAt: serverTimestamp()
-        }, { merge: true });
-      }
-
-      onSnapshot(
-        appDoc,
-        snapshot => {
-          if (snapshot.exists()) {
-            currentData = normalizeData(snapshot.data());
-            saveLocalData(currentData);
-            updateDisplay();
-            setSyncStatus("Sync connected", "online");
-          }
-        },
-        error => {
-          console.error(error);
-          setSyncStatus("Sync error - using this phone", "error");
-          currentData = getLocalData();
+      unsubscribeSnapshot = onSnapshot(appDoc, snapshot => {
+        if (snapshot.exists()) {
+          currentData = applyDailyReset(normalizeData(snapshot.data()));
+          storeLocalData(currentData);
+          setSyncStatus(navigator.onLine ? "Sync connected" : "Saved offline", navigator.onLine ? "online" : "offline");
           updateDisplay();
+        } else {
+          saveData(currentData);
         }
-      );
-
-      await ensureTodayStartsAmber();
+      }, error => {
+        console.error(error);
+        setSyncStatus("Sync failed - local mode", "error");
+      });
     } catch (error) {
       console.error(error);
-      isFirebaseReady = false;
-      setSyncStatus("Sync failed - check Firebase config", "error");
-      await ensureTodayStartsAmber();
+      setSyncStatus("Local mode", "offline");
     }
   }
 
-  try {
-    parentUnlocked = false;
-    loadSavedNoteAuthor();
-    setTreatTheme(getCurrentTheme());
-    updateDisplay();
-    updateLockDisplay();
-    setupServiceWorker().finally(updateNotificationStatus);
-    connectButtons();
-    startFirebaseSync();
-    scheduleMidnightAmberReset();
-  } catch (error) {
-    console.error(error);
-    alert("Button error - check script.js upload");
+  function connectEvents() {
+    document.querySelectorAll(".nav-button").forEach(button => {
+      button.addEventListener("click", () => switchPage(button.dataset.page));
+    });
+
+    elements.headerUnlockButton.addEventListener("click", () => {
+      if (parentUnlocked) {
+        parentUnlocked = false;
+      } else {
+        verifyParentPin("unlock parent controls");
+      }
+
+      updateParentLockDisplay();
+    });
+
+    elements.parentPageUnlockButton.addEventListener("click", () => verifyParentPin("unlock parent page"));
+    elements.settingsUnlockButton.addEventListener("click", () => verifyParentPin("unlock settings"));
+
+    elements.themeSelect.addEventListener("change", event => setTheme(event.target.value));
+
+    elements.deduct5Button.addEventListener("click", () => adjustCoins(-5));
+    elements.deduct10Button.addEventListener("click", () => adjustCoins(-10));
+    elements.deduct50Button.addEventListener("click", () => adjustCoins(-50));
+    elements.add5Button.addEventListener("click", () => adjustCoins(5));
+    elements.add10Button.addEventListener("click", () => adjustCoins(10));
+    elements.add50Button.addEventListener("click", () => adjustCoins(50));
+
+    elements.redLight.addEventListener("click", () => setLevel("red"));
+    elements.amberLight.addEventListener("click", () => setLevel("amber"));
+    elements.greenLight.addEventListener("click", () => setLevel("green"));
+    elements.redLabel.addEventListener("click", () => setLevel("red"));
+    elements.amberLabel.addEventListener("click", () => setLevel("amber"));
+    elements.greenLabel.addEventListener("click", () => setLevel("green"));
+
+    elements.resetTodayButton.addEventListener("click", resetToday);
+    elements.collectPrizeButton.addEventListener("click", collectPrize);
+
+    elements.enableNotificationsButton.addEventListener("click", enableNotifications);
+    elements.settingsEnableNotificationsButton.addEventListener("click", enableNotifications);
+
+    elements.addParentNoteButton.addEventListener("click", addOrUpdateNote);
+    elements.noteAuthor.value = localStorage.getItem(NOTE_AUTHOR_KEY) || "";
+    elements.noteAuthor.addEventListener("input", () => localStorage.setItem(NOTE_AUTHOR_KEY, elements.noteAuthor.value.trim()));
+    elements.noteFilterSelect.addEventListener("change", updateParentNotes);
+
+    elements.addRewardButton.addEventListener("click", addReward);
+
+    elements.addCategoryButton.addEventListener("click", addCategory);
+
+    elements.historyFilterSelect.addEventListener("change", updateHistory);
+    elements.clearHistoryButton.addEventListener("click", clearHistory);
+
+    elements.copyWeeklyReportButton.addEventListener("click", copyWeeklyReport);
+
+    elements.saveCoinSettingsButton.addEventListener("click", saveCoinSettings);
+    elements.changePinButton.addEventListener("click", changePin);
+
+    elements.createAccountButton.addEventListener("click", createAccount);
+    elements.signInButton.addEventListener("click", signInParent);
+    elements.signOutButton.addEventListener("click", signOutParent);
+    elements.addThisParentButton.addEventListener("click", addThisParent);
+
+    elements.exportDataButton.addEventListener("click", exportData);
+    elements.resetCoinsButton.addEventListener("click", resetCoins);
+    elements.clearAllDataButton.addEventListener("click", clearAllData);
+
+    window.addEventListener("online", () => setSyncStatus("Back online", "online"));
+    window.addEventListener("offline", () => setSyncStatus("Offline - saved on phone", "offline"));
   }
+
+  setTheme(getCurrentTheme());
+  connectEvents();
+  setupServiceWorker().finally(updateNotificationStatus);
+  updateDisplay();
+  initFirebase();
 });
