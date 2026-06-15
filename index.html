@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="mario">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=13" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -20,9 +20,11 @@
     <header class="hero">
       <div class="cloud cloud-one"></div>
       <div class="cloud cloud-two"></div>
+      <div class="star-field star-one"></div>
+      <div class="star-field star-two"></div>
 
       <div class="score-bar">
-        <span>⭐ CAMERON</span>
+        <span id="themeHeaderIcon">⭐ CAMERON</span>
         <span>🪙 <span id="coinTotalTop">0</span></span>
         <span>GOAL 1000</span>
       </div>
@@ -31,20 +33,49 @@
 
       <h1>Cameron</h1>
 
+      <section class="theme-switcher" aria-label="Theme selector">
+        <label for="themeSelect">Theme</label>
+        <select id="themeSelect">
+          <option value="mario">Mario / Retro</option>
+          <option value="space">Spaceman & Rocket</option>
+          <option value="minecraft">Minecraft Blocks</option>
+        </select>
+      </section>
+
       <div class="power-row">
         <div class="question-block">?</div>
         <div class="coin-art"></div>
         <div class="brick-block"></div>
+
+        <div class="rocket-art">
+          <div class="rocket-window"></div>
+          <div class="rocket-fin left"></div>
+          <div class="rocket-fin right"></div>
+          <div class="rocket-flame"></div>
+        </div>
+
         <div class="mushroom-art">
           <div class="mushroom-cap"></div>
           <div class="mushroom-face"></div>
         </div>
+
+        <div class="astronaut-helmet">
+          <div class="helmet-visor"></div>
+        </div>
+
+        <div class="minecraft-character">
+          <div class="mc-head"></div>
+          <div class="mc-body"></div>
+        </div>
+
+        <div class="minecraft-block grass-block"></div>
+
         <div class="question-block">?</div>
       </div>
     </header>
 
     <section class="coin-card">
-      <div class="coin-title">COIN BANK</div>
+      <div class="coin-title" id="coinTitle">COIN BANK</div>
       <p class="sync-status" id="syncStatus">Sync loading...</p>
 
       <div class="coin-count">
@@ -55,7 +86,7 @@
         <div class="progress-inner" id="coinProgress"></div>
       </div>
 
-      <p class="coin-help">
+      <p class="coin-help" id="coinHelp">
         Synced between phones when Firebase is connected.
       </p>
 
@@ -69,14 +100,16 @@
 
     <section class="treat-card" id="treatCard">
       <div class="treat-box" id="treatBox">
-        <div class="box-lid">?</div>
+        <div class="box-lid" id="treatBoxIcon">?</div>
         <div class="special-treat-text" id="specialTreatText">SPECIAL TREAT!</div>
       </div>
-      <p class="treat-subtitle">1000 coins reached!</p>
+      <p class="treat-subtitle" id="treatSubtitle">1000 coins reached!</p>
     </section>
 
     <section class="traffic-section">
       <div class="pipe-top"></div>
+      <div class="rocket-pad-top"></div>
+      <div class="minecraft-topper"></div>
 
       <section class="traffic-light" aria-label="Behaviour traffic light">
         <button type="button" class="light red" id="redLight" aria-label="Red: oops level">
@@ -93,6 +126,8 @@
       </section>
 
       <div class="pipe-stem"></div>
+      <div class="rocket-pad-stem"></div>
+      <div class="minecraft-stem"></div>
 
       <div class="level-labels">
         <button type="button" class="level-card red-card" id="redLabel">
@@ -102,18 +137,18 @@
 
         <button type="button" class="level-card amber-card" id="amberLabel">
           <strong>AMBER</strong>
-          <span>Trying level</span>
+          <span id="amberLabelText">Trying level</span>
         </button>
 
         <button type="button" class="level-card green-card" id="greenLabel">
           <strong>GREEN</strong>
-          <span>+50 coins</span>
+          <span id="greenLabelText">+50 coins</span>
         </button>
       </div>
     </section>
 
     <section class="today-card">
-      <div class="today-title">TODAY'S LEVEL</div>
+      <div class="today-title" id="todayTitle">TODAY'S LEVEL</div>
       <div class="message" id="message">Tap a light to choose today</div>
       <div class="sub-message" id="subMessage">Every day is a new level.</div>
 
@@ -124,7 +159,7 @@
 
     <section class="history">
       <div class="history-header">
-        <h2>LEVEL HISTORY</h2>
+        <h2 id="historyTitle">LEVEL HISTORY</h2>
         <button type="button" id="clearHistoryButton">Clear History</button>
       </div>
 
@@ -134,9 +169,14 @@
     <footer class="ground" aria-hidden="true">
       <div class="grass"></div>
       <div class="dirt"></div>
+      <div class="moon-top"></div>
+      <div class="moon-base"></div>
+      <div class="mc-grass"></div>
+      <div class="mc-dirt"></div>
     </footer>
   </main>
 
   <script src="script.js?v=11" type="module"></script>
+  <script src="theme.js?v=1"></script>
 </body>
 </html>
