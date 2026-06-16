@@ -1276,7 +1276,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const latestFeeling = normalizeFeelingLogs(currentData.feelingLogs)[0];
 
     if (latestFeeling && latestFeeling.dateISO === getDateISO()) {
-      elements.childNextReward.textContent = `Today you feel ${latestFeeling.emoji} ${latestFeeling.label}`;
+      elements.childNextReward.innerHTML = `
+        <span class="child-feeling-text">Today I feel</span>
+        <span class="child-feeling-face feeling-${latestFeeling.colour}" aria-label="${latestFeeling.label}">
+          <span>${latestFeeling.emoji}</span>
+        </span>
+      `;
       return;
     }
 

@@ -2706,3 +2706,64 @@ body.child-mode .power-row {
     padding: 10px 6px;
   }
 }
+
+
+/* CHILD HOME CLEANUP */
+
+.streak-card {
+  display: none !important;
+}
+
+body.child-mode .child-today-card .child-status-row,
+body.child-mode .child-today-card .child-status-row-single {
+  display: none !important;
+}
+
+body.child-mode .child-today-card {
+  padding-bottom: 20px;
+}
+
+.child-feeling-text {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.child-feeling-face {
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto;
+  border: 5px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  border-radius: 50%;
+}
+
+.child-feeling-face span {
+  display: grid;
+  place-items: center;
+  font-size: 54px;
+  line-height: 1;
+}
+
+.child-next-reward:has(.child-feeling-face) {
+  display: block;
+  padding: 16px;
+}
+
+html[data-theme="space"] .child-feeling-face {
+  color: var(--outline);
+}
+
+@media (max-width: 390px) {
+  .child-feeling-face {
+    width: 82px;
+    height: 82px;
+  }
+
+  .child-feeling-face span {
+    font-size: 48px;
+  }
+}
