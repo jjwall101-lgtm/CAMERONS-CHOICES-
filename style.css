@@ -2516,3 +2516,43 @@ body.child-mode .family-calendar-day.selected {
   outline: 5px solid var(--theme-accent);
   outline-offset: -7px;
 }
+
+
+/* CALENDAR DESCRIPTION CHANGE FIX */
+
+.family-calendar-details {
+  min-height: 112px;
+}
+
+.selected-calendar-detail {
+  animation: calendarDetailChange 0.18s ease-out;
+}
+
+.calendar-selected-description {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border: 3px solid var(--outline);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.72);
+  font-weight: 850;
+}
+
+html[data-theme="space"] .calendar-selected-description {
+  background: #0b0f3e;
+}
+
+.family-calendar-day.selected .calendar-person {
+  background: var(--theme-accent);
+  color: var(--theme-dark);
+}
+
+@keyframes calendarDetailChange {
+  from {
+    opacity: 0.35;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

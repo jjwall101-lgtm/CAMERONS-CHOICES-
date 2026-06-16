@@ -1403,21 +1403,40 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function selectCalendarDay(dateISO) {
-    if (!dateISO) {
-      dateISO = getDateISO();
+  function buildCalendarDetailHtml(dateISO, entry) {
+    const date = new Date(`${dateISO}T12:00:00`);
+    const dateTitle = formatCalendarDate(date);
+
+    if (entry) {
+      const safeWho = escapeAttr(entry.who);
+      const safeIcon = escapeAttr(entry.icon);
+      const safeNote = entry.note ? escapeAttr(entry.note) : "No description added for this day.";
+
+      return `
+        <div class="calendar-detail-main selected-calendar-detail" data-selected-date="${dateISO}">
+          <div class="calendar-detail-icon">${safeIcon}</div>
+          <div>
+            <strong>${dateTitle}</strong>
+            <span>Cameron is with ${safeWho}</span>
+            <p class="calendar-selected-description"><b>Description:</b> ${safeNote}</p>
+          </div>
+        </div>
+      `;
     }
 
-    selectedCalendarDate = dateISO;
+    return `
+      <div class="calendar-detail-main selected-calendar-detail" data-selected-date="${dateISO}">
+        <div class="calendar-detail-icon">📅</div>
+        <div>
+          <strong>${dateTitle}</strong>
+          <span>No plan has been added for this day yet.</span>
+          <p class="calendar-selected-description"><b>Description:</b> ${parentUnlocked ? "Use the editor below to add who Cameron is with and what is happening." : "Nothing has been added for Cameron to see yet."}</p>
+        </div>
+      </div>
+    `;
+  }
 
-    const entry = getCalendarEntry(dateISO);
-    const date = new Date(`${dateISO}T12:00:00`);
-
-    document.querySelectorAll(".family-calendar-day").forEach(dayButton => {
-      dayButton.classList.toggle("selected", dayButton.dataset.date === dateISO);
-      dayButton.setAttribute("aria-pressed", dayButton.dataset.date === dateISO ? "true" : "false");
-    });
-
+  function updateCalendarEditorFields(dateISO, entry) {
     if (elements.calendarDateInput) {
       elements.calendarDateInput.value = dateISO;
     }
@@ -1433,33 +1452,28 @@ document.addEventListener("DOMContentLoaded", () => {
     if (elements.calendarNoteInput) {
       elements.calendarNoteInput.value = entry?.note || "";
     }
+  }
 
-    if (!elements.calendarDayDetails) {
-      return;
+  function selectCalendarDay(dateISO) {
+    if (!dateISO) {
+      dateISO = getDateISO();
     }
 
-    if (entry) {
-      elements.calendarDayDetails.innerHTML = `
-        <div class="calendar-detail-main">
-          <div class="calendar-detail-icon">${entry.icon}</div>
-          <div>
-            <strong>${formatCalendarDate(date)}</strong>
-            <span>Cameron is with ${entry.who}</span>
-            ${entry.note ? `<p>${entry.note}</p>` : ""}
-          </div>
-        </div>
-      `;
-    } else {
-      elements.calendarDayDetails.innerHTML = `
-        <div class="calendar-detail-main">
-          <div class="calendar-detail-icon">📅</div>
-          <div>
-            <strong>${formatCalendarDate(date)}</strong>
-            <span>No plan has been added for this day yet.</span>
-            ${parentUnlocked ? "<p>Use the editor below to add who Cameron is with.</p>" : ""}
-          </div>
-        </div>
-      `;
+    selectedCalendarDate = dateISO;
+
+    const entry = getCalendarEntry(dateISO);
+
+    document.querySelectorAll(".family-calendar-day").forEach(dayButton => {
+      const isSelected = dayButton.dataset.date === dateISO;
+      dayButton.classList.toggle("selected", isSelected);
+      dayButton.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    });
+
+    updateCalendarEditorFields(dateISO, entry);
+
+    if (elements.calendarDayDetails) {
+      elements.calendarDayDetails.innerHTML = buildCalendarDetailHtml(dateISO, entry);
+      elements.calendarDayDetails.dataset.selectedDate = dateISO;
     }
   }
 
@@ -1527,10 +1541,14 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
 
-      button.addEventListener("click", event => {
+      const chooseCalendarDay = event => {
         event.preventDefault();
+        selectedCalendarDate = dateISO;
         selectCalendarDay(dateISO);
-      });
+      };
+
+      button.addEventListener("click", chooseCalendarDay);
+      button.addEventListener("pointerup", chooseCalendarDay);
       grid.appendChild(button);
     }
 
