@@ -2235,3 +2235,243 @@ html[data-theme="space"] .pin-pad-actions button:last-child {
   background: var(--theme-accent);
   color: #020316;
 }
+
+
+/* FAMILY READ-ONLY CALENDAR UPDATE */
+
+.parent-mode-only {
+  display: none !important;
+}
+
+body.parent-mode .parent-mode-only {
+  display: block !important;
+}
+
+body.child-mode .nav-button[data-page="calendar"] {
+  display: block;
+}
+
+body.child-mode .app-nav {
+  grid-template-columns: repeat(4, 1fr);
+  max-width: 500px;
+}
+
+.family-calendar-card {
+  text-align: center;
+}
+
+.family-today-card {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin: 14px 0;
+  padding: 14px;
+  border: 4px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  border-radius: 22px;
+  background: rgba(255,255,255,0.78);
+  text-align: left;
+}
+
+html[data-theme="space"] .family-today-card {
+  background: #10103e;
+}
+
+.family-today-icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border: 4px solid var(--outline);
+  border-radius: 50%;
+  background: white;
+  font-size: 34px;
+  box-shadow: 3px 3px 0 var(--outline);
+}
+
+.family-today-card strong,
+.family-today-card span,
+.family-today-card p {
+  display: block;
+  font-weight: 900;
+}
+
+.family-today-card p {
+  margin: 5px 0 0;
+  font-size: 13px;
+}
+
+.family-calendar-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.family-calendar-day {
+  min-height: 136px;
+  padding: 9px 7px;
+  border-radius: 22px;
+  text-align: center;
+  background: rgba(255,255,255,0.76);
+}
+
+.family-calendar-day.today {
+  outline: 5px solid var(--theme-accent);
+  outline-offset: -9px;
+}
+
+.family-calendar-day.has-plan {
+  background: #dcffd7;
+}
+
+html[data-theme="space"] .family-calendar-day {
+  background: #10103e;
+  color: white;
+}
+
+html[data-theme="space"] .family-calendar-day.has-plan {
+  background: #174d39;
+}
+
+.family-calendar-day strong {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.calendar-weekday,
+.calendar-month {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.calendar-person {
+  margin-top: 8px;
+  padding: 8px 6px;
+  border: 3px solid var(--outline);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.8);
+}
+
+html[data-theme="space"] .calendar-person {
+  background: #0b0f3e;
+}
+
+.calendar-person-icon {
+  display: block;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.calendar-person-name {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1.15;
+}
+
+.family-calendar-details {
+  text-align: left;
+}
+
+.calendar-detail-main {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.calendar-detail-icon {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border: 4px solid var(--outline);
+  border-radius: 50%;
+  background: white;
+  color: var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  font-size: 34px;
+}
+
+.calendar-detail-main strong,
+.calendar-detail-main span {
+  display: block;
+  font-weight: 950;
+}
+
+.calendar-detail-main p {
+  margin: 6px 0 0;
+  font-weight: 800;
+}
+
+.calendar-editor {
+  margin-top: 16px;
+  padding: 14px;
+  border: 4px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  border-radius: 22px;
+  background: rgba(255,255,255,0.68);
+  text-align: left;
+}
+
+html[data-theme="space"] .calendar-editor {
+  background: #10103e;
+}
+
+.calendar-editor-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.calendar-editor-buttons button {
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  border-radius: 14px;
+  background: var(--theme-accent);
+  color: var(--theme-dark);
+  padding: 12px 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#deleteCalendarEntryButton {
+  background: #ffb2b0;
+  color: var(--outline);
+}
+
+.calendar-editor-buttons button:active {
+  transform: translateY(3px);
+  box-shadow: 1px 1px 0 var(--outline);
+}
+
+body.child-mode .calendar-editor {
+  display: none !important;
+}
+
+body.child-mode .family-calendar-day {
+  min-height: 144px;
+}
+
+@media (min-width: 520px) {
+  .family-calendar-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 390px) {
+  body.child-mode .app-nav {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 340px;
+  }
+
+  .family-calendar-grid {
+    gap: 8px;
+  }
+
+  .family-calendar-day {
+    min-height: 128px;
+  }
+}

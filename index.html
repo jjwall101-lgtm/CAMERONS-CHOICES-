@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=34" />
+  <link rel="stylesheet" href="style.css?v=35" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -359,6 +359,7 @@
           <option value="level">Levels</option>
           <option value="reward">Rewards</option>
           <option value="feeling">Feelings</option>
+          <option value="calendar">Calendar</option>
           <option value="note">Notes</option>
         </select>
 
@@ -393,22 +394,52 @@
 
 
     <section class="page" id="page-calendar">
-      <section class="calendar-card">
-        <div class="section-title">CALENDAR</div>
-        <p class="calendar-subtitle">Tap a day to see notes and logs.</p>
+      <section class="calendar-card family-calendar-card">
+        <div class="section-title">CAMERON'S CALENDAR</div>
+        <p class="calendar-subtitle">Tap a day to see who Cameron is with.</p>
 
-        <div class="calendar-key">
-          <span><b class="key-green"></b>Green</span>
-          <span><b class="key-amber"></b>Amber</span>
-          <span><b class="key-red"></b>Red</span>
-          <span><b class="key-blank"></b>No log</span>
+        <div class="family-today-card" id="familyTodayCard">
+          Loading Cameron's day...
         </div>
 
-        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="calendar-grid family-calendar-grid" id="calendarGrid"></div>
 
-        <div class="calendar-day-details" id="calendarDayDetails">
+        <div class="calendar-day-details family-calendar-details" id="calendarDayDetails">
           Select a day to view details.
         </div>
+
+        <section class="calendar-editor parent-mode-only" id="calendarEditor">
+          <div class="panel-title">Edit Cameron's Calendar</div>
+          <p class="small-copy">Tap a day above, then set who Cameron is with.</p>
+
+          <label for="calendarDateInput">Day</label>
+          <input type="date" id="calendarDateInput" />
+
+          <label for="calendarWhoInput">Who is Cameron with?</label>
+          <input type="text" id="calendarWhoInput" placeholder="Mum / Dad / Nan / School" maxlength="50" />
+
+          <label for="calendarIconSelect">Icon</label>
+          <select id="calendarIconSelect">
+            <option value="🏠">🏠 Home</option>
+            <option value="👩">👩 Mum</option>
+            <option value="👨">👨 Dad</option>
+            <option value="👨‍👩‍👧">👨‍👩‍👧 Family</option>
+            <option value="🏫">🏫 School</option>
+            <option value="🧸">🧸 Nursery / childcare</option>
+            <option value="👵">👵 Nan / grandparent</option>
+            <option value="🚗">🚗 Travel</option>
+            <option value="🎉">🎉 Special day</option>
+            <option value="⭐">⭐ Other</option>
+          </select>
+
+          <label for="calendarNoteInput">Short note</label>
+          <textarea id="calendarNoteInput" rows="3" placeholder="Example: Daddy picks up after school."></textarea>
+
+          <div class="calendar-editor-buttons">
+            <button type="button" id="saveCalendarEntryButton">Save Day</button>
+            <button type="button" id="deleteCalendarEntryButton">Clear Day</button>
+          </div>
+        </section>
       </section>
     </section>
 
@@ -526,6 +557,6 @@
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=34" type="module"></script>
+  <script src="script.js?v=35" type="module"></script>
 </body>
 </html>

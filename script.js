@@ -111,6 +111,14 @@ document.addEventListener("DOMContentLoaded", () => {
     saveQuickLogButton: $("saveQuickLogButton"),
     calendarGrid: $("calendarGrid"),
     calendarDayDetails: $("calendarDayDetails"),
+    familyTodayCard: $("familyTodayCard"),
+    calendarEditor: $("calendarEditor"),
+    calendarDateInput: $("calendarDateInput"),
+    calendarWhoInput: $("calendarWhoInput"),
+    calendarIconSelect: $("calendarIconSelect"),
+    calendarNoteInput: $("calendarNoteInput"),
+    saveCalendarEntryButton: $("saveCalendarEntryButton"),
+    deleteCalendarEntryButton: $("deleteCalendarEntryButton"),
     parentPageUnlockButton: $("parentPageUnlockButton"),
     settingsUnlockButton: $("settingsUnlockButton"),
     lockStatus: $("lockStatus"),
@@ -244,6 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
       rewards: DEFAULT_REWARDS,
       rewardRequests: [],
       feelingLogs: [],
+      familyCalendar: [],
       categories: DEFAULT_CATEGORIES,
       streak: {
         current: 0,
@@ -332,6 +341,26 @@ document.addEventListener("DOMContentLoaded", () => {
       .slice(0, 250);
   }
 
+  function normalizeFamilyCalendar(calendarEntries) {
+    if (!Array.isArray(calendarEntries)) {
+      return [];
+    }
+
+    return calendarEntries
+      .filter(entry => entry && typeof entry === "object")
+      .map(entry => ({
+        id: entry.id || `calendar-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        dateISO: entry.dateISO || "",
+        who: String(entry.who || "").slice(0, 50),
+        icon: String(entry.icon || "⭐").slice(0, 8),
+        note: String(entry.note || "").slice(0, 300),
+        updatedAt: entry.updatedAt || ""
+      }))
+      .filter(entry => entry.dateISO && entry.who.trim())
+      .sort((a, b) => a.dateISO.localeCompare(b.dateISO))
+      .slice(0, 365);
+  }
+
   function normalizeCategories(categories) {
     const list = Array.isArray(categories) && categories.length ? categories : DEFAULT_CATEGORIES;
     const clean = list
@@ -402,6 +431,7 @@ document.addEventListener("DOMContentLoaded", () => {
       rewards: normalizeRewards(data?.rewards),
       rewardRequests: normalizeRewardRequests(data?.rewardRequests),
       feelingLogs: normalizeFeelingLogs(data?.feelingLogs),
+      familyCalendar: normalizeFamilyCalendar(data?.familyCalendar),
       categories: normalizeCategories(data?.categories),
       streak: {
         current: Math.max(0, Number(data?.streak?.current) || 0),
@@ -1360,67 +1390,217 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function getCalendarEntry(dateISO) {
+    return normalizeFamilyCalendar(currentData.familyCalendar).find(entry => entry.dateISO === dateISO) || null;
+  }
+
+  function formatCalendarDate(date) {
+    return date.toLocaleDateString("en-GB", {
+      weekday: "long",
+      day: "2-digit",
+      month: "short"
+    });
+  }
+
+  function selectCalendarDay(dateISO) {
+    const entry = getCalendarEntry(dateISO);
+    const date = new Date(`${dateISO}T12:00:00`);
+
+    if (elements.calendarDateInput) {
+      elements.calendarDateInput.value = dateISO;
+    }
+
+    if (elements.calendarWhoInput) {
+      elements.calendarWhoInput.value = entry?.who || "";
+    }
+
+    if (elements.calendarIconSelect) {
+      elements.calendarIconSelect.value = entry?.icon || "🏠";
+    }
+
+    if (elements.calendarNoteInput) {
+      elements.calendarNoteInput.value = entry?.note || "";
+    }
+
+    if (!elements.calendarDayDetails) {
+      return;
+    }
+
+    if (entry) {
+      elements.calendarDayDetails.innerHTML = `
+        <div class="calendar-detail-main">
+          <div class="calendar-detail-icon">${entry.icon}</div>
+          <div>
+            <strong>${formatCalendarDate(date)}</strong>
+            <span>Cameron is with ${entry.who}</span>
+            ${entry.note ? `<p>${entry.note}</p>` : ""}
+          </div>
+        </div>
+      `;
+    } else {
+      elements.calendarDayDetails.innerHTML = `
+        <div class="calendar-detail-main">
+          <div class="calendar-detail-icon">📅</div>
+          <div>
+            <strong>${formatCalendarDate(date)}</strong>
+            <span>No plan has been added for this day yet.</span>
+            ${parentUnlocked ? "<p>Use the editor below to add who Cameron is with.</p>" : ""}
+          </div>
+        </div>
+      `;
+    }
+  }
+
   function updateCalendar() {
     const grid = elements.calendarGrid;
-    const details = elements.calendarDayDetails;
 
-    if (!grid || !details) {
+    if (!grid) {
       return;
+    }
+
+    const entries = normalizeFamilyCalendar(currentData.familyCalendar);
+    const today = new Date();
+    const todayISO = getDateISO(today);
+    const todayEntry = entries.find(entry => entry.dateISO === todayISO);
+
+    if (elements.familyTodayCard) {
+      if (todayEntry) {
+        elements.familyTodayCard.innerHTML = `
+          <div class="family-today-icon">${todayEntry.icon}</div>
+          <div>
+            <strong>Today</strong>
+            <span>Cameron is with ${todayEntry.who}</span>
+            ${todayEntry.note ? `<p>${todayEntry.note}</p>` : ""}
+          </div>
+        `;
+      } else {
+        elements.familyTodayCard.innerHTML = `
+          <div class="family-today-icon">📅</div>
+          <div>
+            <strong>Today</strong>
+            <span>No plan added yet.</span>
+          </div>
+        `;
+      }
     }
 
     grid.innerHTML = "";
 
-    const today = new Date();
-    const history = normalizeHistory(currentData.history);
-    const notes = normalizeNotes(currentData.parentNotes);
-
-    for (let offset = 27; offset >= 0; offset -= 1) {
+    for (let offset = 0; offset < 28; offset += 1) {
       const date = new Date(today);
-      date.setDate(today.getDate() - offset);
+      date.setDate(today.getDate() + offset);
       const dateISO = getDateISO(date);
-
-      const dayItems = history.filter(item => item.dateISO === dateISO);
-      const dayNotes = notes.filter(note => note.dateISO === dateISO);
-      const dayFeelings = normalizeFeelingLogs(currentData.feelingLogs).filter(log => log.dateISO === dateISO);
-
-      let level = "blank";
-
-      if (dayItems.some(item => item.level === "red")) {
-        level = "red";
-      } else if (dayItems.some(item => item.level === "green")) {
-        level = "green";
-      } else if (dayItems.some(item => item.level === "amber")) {
-        level = "amber";
-      }
+      const entry = entries.find(item => item.dateISO === dateISO);
 
       const button = document.createElement("button");
       button.type = "button";
-      button.className = `calendar-day calendar-${level}`;
-      button.innerHTML = `<strong>${date.getDate()}</strong><span>${date.toLocaleDateString("en-GB", { weekday: "short" })}</span>`;
+      button.className = "calendar-day family-calendar-day";
+      button.classList.toggle("today", dateISO === todayISO);
+      button.classList.toggle("has-plan", Boolean(entry));
 
-      if (dayNotes.length || dayFeelings.length) {
-        button.classList.add("has-note");
-      }
+      const weekday = date.toLocaleDateString("en-GB", { weekday: "short" });
+      const day = date.getDate();
+      const month = date.toLocaleDateString("en-GB", { month: "short" });
 
-      button.addEventListener("click", () => {
-        const lines = [
-          `<strong>${date.toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "short", year: "numeric" })}</strong>`,
-          "",
-          dayFeelings.length ? "<b>Feelings</b>" : "<b>No feelings logged</b>",
-          ...dayFeelings.slice(0, 6).map(log => `• ${log.emoji} ${log.label}`),
-          "",
-          dayItems.length ? "<b>History</b>" : "<b>No history</b>",
-          ...dayItems.slice(0, 6).map(item => `• ${item.text}`),
-          "",
-          dayNotes.length ? "<b>Notes</b>" : "<b>No notes</b>",
-          ...dayNotes.slice(0, 6).map(note => `• ${note.author}: ${note.text}`)
-        ];
+      button.innerHTML = `
+        <span class="calendar-weekday">${weekday}</span>
+        <strong>${day}</strong>
+        <span class="calendar-month">${month}</span>
+        <div class="calendar-person">
+          <span class="calendar-person-icon">${entry?.icon || "—"}</span>
+          <span class="calendar-person-name">${entry?.who || "No plan"}</span>
+        </div>
+      `;
 
-        details.innerHTML = lines.join("<br>");
-      });
-
+      button.addEventListener("click", () => selectCalendarDay(dateISO));
       grid.appendChild(button);
     }
+
+    if (elements.calendarDateInput && !elements.calendarDateInput.value) {
+      elements.calendarDateInput.value = todayISO;
+    }
+
+    selectCalendarDay(elements.calendarDateInput?.value || todayISO);
+  }
+
+  async function saveCalendarEntry() {
+    if (!await verifyParentPin("edit Cameron's calendar")) {
+      return;
+    }
+
+    const dateISO = elements.calendarDateInput?.value || "";
+    const who = elements.calendarWhoInput?.value.trim() || "";
+    const icon = elements.calendarIconSelect?.value || "⭐";
+    const note = elements.calendarNoteInput?.value.trim() || "";
+
+    if (!dateISO) {
+      alert("Choose a day first.");
+      return;
+    }
+
+    if (!who) {
+      alert("Add who Cameron is with first.");
+      return;
+    }
+
+    const data = await getLatestData();
+    const calendar = normalizeFamilyCalendar(data.familyCalendar).filter(entry => entry.dateISO !== dateISO);
+
+    calendar.push({
+      id: `calendar-${dateISO}`,
+      dateISO,
+      who,
+      icon,
+      note,
+      updatedAt: new Date().toISOString()
+    });
+
+    data.familyCalendar = calendar;
+
+    addHistoryEntry(data, {
+      type: "calendar",
+      level: "calendar",
+      category: "Calendar",
+      text: `Calendar updated: ${dateISO} - Cameron is with ${who}`,
+      coinChange: 0,
+      coinsAfter: data.coinTotal
+    });
+
+    await saveData(data);
+  }
+
+  async function deleteCalendarEntry() {
+    if (!await verifyParentPin("clear this calendar day")) {
+      return;
+    }
+
+    const dateISO = elements.calendarDateInput?.value || "";
+
+    if (!dateISO) {
+      alert("Choose a day first.");
+      return;
+    }
+
+    if (!confirm("Clear this calendar day?")) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.familyCalendar = normalizeFamilyCalendar(data.familyCalendar).filter(entry => entry.dateISO !== dateISO);
+
+    addHistoryEntry(data, {
+      type: "calendar",
+      level: "calendar",
+      category: "Calendar",
+      text: `Calendar cleared: ${dateISO}`,
+      coinChange: 0,
+      coinsAfter: data.coinTotal
+    });
+
+    if (elements.calendarWhoInput) elements.calendarWhoInput.value = "";
+    if (elements.calendarNoteInput) elements.calendarNoteInput.value = "";
+
+    await saveData(data);
   }
 
   async function claimReward(rewardId) {
@@ -1752,7 +1932,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function switchPage(page) {
-    if (childMode && !["home", "feelings", "rewards"].includes(page)) {
+    if (childMode && !["home", "feelings", "rewards", "calendar"].includes(page)) {
       page = "home";
     }
 
@@ -1778,7 +1958,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     document.querySelectorAll(".nav-button").forEach(button => {
-      const parentOnlyPage = !["home", "feelings", "rewards"].includes(button.dataset.page);
+      const parentOnlyPage = !["home", "feelings", "rewards", "calendar"].includes(button.dataset.page);
       button.hidden = childMode && parentOnlyPage;
     });
 
@@ -1844,7 +2024,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateDisplay() {
     if (childMode) {
       const activePage = document.querySelector(".page.active");
-      if (activePage && !["page-home", "page-feelings", "page-rewards"].includes(activePage.id)) {
+      if (activePage && !["page-home", "page-feelings", "page-rewards", "page-calendar"].includes(activePage.id)) {
         switchPage("home");
       }
     }
@@ -2684,6 +2864,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     elements.historyFilterSelect.addEventListener("change", updateHistory);
     elements.clearHistoryButton.addEventListener("click", clearHistory);
+
+    elements.saveCalendarEntryButton.addEventListener("click", saveCalendarEntry);
+    elements.deleteCalendarEntryButton.addEventListener("click", deleteCalendarEntry);
+    elements.calendarDateInput.addEventListener("change", () => selectCalendarDay(elements.calendarDateInput.value));
 
     elements.copyWeeklyReportButton.addEventListener("click", copyWeeklyReport);
 
