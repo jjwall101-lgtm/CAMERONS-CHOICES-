@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=43" />
+  <link rel="stylesheet" href="style.css?v=44" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -161,34 +161,48 @@
       </section>
 
       <section class="behaviour-card">
-        <div class="section-title">TODAY'S DAY</div>
+        <div class="section-title">TODAY'S LEVEL</div>
 
         <div class="today-level-pill" id="todayLevelPill">AMBER</div>
-<label for="behaviourCategorySelect">Reason/category</label>
+
+        <label for="behaviourCategorySelect">Reason/category</label>
         <select id="behaviourCategorySelect"></select>
 
         <label for="behaviourReasonText">Quick note / reason</label>
         <textarea id="behaviourReasonText" rows="3" placeholder="Optional note for this change..."></textarea>
 
-                <p class="child-day-waiting-message" id="childDayWaitingMessage" hidden>
-          Waiting for Parent Mode to log today.
-        </p>
-
-        <section class="day-choice-buttons" aria-label="Log Cameron's day">
-          <button type="button" class="day-choice-button good-day-button" id="goodDayButton">
-            <span class="day-choice-icon" id="goodDayIcon">⭐</span>
-            <strong>GOOD DAY</strong>
-            <small id="greenCoinValue">+50 coins</small>
+        <section class="traffic-light" aria-label="Behaviour traffic light">
+          <button type="button" class="light red" id="redLight" aria-label="Red level">
+            <span>!</span>
           </button>
 
-          <button type="button" class="day-choice-button tricky-day-button" id="trickyDayButton">
-            <span class="day-choice-icon" id="trickyDayIcon">!</span>
-            <strong>TRICKY DAY</strong>
-            <small id="redCoinValue">-50 coins</small>
+          <button type="button" class="light amber active" id="amberLight" aria-label="Amber level">
+            <span>?</span>
+          </button>
+
+          <button type="button" class="light green" id="greenLight" aria-label="Green level">
+            <span>★</span>
           </button>
         </section>
 
-        <button type="button" class="reset-button" id="resetTodayButton">Reset today</button>
+        <div class="level-labels">
+          <button type="button" class="level-card red-card" id="redLabel">
+            <strong>RED</strong>
+            <span id="redCoinValue">-50 coins</span>
+          </button>
+
+          <button type="button" class="level-card amber-card" id="amberLabel">
+            <strong>AMBER</strong>
+            <span>Trying level</span>
+          </button>
+
+          <button type="button" class="level-card green-card" id="greenLabel">
+            <strong>GREEN</strong>
+            <span id="greenCoinValue">+50 coins</span>
+          </button>
+        </div>
+
+        <button type="button" class="reset-button" id="resetTodayButton">Reset today to amber</button>
       </section>
 
       <section class="treat-card" id="treatCard">
@@ -260,9 +274,9 @@
 
             <label for="quickLogLevelSelect">Today’s level</label>
             <select id="quickLogLevelSelect">
-              <option value="green">Good Day</option>
-              <option value="amber">Not logged / reset</option>
-              <option value="red">Tricky Day</option>
+              <option value="green">Green</option>
+              <option value="amber">Amber</option>
+              <option value="red">Red</option>
             </select>
 
             <label for="quickLogCategorySelect">Category</label>
@@ -540,21 +554,9 @@
       </div>
     </section>
 
-
-    <section class="child-animation-stage" id="childAnimationStage" aria-live="polite" hidden>
-      <div class="child-animation-card" id="childAnimationCard">
-        <button type="button" class="child-animation-close" id="childAnimationCloseButton" aria-label="Close animation">×</button>
-
-        <div class="animation-scene" id="animationScene">
-          <div class="animation-message" id="animationMessage">Well done!</div>
-          <div class="animation-world" id="animationWorld"></div>
-        </div>
-      </div>
-    </section>
-
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=43" type="module"></script>
+  <script src="script.js?v=44" type="module"></script>
 </body>
 </html>

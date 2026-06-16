@@ -153,21 +153,12 @@ document.addEventListener("DOMContentLoaded", () => {
     todayLevelPill: $("todayLevelPill"),
     behaviourCategorySelect: $("behaviourCategorySelect"),
     behaviourReasonText: $("behaviourReasonText"),
-    goodDayButton: $("goodDayButton"),
-    trickyDayButton: $("trickyDayButton"),
-    goodDayIcon: $("goodDayIcon"),
-    trickyDayIcon: $("trickyDayIcon"),
-    childDayPlayPanel: $("childDayPlayPanel"),
-    childDayPlayMessage: $("childDayPlayMessage"),
-    childDayWaitingMessage: $("childDayWaitingMessage"),
-    childPlayGoodButton: $("childPlayGoodButton"),
-    childPlayTrickyButton: $("childPlayTrickyButton"),
-    childPlayGoodIcon: $("childPlayGoodIcon"),
-    childAnimationStage: $("childAnimationStage"),
-    childAnimationCard: $("childAnimationCard"),
-    childAnimationCloseButton: $("childAnimationCloseButton"),
-    animationMessage: $("animationMessage"),
-    animationWorld: $("animationWorld"),
+    redLight: $("redLight"),
+    amberLight: $("amberLight"),
+    greenLight: $("greenLight"),
+    redLabel: $("redLabel"),
+    amberLabel: $("amberLabel"),
+    greenLabel: $("greenLabel"),
     redCoinValue: $("redCoinValue"),
     greenCoinValue: $("greenCoinValue"),
     resetTodayButton: $("resetTodayButton"),
@@ -783,83 +774,6 @@ document.addEventListener("DOMContentLoaded", () => {
     await saveData(data);
   }
 
-  function closeChildDayAnimation() {
-    if (!elements.childAnimationStage || !elements.animationWorld) {
-      return;
-    }
-
-    elements.childAnimationStage.hidden = true;
-    elements.childAnimationStage.className = "child-animation-stage";
-    elements.animationWorld.innerHTML = "";
-  }
-
-  function playChildDayAnimation(kind) {
-    if (!elements.childAnimationStage || !elements.animationWorld) {
-      return;
-    }
-
-    const theme = getCurrentTheme();
-
-    elements.childAnimationStage.hidden = true;
-    elements.childAnimationStage.className = "child-animation-stage";
-    elements.animationWorld.innerHTML = "";
-
-    window.requestAnimationFrame(() => {
-      elements.childAnimationStage.hidden = false;
-      elements.childAnimationStage.className = `child-animation-stage show ${theme}-${kind}-animation`;
-    });
-
-    if (kind === "tricky") {
-      elements.animationMessage.textContent = "We’ll try again tomorrow";
-      elements.animationWorld.innerHTML = `
-        <div class="tricky-cloud cloud-one">☁️</div>
-        <div class="tricky-cloud cloud-two">☁️</div>
-        <div class="tricky-face">uh-oh</div>
-        <div class="tricky-heart">❤️</div>
-        <div class="tricky-ground"></div>
-      `;
-    } else if (theme === "space") {
-      elements.animationMessage.textContent = "Amazing launch!";
-      elements.animationWorld.innerHTML = `
-        <div class="space-stars">✦ ✧ ✦ ✧ ✦</div>
-        <div class="launch-pad"></div>
-        <div class="big-rocket">🚀</div>
-        <div class="rocket-smoke smoke-one"></div>
-        <div class="rocket-smoke smoke-two"></div>
-        <div class="rocket-smoke smoke-three"></div>
-        <div class="well-done-badge">WELL DONE!</div>
-      `;
-    } else if (theme === "minecraft") {
-      elements.animationMessage.textContent = "Diamond reward!";
-      elements.animationWorld.innerHTML = `
-        <div class="minecraft-good-scene">
-          <div class="minecraft-player">⛏️</div>
-          <div class="minecraft-block-prize">💎</div>
-          <div class="minecraft-sparkle sparkle-one">✦</div>
-          <div class="minecraft-sparkle sparkle-two">✦</div>
-          <div class="minecraft-sparkle sparkle-three">✦</div>
-          <div class="minecraft-ground"></div>
-          <div class="well-done-badge">WELL DONE!</div>
-        </div>
-      `;
-    } else {
-      elements.animationMessage.textContent = "Well done!";
-      elements.animationWorld.innerHTML = `
-        <div class="mario-question-box">?</div>
-        <div class="mario-jumper">🍄</div>
-        <div class="mario-prize">⭐</div>
-        <div class="mario-coin-one">🪙</div>
-        <div class="mario-coin-two">🪙</div>
-        <div class="mario-ground"></div>
-        <div class="well-done-badge">WELL DONE!</div>
-      `;
-    }
-
-    window.setTimeout(() => {
-      closeChildDayAnimation();
-    }, kind === "tricky" ? 2600 : 3200);
-  }
-
   async function setLevel(level) {
     if (childMode) {
       alert("Enter Parent Mode to change today's level.");
@@ -888,6 +802,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    if (level === "green" && previousLevel !== "amber") {
+      alert("Go to amber before green.");
+      return;
+    }
+
     const category = elements.behaviourCategorySelect?.value || "General";
     const reason = elements.behaviourReasonText?.value.trim() || "";
     let coinChange = 0;
@@ -895,14 +814,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (level === "green" && previousLevel === "amber") {
       coinChange = data.settings.greenCoins;
-      text = `Good Day logged: +${coinChange} coins`;
+      text = `Moved to GREEN: +${coinChange} coins`;
     } else if (level === "red" && previousLevel !== "red") {
       coinChange = -data.settings.redCoins;
-      text = `Tricky Day logged: -${data.settings.redCoins} coins`;
+      text = `Moved to RED: -${data.settings.redCoins} coins`;
     } else if (level === "amber") {
-      text = "Day reset / not logged";
+      text = "Moved to AMBER";
     } else {
-      text = level === "green" ? "Good Day logged" : level === "red" ? "Tricky Day logged" : "Day reset";
+      text = `Moved to ${level.toUpperCase()}`;
     }
 
     const before = data.coinTotal;
@@ -960,7 +879,7 @@ document.addEventListener("DOMContentLoaded", () => {
       type: "level",
       level: "amber",
       category: "General",
-      text: "Today reset",
+      text: "Today reset to amber",
       coinChange: 0,
       coinsAfter: data.coinTotal
     });
@@ -1351,11 +1270,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const next = rewards.find(reward => reward.cost > total) || rewards.find(reward => total >= reward.cost);
 
     elements.childCoinTotal.textContent = total;
-    elements.childTodayLevel.textContent = currentData.today.level === "green"
-      ? "GOOD"
-      : currentData.today.level === "red"
-        ? "TRICKY"
-        : "—";
+    elements.childTodayLevel.textContent = currentData.today.level.toUpperCase();
     elements.childStreakCount.textContent = currentData.streak.current;
 
     const latestFeeling = normalizeFeelingLogs(currentData.feelingLogs)[0];
@@ -1462,7 +1377,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     [
       ["Coins", currentData.coinTotal],
-      ["Today", currentData.today.level === "green" ? "GOOD" : currentData.today.level === "red" ? "TRICKY" : "—"],
+      ["Today", currentData.today.level.toUpperCase()],
       ["Pending rewards", pendingRequests],
       ["Latest feeling", latestFeelingText],
       ["Notes today", notesToday],
@@ -2134,14 +2049,6 @@ document.addEventListener("DOMContentLoaded", () => {
         button.disabled = childMode || !parentUnlocked;
       }
     });
-
-    if (elements.goodDayButton) {
-      elements.goodDayButton.disabled = !childMode && !parentUnlocked;
-    }
-
-    if (elements.trickyDayButton) {
-      elements.trickyDayButton.disabled = !childMode && !parentUnlocked;
-    }
   }
 
   function updateDisplay() {
@@ -2228,87 +2135,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateLevelDisplay() {
     const level = currentData.today.level;
-    const label = level === "green"
-      ? "GOOD DAY"
-      : level === "red"
-        ? "TRICKY DAY"
-        : "NOT LOGGED YET";
+    const label = level.toUpperCase();
 
     elements.todayLevelPill.textContent = label;
     elements.todayLevelPill.style.background = level === "red" ? "var(--red)" : level === "green" ? "var(--green)" : "var(--amber)";
 
-    if (elements.goodDayButton) {
-      elements.goodDayButton.classList.toggle("active", level === "green");
-    }
-
-    if (elements.trickyDayButton) {
-      elements.trickyDayButton.classList.toggle("active", level === "red");
-    }
-
-    updateDayChoiceIcons();
-    updateChildDayPlayPanel();
-  }
-
-  function updateDayChoiceIcons() {
-    const theme = getCurrentTheme();
-
-    if (elements.goodDayIcon) {
-      elements.goodDayIcon.textContent = theme === "space" ? "🚀" : theme === "minecraft" ? "💎" : "⭐";
-    }
-
-    if (elements.trickyDayIcon) {
-      elements.trickyDayIcon.textContent = theme === "space" ? "☄️" : theme === "minecraft" ? "🧱" : "🍄";
-    }
-  }
-
-  function updateChildDayPlayPanel() {
-    if (!elements.goodDayButton || !elements.trickyDayButton) {
-      return;
-    }
-
-    const level = currentData.today.level;
-    const theme = getCurrentTheme();
-    const isChild = childMode;
-
-    if (elements.childPlayGoodIcon) {
-      elements.childPlayGoodIcon.textContent = theme === "space" ? "🚀" : theme === "minecraft" ? "💎" : "⭐";
-    }
-
-    if (elements.childDayWaitingMessage) {
-      elements.childDayWaitingMessage.hidden = !(isChild && level !== "green" && level !== "red");
-    }
-
-    if (isChild) {
-      elements.goodDayButton.hidden = level !== "green";
-      elements.trickyDayButton.hidden = level !== "red";
-      elements.goodDayButton.disabled = false;
-      elements.trickyDayButton.disabled = false;
-
-      if (elements.goodDayButton.querySelector("small")) {
-        elements.goodDayButton.querySelector("small").textContent = "Tap to celebrate";
-      }
-
-      if (elements.trickyDayButton.querySelector("small")) {
-        elements.trickyDayButton.querySelector("small").textContent = "We’ll try again tomorrow";
-      }
-
-      return;
-    }
-
-    elements.goodDayButton.hidden = false;
-    elements.trickyDayButton.hidden = false;
-
-    if (elements.goodDayButton.querySelector("small")) {
-      elements.goodDayButton.querySelector("small").textContent = `+${currentData.settings.greenCoins} coins`;
-    }
-
-    if (elements.trickyDayButton.querySelector("small")) {
-      elements.trickyDayButton.querySelector("small").textContent = `-${currentData.settings.redCoins} coins`;
-    }
-
-    if (elements.childDayWaitingMessage) {
-      elements.childDayWaitingMessage.hidden = true;
-    }
+    elements.redLight.classList.toggle("active", level === "red");
+    elements.amberLight.classList.toggle("active", level === "amber");
+    elements.greenLight.classList.toggle("active", level === "green");
   }
 
   function updateStreakDisplay() {
@@ -3034,31 +2868,15 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.add10Button.addEventListener("click", () => adjustCoins(10));
     elements.add50Button.addEventListener("click", () => adjustCoins(50));
 
-    elements.goodDayButton.addEventListener("click", () => {
-      if (childMode) {
-        playChildDayAnimation("good");
-        return;
-      }
-
-      setLevel("green");
-    });
-
-    elements.trickyDayButton.addEventListener("click", () => {
-      if (childMode) {
-        playChildDayAnimation("tricky");
-        return;
-      }
-
-      setLevel("red");
-    });
+    elements.redLight.addEventListener("click", () => setLevel("red"));
+    elements.amberLight.addEventListener("click", () => setLevel("amber"));
+    elements.greenLight.addEventListener("click", () => setLevel("green"));
+    elements.redLabel.addEventListener("click", () => setLevel("red"));
+    elements.amberLabel.addEventListener("click", () => setLevel("amber"));
+    elements.greenLabel.addEventListener("click", () => setLevel("green"));
 
     elements.resetTodayButton.addEventListener("click", resetToday);
     elements.collectPrizeButton.addEventListener("click", collectPrize);
-
-    elements.childPlayGoodButton.addEventListener("click", () => playChildDayAnimation("good"));
-    elements.childPlayTrickyButton.addEventListener("click", () => playChildDayAnimation("tricky"));
-
-    elements.childAnimationCloseButton.addEventListener("click", closeChildDayAnimation);
 
     elements.enableNotificationsButton.addEventListener("click", enableNotifications);
     elements.settingsEnableNotificationsButton.addEventListener("click", enableNotifications);
