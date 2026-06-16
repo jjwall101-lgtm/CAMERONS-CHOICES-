@@ -1462,6 +1462,7 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedCalendarDate = dateISO;
 
     const entry = getCalendarEntry(dateISO);
+    const selectedHtml = buildCalendarDetailHtml(dateISO, entry);
 
     document.querySelectorAll(".family-calendar-day").forEach(dayButton => {
       const isSelected = dayButton.dataset.date === dateISO;
@@ -1471,8 +1472,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateCalendarEditorFields(dateISO, entry);
 
+    if (elements.familyTodayCard) {
+      elements.familyTodayCard.innerHTML = selectedHtml;
+      elements.familyTodayCard.dataset.selectedDate = dateISO;
+    }
+
     if (elements.calendarDayDetails) {
-      elements.calendarDayDetails.innerHTML = buildCalendarDetailHtml(dateISO, entry);
+      elements.calendarDayDetails.innerHTML = selectedHtml;
       elements.calendarDayDetails.dataset.selectedDate = dateISO;
     }
   }
@@ -1487,29 +1493,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const entries = normalizeFamilyCalendar(currentData.familyCalendar);
     const today = new Date();
     const todayISO = getDateISO(today);
-    const todayEntry = entries.find(entry => entry.dateISO === todayISO);
-
-    if (elements.familyTodayCard) {
-      if (todayEntry) {
-        elements.familyTodayCard.innerHTML = `
-          <div class="family-today-icon">${todayEntry.icon}</div>
-          <div>
-            <strong>Today</strong>
-            <span>Cameron is with ${todayEntry.who}</span>
-            ${todayEntry.note ? `<p>${todayEntry.note}</p>` : ""}
-          </div>
-        `;
-      } else {
-        elements.familyTodayCard.innerHTML = `
-          <div class="family-today-icon">📅</div>
-          <div>
-            <strong>Today</strong>
-            <span>No plan added yet.</span>
-          </div>
-        `;
-      }
-    }
-
     grid.innerHTML = "";
 
     for (let offset = 0; offset < 28; offset += 1) {

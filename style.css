@@ -2556,3 +2556,32 @@ html[data-theme="space"] .calendar-selected-description {
     transform: translateY(0);
   }
 }
+
+
+/* SELECTED CALENDAR DESCRIPTION FIX */
+
+.family-today-card {
+  display: block;
+  outline: 5px solid var(--theme-accent);
+  outline-offset: -8px;
+}
+
+.family-today-card .calendar-detail-main {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+}
+
+.family-today-card .calendar-detail-main strong::before {
+  content: "Selected: ";
+}
+
+.family-today-card .calendar-selected-description {
+  margin-top: 7px;
+}
+
+.calendar-day-details {
+  display: none !important;
+}
