@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=44" />
+  <link rel="stylesheet" href="style.css?v=45" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -32,6 +32,18 @@
         <h1>Cameron</h1>
 
         <p class="mode-status-pill" id="modeStatusPill">Child Mode</p>
+
+        <section class="hero-child-stats child-mode-only" aria-label="Cameron's coin bank and streak">
+          <div class="hero-child-stat hero-child-coins">
+            <span id="childCoinTotal">0</span>
+            <small>coins</small>
+          </div>
+
+          <div class="hero-child-stat hero-child-streak">
+            <span id="childStreakCount">0</span>
+            <small>day streak</small>
+          </div>
+        </section>
 
         <section class="theme-switcher" aria-label="Theme selector">
           <label for="themeSelect">Theme</label>
@@ -85,24 +97,15 @@
     </nav>
 
 
-    <section class="child-dashboard-card child-mode-only" id="childDashboardCard">
-      <div class="child-welcome">Cameron’s Adventure</div>
-
-      <div class="child-big-coins">
-        <span id="childCoinTotal">0</span>
-        <small>coins</small>
-      </div>
+    <section class="child-dashboard-card child-mode-only child-today-card" id="childDashboardCard">
+      <div class="child-welcome">Today</div>
 
       <div class="child-next-reward" id="childNextReward">Next reward loading...</div>
 
-      <div class="child-status-row">
+      <div class="child-status-row child-status-row-single">
         <div>
           <strong id="childTodayLevel">AMBER</strong>
           <span>Today</span>
-        </div>
-        <div>
-          <strong id="childStreakCount">0</strong>
-          <span>Streak</span>
         </div>
       </div>
     </section>
@@ -557,6 +560,6 @@
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=44" type="module"></script>
+  <script src="script.js?v=45" type="module"></script>
 </body>
 </html>

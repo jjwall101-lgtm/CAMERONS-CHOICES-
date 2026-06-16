@@ -2585,3 +2585,124 @@ html[data-theme="space"] .calendar-selected-description {
 .calendar-day-details {
   display: none !important;
 }
+
+
+/* MOVE CHILD COIN BANK + STREAK TO TOP CARD */
+
+.hero-child-stats {
+  display: none;
+}
+
+body.child-mode .hero-child-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px auto 12px;
+  max-width: 330px;
+}
+
+.hero-child-stat {
+  padding: 12px 8px;
+  border: 5px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  border-radius: 22px;
+  background: rgba(255,255,255,0.78);
+  text-align: center;
+}
+
+html[data-theme="space"] .hero-child-stat {
+  background: #10103e;
+  color: white;
+}
+
+.hero-child-stat span {
+  display: block;
+  font-size: 42px;
+  font-weight: 950;
+  line-height: 0.95;
+}
+
+.hero-child-stat small {
+  display: block;
+  margin-top: 5px;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.hero-child-coins {
+  background:
+    radial-gradient(circle at 22% 20%, rgba(255,255,255,.5) 0 8px, transparent 9px),
+    linear-gradient(180deg, #fff6b7, #ffd447);
+}
+
+.hero-child-streak {
+  background:
+    radial-gradient(circle at 22% 20%, rgba(255,255,255,.5) 0 8px, transparent 9px),
+    linear-gradient(180deg, #d7ffd7, #83e98a);
+}
+
+html[data-theme="space"] .hero-child-coins {
+  background:
+    radial-gradient(circle at 20% 22%, rgba(255,255,255,.8) 0 2px, transparent 3px),
+    linear-gradient(180deg, #45d8ff, #5166ff);
+}
+
+html[data-theme="space"] .hero-child-streak {
+  background:
+    radial-gradient(circle at 76% 25%, rgba(255,255,255,.8) 0 2px, transparent 3px),
+    linear-gradient(180deg, #a07bff, #4d42d8);
+}
+
+html[data-theme="minecraft"] .hero-child-coins {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.16) 0 25%, transparent 26% 50%, rgba(255,255,255,.16) 51% 75%, transparent 76%),
+    linear-gradient(180deg, #ffd447, #c88a1d);
+}
+
+html[data-theme="minecraft"] .hero-child-streak {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.16) 0 25%, transparent 26% 50%, rgba(255,255,255,.16) 51% 75%, transparent 76%),
+    linear-gradient(180deg, #bdf3ad, #5cae40);
+  color: white;
+}
+
+.child-today-card {
+  margin-top: 0;
+}
+
+.child-today-card .child-welcome {
+  font-size: 18px;
+}
+
+.child-status-row-single {
+  grid-template-columns: 1fr;
+  max-width: 220px;
+  margin: 0 auto;
+}
+
+body.child-mode .child-dashboard-card .child-big-coins {
+  display: none !important;
+}
+
+body.child-mode .profile-card h1 {
+  margin-bottom: 4px;
+}
+
+body.child-mode .power-row {
+  margin-top: 10px;
+}
+
+@media (max-width: 390px) {
+  body.child-mode .hero-child-stats {
+    max-width: 300px;
+    gap: 8px;
+  }
+
+  .hero-child-stat span {
+    font-size: 36px;
+  }
+
+  .hero-child-stat {
+    padding: 10px 6px;
+  }
+}

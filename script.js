@@ -1261,7 +1261,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateChildDashboard() {
-    if (!elements.childCoinTotal) {
+    if (!elements.childCoinTotal || !elements.childNextReward || !elements.childTodayLevel || !elements.childStreakCount) {
       return;
     }
 
