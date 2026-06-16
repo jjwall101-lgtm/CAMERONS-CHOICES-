@@ -2692,3 +2692,539 @@ body.child-mode .today-level-pill {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* CHILD MODE GOOD / TRICKY ANIMATIONS */
+
+body.child-mode .day-choice-buttons {
+  display: grid !important;
+  grid-template-columns: 1fr;
+  margin-top: 14px;
+}
+
+body.child-mode .day-choice-button {
+  min-height: 126px;
+}
+
+body.child-mode .day-choice-button small {
+  display: none;
+}
+
+body.child-mode .day-choice-button strong {
+  font-size: 23px;
+}
+
+body.child-mode .day-choice-icon {
+  width: 66px;
+  height: 66px;
+  font-size: 34px;
+}
+
+/* Make child and parent mode use the same icon style */
+.day-choice-icon {
+  background: rgba(255,255,255,0.92);
+}
+
+html[data-theme="mario"] .good-day-button .day-choice-icon::after {
+  content: "";
+}
+
+html[data-theme="mario"] .good-day-button {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.28), transparent 40%),
+    linear-gradient(180deg, #ffe58d, #ffbc3f);
+  color: #7b3f00;
+}
+
+html[data-theme="mario"] .tricky-day-button {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.24), transparent 40%),
+    linear-gradient(180deg, #ffb2b0, #ff7070);
+  color: #5b1010;
+}
+
+html[data-theme="space"] .good-day-button {
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255,255,255,.85) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 30%, rgba(255,255,255,.65) 0 2px, transparent 3px),
+    linear-gradient(180deg, #45d8ff, #5166ff);
+  color: white;
+}
+
+html[data-theme="space"] .tricky-day-button {
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255,255,255,.7) 0 2px, transparent 3px),
+    linear-gradient(180deg, #ff8b2b, #9b2dff);
+  color: white;
+}
+
+html[data-theme="minecraft"] .good-day-button {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.15) 0 25%, transparent 26% 50%, rgba(255,255,255,.15) 51% 75%, transparent 76%),
+    linear-gradient(180deg, #bdf3ad, #5cae40);
+  color: white;
+}
+
+html[data-theme="minecraft"] .tricky-day-button {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.14) 0 25%, transparent 26% 50%, rgba(255,255,255,.14) 51% 75%, transparent 76%),
+    linear-gradient(180deg, #d8c08a, #8b5b38);
+  color: white;
+}
+
+.child-animation-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0,0,0,0.45);
+}
+
+.child-animation-stage[hidden] {
+  display: none !important;
+}
+
+.child-animation-card {
+  width: min(100%, 420px);
+  min-height: 380px;
+  position: relative;
+  overflow: hidden;
+  border: 6px solid var(--outline);
+  box-shadow: 8px 8px 0 var(--outline);
+  border-radius: 30px;
+  background: var(--theme-card);
+  animation: animationCardPop 0.24s ease-out both;
+}
+
+.child-animation-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--outline);
+  box-shadow: 2px 2px 0 var(--outline);
+  border-radius: 50%;
+  background: white;
+  font-size: 22px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.animation-scene {
+  position: relative;
+  height: 380px;
+  overflow: hidden;
+}
+
+.animation-message {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 10;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 86%;
+  padding: 10px 16px;
+  border: 5px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  border-radius: 999px;
+  background: var(--theme-accent);
+  color: var(--theme-dark);
+  font-size: 22px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.animation-world {
+  position: absolute;
+  inset: 0;
+}
+
+/* Shared tricky animation */
+
+.tricky-face {
+  position: absolute;
+  left: 50%;
+  top: 124px;
+  transform: translateX(-50%);
+  width: 158px;
+  height: 158px;
+  display: grid;
+  place-items: center;
+  border: 6px solid var(--outline);
+  box-shadow: 5px 5px 0 var(--outline);
+  border-radius: 50%;
+  background: #ffd447;
+  color: #5b1010;
+  font-size: 30px;
+  font-weight: 950;
+  animation: trickyFaceWobble 1.25s ease-in-out infinite;
+}
+
+.tricky-cloud {
+  position: absolute;
+  top: 94px;
+  font-size: 50px;
+  opacity: 0.9;
+  animation: cloudDrift 2.5s ease-in-out infinite;
+}
+
+.cloud-one {
+  left: 32px;
+}
+
+.cloud-two {
+  right: 34px;
+  animation-delay: 0.4s;
+}
+
+.tricky-heart {
+  position: absolute;
+  left: 50%;
+  top: 270px;
+  transform: translateX(-50%);
+  font-size: 40px;
+  animation: heartPulse 1s ease-in-out infinite;
+}
+
+.tricky-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 70px;
+  background: linear-gradient(180deg, #bdf3ad, #55bf4b);
+  border-top: 6px solid var(--outline);
+}
+
+.space-tricky-animation .tricky-ground {
+  background: linear-gradient(180deg, #d7def1, #a6b0c8);
+}
+
+.minecraft-tricky-animation .tricky-ground {
+  background: linear-gradient(180deg, #5cae40 0 30%, #8b5b38 31% 100%);
+}
+
+.tricky-animation .animation-message,
+.mario-tricky-animation .animation-message,
+.space-tricky-animation .animation-message,
+.minecraft-tricky-animation .animation-message {
+  background: #ffb2b0;
+  color: #5b1010;
+}
+
+/* Space good animation */
+
+.space-good-animation .animation-scene {
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255,255,255,.9) 0 2px, transparent 3px),
+    radial-gradient(circle at 72% 30%, rgba(255,255,255,.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 82% 68%, rgba(255,255,255,.6) 0 1px, transparent 2px),
+    linear-gradient(180deg, #0e1244, #171d68);
+}
+
+.space-stars {
+  position: absolute;
+  inset: 70px 0 auto;
+  color: white;
+  text-align: center;
+  font-size: 32px;
+  letter-spacing: 18px;
+  opacity: .9;
+  animation: starsTwinkle 1s ease-in-out infinite;
+}
+
+.big-rocket {
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
+  font-size: 86px;
+  animation: rocketBlastOff 2.6s ease-in forwards;
+}
+
+.launch-pad {
+  position: absolute;
+  left: 50%;
+  bottom: 46px;
+  width: 150px;
+  height: 28px;
+  transform: translateX(-50%);
+  border: 5px solid var(--outline);
+  border-radius: 999px;
+  background: #d7def1;
+}
+
+.rocket-smoke {
+  position: absolute;
+  bottom: 42px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.86);
+  border: 4px solid rgba(0,0,0,.2);
+  animation: smokePuff 1.4s ease-out infinite;
+}
+
+.smoke-one { left: 112px; }
+.smoke-two { left: 170px; animation-delay: .18s; }
+.smoke-three { right: 112px; animation-delay: .34s; }
+
+/* Mario good animation */
+
+.mario-good-animation .animation-scene {
+  background: linear-gradient(180deg, #8ee7ff 0 64%, #69d45d 65% 78%, #8a5733 79% 100%);
+}
+
+.mario-question-box {
+  position: absolute;
+  left: 50%;
+  top: 110px;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: 6px solid var(--outline);
+  box-shadow: 5px 5px 0 var(--outline);
+  background: #ffd447;
+  color: #8a4a00;
+  font-size: 42px;
+  font-weight: 950;
+  animation: boxBump 2.2s ease-in-out forwards;
+}
+
+.mario-jumper {
+  position: absolute;
+  left: calc(50% - 34px);
+  bottom: 72px;
+  font-size: 68px;
+  animation: marioJump 2.2s ease-in-out forwards;
+}
+
+.mario-prize {
+  position: absolute;
+  left: calc(50% - 18px);
+  top: 112px;
+  font-size: 42px;
+  opacity: 0;
+  animation: prizePop 2.2s ease-out forwards;
+}
+
+.mario-coin-one,
+.mario-coin-two {
+  position: absolute;
+  top: 132px;
+  font-size: 32px;
+  opacity: 0;
+  animation: coinPop 2.2s ease-out forwards;
+}
+
+.mario-coin-one { left: 34%; }
+.mario-coin-two { right: 34%; animation-delay: .08s; }
+
+.mario-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 72px;
+  background: repeating-linear-gradient(90deg, #8a5733 0 22px, #714226 22px 44px);
+  border-top: 6px solid var(--outline);
+}
+
+/* Minecraft good animation */
+
+.minecraft-good-animation .animation-scene {
+  background: linear-gradient(180deg, #91dcff 0 55%, #5cae40 56% 76%, #8b5b38 77% 100%);
+}
+
+.minecraft-player {
+  position: absolute;
+  left: 66px;
+  bottom: 78px;
+  font-size: 70px;
+  animation: minecraftMine 1.8s ease-in-out forwards;
+}
+
+.minecraft-block-prize {
+  position: absolute;
+  right: 80px;
+  bottom: 116px;
+  width: 82px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  border: 6px solid var(--outline);
+  box-shadow: 5px 5px 0 var(--outline);
+  background: linear-gradient(135deg, #58f3ff, #246cff);
+  font-size: 44px;
+  animation: diamondBurst 2.4s ease-out forwards;
+}
+
+.minecraft-sparkle {
+  position: absolute;
+  font-size: 32px;
+  color: #ffffff;
+  opacity: 0;
+  animation: sparklePop 2.2s ease-out forwards;
+}
+
+.sparkle-one { right: 66px; top: 108px; }
+.sparkle-two { right: 150px; top: 136px; animation-delay: .18s; }
+.sparkle-three { right: 112px; top: 76px; animation-delay: .32s; }
+
+.minecraft-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 72px;
+  background: linear-gradient(180deg, #5cae40 0 32%, #8b5b38 33% 100%);
+  border-top: 6px solid var(--outline);
+}
+
+/* Badge */
+
+.well-done-badge {
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%) scale(0);
+  z-index: 8;
+  padding: 10px 16px;
+  border: 5px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--outline);
+  font-size: 20px;
+  font-weight: 950;
+  animation: badgePop 2.3s ease-out forwards;
+}
+
+/* Keyframes */
+
+@keyframes animationCardPop {
+  from { transform: scale(.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes trickyFaceWobble {
+  0%, 100% { transform: translateX(-50%) rotate(0deg) scale(1); }
+  25% { transform: translateX(-50%) rotate(-4deg) scale(1.02); }
+  50% { transform: translateX(-50%) rotate(4deg) scale(.98); }
+  75% { transform: translateX(-50%) rotate(-2deg) scale(1.01); }
+}
+
+@keyframes cloudDrift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(12px); }
+}
+
+@keyframes heartPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.2); }
+}
+
+@keyframes rocketBlastOff {
+  0% { transform: translateX(-50%) translateY(0) rotate(-2deg); }
+  35% { transform: translateX(-50%) translateY(-40px) rotate(2deg); }
+  100% { transform: translateX(-50%) translateY(-330px) rotate(8deg); }
+}
+
+@keyframes smokePuff {
+  0% { transform: scale(.6); opacity: .9; }
+  100% { transform: scale(1.6) translateY(22px); opacity: 0; }
+}
+
+@keyframes starsTwinkle {
+  0%, 100% { opacity: .5; transform: scale(.98); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes marioJump {
+  0% { transform: translateY(0); }
+  34% { transform: translateY(-118px); }
+  48% { transform: translateY(-102px); }
+  74% { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes boxBump {
+  0%, 30% { transform: translateX(-50%) translateY(0); }
+  38% { transform: translateX(-50%) translateY(-18px); }
+  48%, 100% { transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes prizePop {
+  0%, 34% { transform: translateY(0) scale(.2); opacity: 0; }
+  45% { transform: translateY(-70px) scale(1.2); opacity: 1; }
+  100% { transform: translateY(-92px) scale(1); opacity: 1; }
+}
+
+@keyframes coinPop {
+  0%, 36% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  52% { transform: translateY(-62px) rotate(180deg); opacity: 1; }
+  100% { transform: translateY(-90px) rotate(360deg); opacity: 0; }
+}
+
+@keyframes minecraftMine {
+  0% { transform: rotate(0deg) translateX(0); }
+  25% { transform: rotate(-18deg) translateX(12px); }
+  45% { transform: rotate(12deg) translateX(30px); }
+  65% { transform: rotate(-18deg) translateX(38px); }
+  100% { transform: rotate(0deg) translateX(38px); }
+}
+
+@keyframes diamondBurst {
+  0%, 45% { transform: scale(1); }
+  58% { transform: scale(1.2) rotate(8deg); filter: brightness(1.4); }
+  100% { transform: scale(1.06) rotate(0deg); filter: brightness(1.15); }
+}
+
+@keyframes sparklePop {
+  0%, 42% { opacity: 0; transform: scale(.2); }
+  64% { opacity: 1; transform: scale(1.35); }
+  100% { opacity: 0; transform: scale(.4) translateY(-40px); }
+}
+
+@keyframes badgePop {
+  0%, 55% { transform: translateX(-50%) scale(0); opacity: 0; }
+  72% { transform: translateX(-50%) scale(1.16); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+@media (min-width: 520px) {
+  body.child-mode .day-choice-buttons {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  .child-animation-card {
+    min-height: 340px;
+  }
+
+  .animation-scene {
+    height: 340px;
+  }
+
+  .animation-message {
+    font-size: 18px;
+  }
+
+  .big-rocket {
+    font-size: 74px;
+  }
+
+  .tricky-face {
+    width: 134px;
+    height: 134px;
+    font-size: 25px;
+  }
+}

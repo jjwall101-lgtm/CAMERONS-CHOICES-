@@ -157,6 +157,11 @@ document.addEventListener("DOMContentLoaded", () => {
     trickyDayButton: $("trickyDayButton"),
     goodDayIcon: $("goodDayIcon"),
     trickyDayIcon: $("trickyDayIcon"),
+    childAnimationStage: $("childAnimationStage"),
+    childAnimationCard: $("childAnimationCard"),
+    childAnimationCloseButton: $("childAnimationCloseButton"),
+    animationMessage: $("animationMessage"),
+    animationWorld: $("animationWorld"),
     redCoinValue: $("redCoinValue"),
     greenCoinValue: $("greenCoinValue"),
     resetTodayButton: $("resetTodayButton"),
@@ -770,6 +775,77 @@ document.addEventListener("DOMContentLoaded", () => {
 
     startCelebrationIfNeeded(data);
     await saveData(data);
+  }
+
+  function closeChildDayAnimation() {
+    if (!elements.childAnimationStage || !elements.animationWorld) {
+      return;
+    }
+
+    elements.childAnimationStage.hidden = true;
+    elements.childAnimationStage.className = "child-animation-stage";
+    elements.animationWorld.innerHTML = "";
+  }
+
+  function playChildDayAnimation(kind) {
+    if (!childMode || !elements.childAnimationStage || !elements.animationWorld) {
+      return;
+    }
+
+    const theme = getCurrentTheme();
+
+    elements.childAnimationStage.hidden = false;
+    elements.childAnimationStage.className = `child-animation-stage show ${theme}-${kind}-animation`;
+
+    if (kind === "tricky") {
+      elements.animationMessage.textContent = "We’ll try again tomorrow";
+      elements.animationWorld.innerHTML = `
+        <div class="tricky-cloud cloud-one">☁️</div>
+        <div class="tricky-cloud cloud-two">☁️</div>
+        <div class="tricky-face">uh-oh</div>
+        <div class="tricky-heart">❤️</div>
+        <div class="tricky-ground"></div>
+      `;
+    } else if (theme === "space") {
+      elements.animationMessage.textContent = "Amazing launch!";
+      elements.animationWorld.innerHTML = `
+        <div class="space-stars">✦ ✧ ✦ ✧ ✦</div>
+        <div class="launch-pad"></div>
+        <div class="big-rocket">🚀</div>
+        <div class="rocket-smoke smoke-one"></div>
+        <div class="rocket-smoke smoke-two"></div>
+        <div class="rocket-smoke smoke-three"></div>
+        <div class="well-done-badge">WELL DONE!</div>
+      `;
+    } else if (theme === "minecraft") {
+      elements.animationMessage.textContent = "Diamond reward!";
+      elements.animationWorld.innerHTML = `
+        <div class="minecraft-good-scene">
+          <div class="minecraft-player">⛏️</div>
+          <div class="minecraft-block-prize">💎</div>
+          <div class="minecraft-sparkle sparkle-one">✦</div>
+          <div class="minecraft-sparkle sparkle-two">✦</div>
+          <div class="minecraft-sparkle sparkle-three">✦</div>
+          <div class="minecraft-ground"></div>
+          <div class="well-done-badge">WELL DONE!</div>
+        </div>
+      `;
+    } else {
+      elements.animationMessage.textContent = "Well done!";
+      elements.animationWorld.innerHTML = `
+        <div class="mario-question-box">?</div>
+        <div class="mario-jumper">🍄</div>
+        <div class="mario-prize">⭐</div>
+        <div class="mario-coin-one">🪙</div>
+        <div class="mario-coin-two">🪙</div>
+        <div class="mario-ground"></div>
+        <div class="well-done-badge">WELL DONE!</div>
+      `;
+    }
+
+    window.setTimeout(() => {
+      closeChildDayAnimation();
+    }, kind === "tricky" ? 2600 : 3200);
   }
 
   async function setLevel(level) {
@@ -2889,11 +2965,28 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.add10Button.addEventListener("click", () => adjustCoins(10));
     elements.add50Button.addEventListener("click", () => adjustCoins(50));
 
-    elements.goodDayButton.addEventListener("click", () => setLevel("green"));
-    elements.trickyDayButton.addEventListener("click", () => setLevel("red"));
+    elements.goodDayButton.addEventListener("click", () => {
+      if (childMode) {
+        playChildDayAnimation("good");
+        return;
+      }
+
+      setLevel("green");
+    });
+
+    elements.trickyDayButton.addEventListener("click", () => {
+      if (childMode) {
+        playChildDayAnimation("tricky");
+        return;
+      }
+
+      setLevel("red");
+    });
 
     elements.resetTodayButton.addEventListener("click", resetToday);
     elements.collectPrizeButton.addEventListener("click", collectPrize);
+
+    elements.childAnimationCloseButton.addEventListener("click", closeChildDayAnimation);
 
     elements.enableNotificationsButton.addEventListener("click", enableNotifications);
     elements.settingsEnableNotificationsButton.addEventListener("click", enableNotifications);

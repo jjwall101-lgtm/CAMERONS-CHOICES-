@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=40" />
+  <link rel="stylesheet" href="style.css?v=41" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -537,9 +537,21 @@
       </div>
     </section>
 
+
+    <section class="child-animation-stage" id="childAnimationStage" aria-live="polite" hidden>
+      <div class="child-animation-card" id="childAnimationCard">
+        <button type="button" class="child-animation-close" id="childAnimationCloseButton" aria-label="Close animation">×</button>
+
+        <div class="animation-scene" id="animationScene">
+          <div class="animation-message" id="animationMessage">Well done!</div>
+          <div class="animation-world" id="animationWorld"></div>
+        </div>
+      </div>
+    </section>
+
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=40" type="module"></script>
+  <script src="script.js?v=41" type="module"></script>
 </body>
 </html>
