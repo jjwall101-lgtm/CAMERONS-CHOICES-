@@ -1,4 +1,4 @@
-const CACHE_NAME = "cameron-app-v48";
+const CACHE_NAME = "cameron-app-v49";
 
 self.addEventListener("install", event => {
   self.skipWaiting();

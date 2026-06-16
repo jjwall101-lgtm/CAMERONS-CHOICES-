@@ -1504,11 +1504,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const entries = normalizeFamilyCalendar(currentData.familyCalendar);
     const today = new Date();
     const todayISO = getDateISO(today);
+    const datesToShow = [];
+
+    if (childMode) {
+      // Child view stays simple: only today plus the next 6 days.
+      for (let offset = 0; offset < 7; offset += 1) {
+        datesToShow.push(new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset, 12));
+      }
+    } else {
+      // Parent view shows the whole current calendar month.
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let dayNumber = 1; dayNumber <= daysInMonth; dayNumber += 1) {
+        datesToShow.push(new Date(year, month, dayNumber, 12));
+      }
+    }
+
+    grid.setAttribute("aria-label", childMode ? "Next seven days" : "Current month");
     grid.innerHTML = "";
 
-    for (let offset = 0; offset < 28; offset += 1) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + offset);
+    datesToShow.forEach(date => {
       const dateISO = getDateISO(date);
       const entry = entries.find(item => item.dateISO === dateISO);
 
@@ -1543,7 +1560,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       button.addEventListener("click", chooseCalendarDay);
       grid.appendChild(button);
-    }
+    });
 
     const visibleDates = [...grid.querySelectorAll(".family-calendar-day")]
       .map(button => button.dataset.date);
@@ -2633,7 +2650,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      serviceWorkerRegistration = await navigator.serviceWorker.register("./sw.js?v=2");
+      serviceWorkerRegistration = await navigator.serviceWorker.register("./sw.js?v=49");
       await navigator.serviceWorker.ready;
       return serviceWorkerRegistration;
     } catch (error) {
