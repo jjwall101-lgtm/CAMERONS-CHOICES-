@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=39" />
+  <link rel="stylesheet" href="style.css?v=40" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -171,38 +171,21 @@
         <label for="behaviourReasonText">Quick note / reason</label>
         <textarea id="behaviourReasonText" rows="3" placeholder="Optional note for this change..."></textarea>
 
-        <section class="traffic-light" aria-label="Behaviour traffic light">
-          <button type="button" class="light red" id="redLight" aria-label="Red level">
-            <span>!</span>
+        <section class="day-choice-buttons" aria-label="Log Cameron's day">
+          <button type="button" class="day-choice-button good-day-button" id="goodDayButton">
+            <span class="day-choice-icon" id="goodDayIcon">⭐</span>
+            <strong>GOOD DAY</strong>
+            <small id="greenCoinValue">+50 coins</small>
           </button>
 
-          <button type="button" class="light amber active" id="amberLight" aria-label="Amber level">
-            <span>?</span>
-          </button>
-
-          <button type="button" class="light green" id="greenLight" aria-label="Green level">
-            <span>★</span>
+          <button type="button" class="day-choice-button tricky-day-button" id="trickyDayButton">
+            <span class="day-choice-icon" id="trickyDayIcon">!</span>
+            <strong>TRICKY DAY</strong>
+            <small id="redCoinValue">-50 coins</small>
           </button>
         </section>
 
-        <div class="level-labels">
-          <button type="button" class="level-card red-card" id="redLabel">
-            <strong>RED</strong>
-            <span id="redCoinValue">-50 coins</span>
-          </button>
-
-          <button type="button" class="level-card amber-card" id="amberLabel">
-            <strong>AMBER</strong>
-            <span>Trying level</span>
-          </button>
-
-          <button type="button" class="level-card green-card" id="greenLabel">
-            <strong>GREEN</strong>
-            <span id="greenCoinValue">+50 coins</span>
-          </button>
-        </div>
-
-        <button type="button" class="reset-button" id="resetTodayButton">Reset today to amber</button>
+        <button type="button" class="reset-button" id="resetTodayButton">Reset today</button>
       </section>
 
       <section class="treat-card" id="treatCard">
@@ -274,9 +257,9 @@
 
             <label for="quickLogLevelSelect">Today’s level</label>
             <select id="quickLogLevelSelect">
-              <option value="green">Green</option>
-              <option value="amber">Amber</option>
-              <option value="red">Red</option>
+              <option value="green">Good Day</option>
+              <option value="amber">Not logged / reset</option>
+              <option value="red">Tricky Day</option>
             </select>
 
             <label for="quickLogCategorySelect">Category</label>
@@ -557,6 +540,6 @@
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=39" type="module"></script>
+  <script src="script.js?v=40" type="module"></script>
 </body>
 </html>

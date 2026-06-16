@@ -153,12 +153,10 @@ document.addEventListener("DOMContentLoaded", () => {
     todayLevelPill: $("todayLevelPill"),
     behaviourCategorySelect: $("behaviourCategorySelect"),
     behaviourReasonText: $("behaviourReasonText"),
-    redLight: $("redLight"),
-    amberLight: $("amberLight"),
-    greenLight: $("greenLight"),
-    redLabel: $("redLabel"),
-    amberLabel: $("amberLabel"),
-    greenLabel: $("greenLabel"),
+    goodDayButton: $("goodDayButton"),
+    trickyDayButton: $("trickyDayButton"),
+    goodDayIcon: $("goodDayIcon"),
+    trickyDayIcon: $("trickyDayIcon"),
     redCoinValue: $("redCoinValue"),
     greenCoinValue: $("greenCoinValue"),
     resetTodayButton: $("resetTodayButton"),
@@ -802,11 +800,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    if (level === "green" && previousLevel !== "amber") {
-      alert("Go to amber before green.");
-      return;
-    }
-
     const category = elements.behaviourCategorySelect?.value || "General";
     const reason = elements.behaviourReasonText?.value.trim() || "";
     let coinChange = 0;
@@ -814,14 +807,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (level === "green" && previousLevel === "amber") {
       coinChange = data.settings.greenCoins;
-      text = `Moved to GREEN: +${coinChange} coins`;
+      text = `Good Day logged: +${coinChange} coins`;
     } else if (level === "red" && previousLevel !== "red") {
       coinChange = -data.settings.redCoins;
-      text = `Moved to RED: -${data.settings.redCoins} coins`;
+      text = `Tricky Day logged: -${data.settings.redCoins} coins`;
     } else if (level === "amber") {
-      text = "Moved to AMBER";
+      text = "Day reset / not logged";
     } else {
-      text = `Moved to ${level.toUpperCase()}`;
+      text = level === "green" ? "Good Day logged" : level === "red" ? "Tricky Day logged" : "Day reset";
     }
 
     const before = data.coinTotal;
@@ -879,7 +872,7 @@ document.addEventListener("DOMContentLoaded", () => {
       type: "level",
       level: "amber",
       category: "General",
-      text: "Today reset to amber",
+      text: "Today reset",
       coinChange: 0,
       coinsAfter: data.coinTotal
     });
@@ -1270,7 +1263,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const next = rewards.find(reward => reward.cost > total) || rewards.find(reward => total >= reward.cost);
 
     elements.childCoinTotal.textContent = total;
-    elements.childTodayLevel.textContent = currentData.today.level.toUpperCase();
+    elements.childTodayLevel.textContent = currentData.today.level === "green"
+      ? "GOOD"
+      : currentData.today.level === "red"
+        ? "TRICKY"
+        : "—";
     elements.childStreakCount.textContent = currentData.streak.current;
 
     const latestFeeling = normalizeFeelingLogs(currentData.feelingLogs)[0];
@@ -1377,7 +1374,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     [
       ["Coins", currentData.coinTotal],
-      ["Today", currentData.today.level.toUpperCase()],
+      ["Today", currentData.today.level === "green" ? "GOOD" : currentData.today.level === "red" ? "TRICKY" : "—"],
       ["Pending rewards", pendingRequests],
       ["Latest feeling", latestFeelingText],
       ["Notes today", notesToday],
@@ -2038,6 +2035,8 @@ document.addEventListener("DOMContentLoaded", () => {
       elements.add5Button,
       elements.add10Button,
       elements.add50Button,
+      elements.goodDayButton,
+      elements.trickyDayButton,
       elements.resetTodayButton,
       elements.clearHistoryButton,
       elements.resetCoinsButton,
@@ -2135,14 +2134,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateLevelDisplay() {
     const level = currentData.today.level;
-    const label = level.toUpperCase();
+    const label = level === "green"
+      ? "GOOD DAY"
+      : level === "red"
+        ? "TRICKY DAY"
+        : "NOT LOGGED YET";
 
     elements.todayLevelPill.textContent = label;
     elements.todayLevelPill.style.background = level === "red" ? "var(--red)" : level === "green" ? "var(--green)" : "var(--amber)";
 
-    elements.redLight.classList.toggle("active", level === "red");
-    elements.amberLight.classList.toggle("active", level === "amber");
-    elements.greenLight.classList.toggle("active", level === "green");
+    if (elements.goodDayButton) {
+      elements.goodDayButton.classList.toggle("active", level === "green");
+    }
+
+    if (elements.trickyDayButton) {
+      elements.trickyDayButton.classList.toggle("active", level === "red");
+    }
+
+    updateDayChoiceIcons();
+  }
+
+  function updateDayChoiceIcons() {
+    const theme = getCurrentTheme();
+
+    if (elements.goodDayIcon) {
+      elements.goodDayIcon.textContent = theme === "space" ? "🚀" : theme === "minecraft" ? "💎" : "⭐";
+    }
+
+    if (elements.trickyDayIcon) {
+      elements.trickyDayIcon.textContent = theme === "space" ? "☄️" : theme === "minecraft" ? "🧱" : "🍄";
+    }
   }
 
   function updateStreakDisplay() {
@@ -2868,12 +2889,8 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.add10Button.addEventListener("click", () => adjustCoins(10));
     elements.add50Button.addEventListener("click", () => adjustCoins(50));
 
-    elements.redLight.addEventListener("click", () => setLevel("red"));
-    elements.amberLight.addEventListener("click", () => setLevel("amber"));
-    elements.greenLight.addEventListener("click", () => setLevel("green"));
-    elements.redLabel.addEventListener("click", () => setLevel("red"));
-    elements.amberLabel.addEventListener("click", () => setLevel("amber"));
-    elements.greenLabel.addEventListener("click", () => setLevel("green"));
+    elements.goodDayButton.addEventListener("click", () => setLevel("green"));
+    elements.trickyDayButton.addEventListener("click", () => setLevel("red"));
 
     elements.resetTodayButton.addEventListener("click", resetToday);
     elements.collectPrizeButton.addEventListener("click", collectPrize);

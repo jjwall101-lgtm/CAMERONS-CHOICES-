@@ -2585,3 +2585,110 @@ html[data-theme="space"] .calendar-selected-description {
 .calendar-day-details {
   display: none !important;
 }
+
+
+/* GOOD DAY / TRICKY DAY UPDATE */
+
+.traffic-light,
+.light,
+.level-labels {
+  display: none !important;
+}
+
+.day-choice-buttons {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 18px 0 8px;
+}
+
+.day-choice-button {
+  min-height: 146px;
+  border: 6px solid var(--outline);
+  box-shadow: 6px 6px 0 var(--outline);
+  border-radius: 28px;
+  padding: 16px 12px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  text-align: center;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.16s ease;
+}
+
+.day-choice-button:active {
+  transform: translateY(5px) scale(0.98);
+  box-shadow: 2px 2px 0 var(--outline);
+}
+
+.day-choice-button.active {
+  outline: 6px solid var(--theme-accent);
+  outline-offset: -10px;
+  transform: translateY(3px);
+  box-shadow: 2px 2px 0 var(--outline);
+}
+
+.day-choice-icon {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: 5px solid var(--outline);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.82);
+  box-shadow: 3px 3px 0 var(--outline);
+  font-size: 38px;
+}
+
+.day-choice-button strong {
+  font-size: 25px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.day-choice-button small {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.good-day-button {
+  background: linear-gradient(180deg, #dcffd7, #91ef93);
+}
+
+.tricky-day-button {
+  background: linear-gradient(180deg, #ffd0d0, #ff8f8f);
+}
+
+html[data-theme="space"] .good-day-button {
+  background: linear-gradient(180deg, #45d8ff, #5166ff);
+  color: white;
+}
+
+html[data-theme="space"] .tricky-day-button {
+  background: linear-gradient(180deg, #ff8b2b, #9b2dff);
+  color: white;
+}
+
+html[data-theme="minecraft"] .good-day-button {
+  background: linear-gradient(180deg, #bdf3ad, #5cae40);
+  color: white;
+}
+
+html[data-theme="minecraft"] .tricky-day-button {
+  background: linear-gradient(180deg, #d8c08a, #8b5b38);
+  color: white;
+}
+
+body.child-mode .day-choice-buttons {
+  display: none !important;
+}
+
+body.child-mode .today-level-pill {
+  font-size: 24px;
+}
+
+@media (min-width: 520px) {
+  .day-choice-buttons {
+    grid-template-columns: 1fr 1fr;
+  }
+}
