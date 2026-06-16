@@ -90,6 +90,12 @@ document.addEventListener("DOMContentLoaded", () => {
     syncStatus: $("syncStatus"),
     headerUnlockButton: $("headerUnlockButton"),
     modeStatusPill: $("modeStatusPill"),
+    pinPadBackdrop: $("pinPadBackdrop"),
+    pinPadText: $("pinPadText"),
+    pinBoxRow: $("pinBoxRow"),
+    pinKeypad: $("pinKeypad"),
+    pinPadCancelButton: $("pinPadCancelButton"),
+    pinPadConfirmButton: $("pinPadConfirmButton"),
     childCoinTotal: $("childCoinTotal"),
     childNextReward: $("childNextReward"),
     childTodayLevel: $("childTodayLevel"),
@@ -430,12 +436,102 @@ document.addEventListener("DOMContentLoaded", () => {
     return localStorage.getItem(PIN_KEY) || DEFAULT_PIN;
   }
 
-  function verifyParentPin(actionText = "continue") {
+  function askForParentPin(actionText = "continue") {
+    return new Promise(resolve => {
+      if (!elements.pinPadBackdrop || !elements.pinKeypad || !elements.pinBoxRow) {
+        resolve(window.prompt(`Enter parent PIN to ${actionText}:`));
+        return;
+      }
+
+      let enteredPin = "";
+      const pinLength = Math.max(4, Math.min(8, getParentPin().length || 4));
+
+      const renderBoxes = () => {
+        elements.pinBoxRow.innerHTML = "";
+
+        for (let index = 0; index < pinLength; index += 1) {
+          const box = document.createElement("span");
+          box.className = "pin-box";
+
+          if (enteredPin.length > index) {
+            box.classList.add("filled");
+            box.textContent = "•";
+          }
+
+          if (enteredPin.length === index) {
+            box.classList.add("active");
+          }
+
+          elements.pinBoxRow.appendChild(box);
+        }
+
+        if (enteredPin.length > pinLength) {
+          const extra = document.createElement("span");
+          extra.className = "pin-extra";
+          extra.textContent = `+${enteredPin.length - pinLength}`;
+          elements.pinBoxRow.appendChild(extra);
+        }
+      };
+
+      const cleanup = () => {
+        elements.pinPadBackdrop.hidden = true;
+        elements.pinKeypad.removeEventListener("click", onKeypadClick);
+        elements.pinPadCancelButton.removeEventListener("click", onCancel);
+        elements.pinPadConfirmButton.removeEventListener("click", onConfirm);
+      };
+
+      const onConfirm = () => {
+        const value = enteredPin;
+        cleanup();
+        resolve(value);
+      };
+
+      const onCancel = () => {
+        cleanup();
+        resolve(null);
+      };
+
+      const onKeypadClick = event => {
+        const button = event.target.closest("button");
+
+        if (!button) {
+          return;
+        }
+
+        const digit = button.dataset.pinDigit;
+        const action = button.dataset.pinAction;
+
+        if (digit !== undefined && enteredPin.length < 12) {
+          enteredPin += digit;
+        }
+
+        if (action === "delete") {
+          enteredPin = enteredPin.slice(0, -1);
+        }
+
+        if (action === "clear") {
+          enteredPin = "";
+        }
+
+        renderBoxes();
+      };
+
+      elements.pinPadText.textContent = `Enter parent PIN to ${actionText}`;
+      elements.pinPadBackdrop.hidden = false;
+      renderBoxes();
+
+      elements.pinKeypad.addEventListener("click", onKeypadClick);
+      elements.pinPadCancelButton.addEventListener("click", onCancel);
+      elements.pinPadConfirmButton.addEventListener("click", onConfirm);
+    });
+  }
+
+  async function verifyParentPin(actionText = "continue") {
     if (parentUnlocked) {
       return true;
     }
 
-    const pin = prompt(`Enter parent PIN to ${actionText}:`);
+    const pin = await askForParentPin(actionText);
 
     if (pin === null) {
       return false;
@@ -622,7 +718,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    if (!verifyParentPin("change coins")) {
+    if (!await verifyParentPin("change coins")) {
       return;
     }
 
@@ -653,7 +749,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    if (!verifyParentPin("change today's level")) {
+    if (!await verifyParentPin("change today's level")) {
       return;
     }
 
@@ -736,7 +832,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function resetToday() {
-    if (!verifyParentPin("reset today")) {
+    if (!await verifyParentPin("reset today")) {
       return;
     }
 
@@ -761,7 +857,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function resetCoins() {
-    if (!verifyParentPin("reset coins")) {
+    if (!await verifyParentPin("reset coins")) {
       return;
     }
 
@@ -790,7 +886,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function collectPrize() {
-    if (!verifyParentPin("collect the prize")) {
+    if (!await verifyParentPin("collect the prize")) {
       return;
     }
 
@@ -975,7 +1071,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function approveRewardRequest(requestId) {
-    if (!verifyParentPin("approve this reward request")) {
+    if (!await verifyParentPin("approve this reward request")) {
       return;
     }
 
@@ -1024,7 +1120,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function rejectRewardRequest(requestId) {
-    if (!verifyParentPin("reject this reward request")) {
+    if (!await verifyParentPin("reject this reward request")) {
       return;
     }
 
@@ -1062,7 +1158,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function saveQuickDailyLog() {
-    if (!verifyParentPin("save a daily log")) {
+    if (!await verifyParentPin("save a daily log")) {
       return;
     }
 
@@ -1328,7 +1424,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function claimReward(rewardId) {
-    if (!verifyParentPin("claim this reward")) {
+    if (!await verifyParentPin("claim this reward")) {
       return;
     }
 
@@ -1367,7 +1463,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function addReward() {
-    if (!verifyParentPin("add a reward")) {
+    if (!await verifyParentPin("add a reward")) {
       return;
     }
 
@@ -1402,7 +1498,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function saveReward(rewardId) {
-    if (!verifyParentPin("edit this reward")) {
+    if (!await verifyParentPin("edit this reward")) {
       return;
     }
 
@@ -1439,7 +1535,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function deleteReward(rewardId) {
-    if (!verifyParentPin("delete this reward")) {
+    if (!await verifyParentPin("delete this reward")) {
       return;
     }
 
@@ -1453,7 +1549,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function addOrUpdateNote() {
-    if (!verifyParentPin("add a parent note")) {
+    if (!await verifyParentPin("add a parent note")) {
       return;
     }
 
@@ -1517,8 +1613,8 @@ document.addEventListener("DOMContentLoaded", () => {
     await saveData(data);
   }
 
-  function editNote(noteId) {
-    if (!verifyParentPin("edit this note")) {
+  async function editNote(noteId) {
+    if (!await verifyParentPin("edit this note")) {
       return;
     }
 
@@ -1537,7 +1633,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function deleteNote(noteId) {
-    if (!verifyParentPin("delete this note")) {
+    if (!await verifyParentPin("delete this note")) {
       return;
     }
 
@@ -1551,7 +1647,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function addCategory() {
-    if (!verifyParentPin("add a category")) {
+    if (!await verifyParentPin("add a category")) {
       return;
     }
 
@@ -1568,7 +1664,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function deleteCategory(category) {
-    if (!verifyParentPin("delete this category")) {
+    if (!await verifyParentPin("delete this category")) {
       return;
     }
 
@@ -1583,7 +1679,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function saveCoinSettings() {
-    if (!verifyParentPin("save settings")) {
+    if (!await verifyParentPin("save settings")) {
       return;
     }
 
@@ -1598,8 +1694,8 @@ document.addEventListener("DOMContentLoaded", () => {
     await saveData(data);
   }
 
-  function changePin() {
-    if (!verifyParentPin("change the PIN")) {
+  async function changePin() {
+    if (!await verifyParentPin("change the PIN")) {
       return;
     }
 
@@ -1616,7 +1712,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function clearHistory() {
-    if (!verifyParentPin("clear history")) {
+    if (!await verifyParentPin("clear history")) {
       return;
     }
 
@@ -1630,7 +1726,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function clearAllData() {
-    if (!verifyParentPin("clear all data")) {
+    if (!await verifyParentPin("clear all data")) {
       return;
     }
 
@@ -1641,8 +1737,8 @@ document.addEventListener("DOMContentLoaded", () => {
     await saveData(getDefaultData());
   }
 
-  function exportData() {
-    if (!verifyParentPin("export data")) {
+  async function exportData() {
+    if (!await verifyParentPin("export data")) {
       return;
     }
 
@@ -2466,7 +2562,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    if (!verifyParentPin("add this signed-in parent")) {
+    if (!await verifyParentPin("add this signed-in parent")) {
       return;
     }
 
@@ -2531,9 +2627,9 @@ document.addEventListener("DOMContentLoaded", () => {
       button.addEventListener("click", () => switchPage(button.dataset.page));
     });
 
-    elements.headerUnlockButton.addEventListener("click", () => {
+    elements.headerUnlockButton.addEventListener("click", async () => {
       if (childMode) {
-        if (verifyParentPin("enter Parent Mode")) {
+        if (await verifyParentPin("enter Parent Mode")) {
           childMode = false;
           parentUnlocked = true;
           localStorage.setItem(CHILD_MODE_KEY, "false");
@@ -2550,8 +2646,8 @@ document.addEventListener("DOMContentLoaded", () => {
       updateDisplay();
     });
 
-    elements.parentPageUnlockButton.addEventListener("click", () => verifyParentPin("unlock parent page"));
-    elements.settingsUnlockButton.addEventListener("click", () => verifyParentPin("unlock settings"));
+    elements.parentPageUnlockButton.addEventListener("click", async () => { await verifyParentPin("unlock parent page"); });
+    elements.settingsUnlockButton.addEventListener("click", async () => { await verifyParentPin("unlock settings"); });
 
     elements.themeSelect.addEventListener("change", event => setTheme(event.target.value));
 

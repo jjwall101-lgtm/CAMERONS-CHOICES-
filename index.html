@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=33" />
+  <link rel="stylesheet" href="style.css?v=34" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -323,7 +323,7 @@
               <input type="text" id="rewardNameInput" placeholder="Choose a small treat" maxlength="60" />
 
               <label for="rewardCostInput">Coin cost</label>
-              <input type="number" id="rewardCostInput" placeholder="100" min="1" max="10000" step="1" />
+              <input type="number" inputmode="numeric" pattern="[0-9]*" id="rewardCostInput" placeholder="100" min="1" max="10000" step="1" />
 
               <button type="button" id="addRewardButton">Add Reward</button>
             </div>
@@ -426,13 +426,13 @@
             <div class="panel-title">Coin Settings</div>
 
             <label for="goalInput">Goal coins</label>
-            <input type="number" id="goalInput" min="50" max="10000" step="10" />
+            <input type="number" inputmode="numeric" pattern="[0-9]*" id="goalInput" min="50" max="10000" step="10" />
 
             <label for="greenCoinsInput">Green coin value</label>
-            <input type="number" id="greenCoinsInput" min="0" max="1000" step="5" />
+            <input type="number" inputmode="numeric" pattern="[0-9]*" id="greenCoinsInput" min="0" max="1000" step="5" />
 
             <label for="redCoinsInput">Red coin value</label>
-            <input type="number" id="redCoinsInput" min="0" max="1000" step="5" />
+            <input type="number" inputmode="numeric" pattern="[0-9]*" id="redCoinsInput" min="0" max="1000" step="5" />
 
             <button type="button" id="saveCoinSettingsButton">Save Coin Settings</button>
           </section>
@@ -493,9 +493,39 @@
       <div class="mc-dirt"></div>
     </footer>
 
+
+    <section class="pin-pad-backdrop" id="pinPadBackdrop" hidden>
+      <div class="pin-pad-modal" role="dialog" aria-modal="true" aria-labelledby="pinPadTitle">
+        <div class="section-title" id="pinPadTitle">PARENT PIN</div>
+        <p id="pinPadText">Enter parent PIN</p>
+
+        <div class="pin-box-row" id="pinBoxRow" aria-label="PIN entry"></div>
+
+        <div class="pin-keypad" id="pinKeypad" aria-label="PIN keypad">
+          <button type="button" data-pin-digit="1">1</button>
+          <button type="button" data-pin-digit="2">2</button>
+          <button type="button" data-pin-digit="3">3</button>
+          <button type="button" data-pin-digit="4">4</button>
+          <button type="button" data-pin-digit="5">5</button>
+          <button type="button" data-pin-digit="6">6</button>
+          <button type="button" data-pin-digit="7">7</button>
+          <button type="button" data-pin-digit="8">8</button>
+          <button type="button" data-pin-digit="9">9</button>
+          <button type="button" data-pin-action="clear">Clear</button>
+          <button type="button" data-pin-digit="0">0</button>
+          <button type="button" data-pin-action="delete">⌫</button>
+        </div>
+
+        <div class="pin-pad-actions">
+          <button type="button" id="pinPadCancelButton">Cancel</button>
+          <button type="button" id="pinPadConfirmButton">Unlock</button>
+        </div>
+      </div>
+    </section>
+
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=33" type="module"></script>
+  <script src="script.js?v=34" type="module"></script>
 </body>
 </html>
