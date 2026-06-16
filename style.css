@@ -3228,3 +3228,121 @@ html[data-theme="minecraft"] .tricky-day-button {
     font-size: 25px;
   }
 }
+
+
+/* CHILD ANIMATION BUTTON FIX */
+
+body.child-mode .day-choice-buttons {
+  display: none !important;
+}
+
+body.parent-mode .child-day-play-panel {
+  display: none !important;
+}
+
+.child-day-play-panel {
+  margin: 14px 0 4px;
+  padding: 14px;
+  border: 5px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  border-radius: 24px;
+  background: rgba(255,255,255,0.72);
+  text-align: center;
+}
+
+html[data-theme="space"] .child-day-play-panel {
+  background: #10103e;
+}
+
+.child-day-play-message {
+  margin: 0 0 12px;
+  font-weight: 950;
+}
+
+.child-play-day-button {
+  width: 100%;
+  min-height: 126px;
+  border: 6px solid var(--outline);
+  box-shadow: 6px 6px 0 var(--outline);
+  border-radius: 28px;
+  padding: 16px 12px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  text-align: center;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.16s ease;
+}
+
+.child-play-day-button[hidden] {
+  display: none !important;
+}
+
+.child-play-day-button:active {
+  transform: translateY(5px) scale(0.98);
+  box-shadow: 2px 2px 0 var(--outline);
+}
+
+.child-play-day-button span {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: 5px solid var(--outline);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 3px 3px 0 var(--outline);
+  font-size: 34px;
+  font-weight: 950;
+}
+
+.child-play-day-button strong {
+  font-size: 23px;
+  font-weight: 950;
+}
+
+.child-play-good {
+  background: linear-gradient(180deg, #dcffd7, #91ef93);
+}
+
+.child-play-tricky {
+  background: linear-gradient(180deg, #ffd0d0, #ff8f8f);
+  color: #5b1010;
+}
+
+html[data-theme="space"] .child-play-good {
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255,255,255,.85) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 30%, rgba(255,255,255,.65) 0 2px, transparent 3px),
+    linear-gradient(180deg, #45d8ff, #5166ff);
+  color: white;
+}
+
+html[data-theme="space"] .child-play-tricky {
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255,255,255,.7) 0 2px, transparent 3px),
+    linear-gradient(180deg, #ff8b2b, #9b2dff);
+  color: white;
+}
+
+html[data-theme="minecraft"] .child-play-good {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.15) 0 25%, transparent 26% 50%, rgba(255,255,255,.15) 51% 75%, transparent 76%),
+    linear-gradient(180deg, #bdf3ad, #5cae40);
+  color: white;
+}
+
+html[data-theme="minecraft"] .child-play-tricky {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.14) 0 25%, transparent 26% 50%, rgba(255,255,255,.14) 51% 75%, transparent 76%),
+    linear-gradient(180deg, #d8c08a, #8b5b38);
+  color: white;
+}
+
+body.child-mode .behaviour-card {
+  display: block !important;
+}
+
+body.child-mode .child-animation-stage.show {
+  display: grid !important;
+}

@@ -157,6 +157,11 @@ document.addEventListener("DOMContentLoaded", () => {
     trickyDayButton: $("trickyDayButton"),
     goodDayIcon: $("goodDayIcon"),
     trickyDayIcon: $("trickyDayIcon"),
+    childDayPlayPanel: $("childDayPlayPanel"),
+    childDayPlayMessage: $("childDayPlayMessage"),
+    childPlayGoodButton: $("childPlayGoodButton"),
+    childPlayTrickyButton: $("childPlayTrickyButton"),
+    childPlayGoodIcon: $("childPlayGoodIcon"),
     childAnimationStage: $("childAnimationStage"),
     childAnimationCard: $("childAnimationCard"),
     childAnimationCloseButton: $("childAnimationCloseButton"),
@@ -788,7 +793,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function playChildDayAnimation(kind) {
-    if (!childMode || !elements.childAnimationStage || !elements.animationWorld) {
+    if (!elements.childAnimationStage || !elements.animationWorld) {
       return;
     }
 
@@ -2228,6 +2233,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     updateDayChoiceIcons();
+    updateChildDayPlayPanel();
   }
 
   function updateDayChoiceIcons() {
@@ -2239,6 +2245,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (elements.trickyDayIcon) {
       elements.trickyDayIcon.textContent = theme === "space" ? "☄️" : theme === "minecraft" ? "🧱" : "🍄";
+    }
+  }
+
+  function updateChildDayPlayPanel() {
+    if (!elements.childPlayGoodButton || !elements.childPlayTrickyButton || !elements.childDayPlayMessage) {
+      return;
+    }
+
+    const level = currentData.today.level;
+    const theme = getCurrentTheme();
+
+    if (elements.childPlayGoodIcon) {
+      elements.childPlayGoodIcon.textContent = theme === "space" ? "🚀" : theme === "minecraft" ? "💎" : "⭐";
+    }
+
+    elements.childPlayGoodButton.hidden = level !== "green";
+    elements.childPlayTrickyButton.hidden = level !== "red";
+
+    if (level === "green") {
+      elements.childDayPlayMessage.textContent = "Good Day is ready. Tap to celebrate.";
+    } else if (level === "red") {
+      elements.childDayPlayMessage.textContent = "Tricky Day is ready. Tap for a kind reminder.";
+    } else {
+      elements.childDayPlayMessage.textContent = "Waiting for Parent Mode to log today.";
     }
   }
 
@@ -2965,26 +2995,14 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.add10Button.addEventListener("click", () => adjustCoins(10));
     elements.add50Button.addEventListener("click", () => adjustCoins(50));
 
-    elements.goodDayButton.addEventListener("click", () => {
-      if (childMode) {
-        playChildDayAnimation("good");
-        return;
-      }
-
-      setLevel("green");
-    });
-
-    elements.trickyDayButton.addEventListener("click", () => {
-      if (childMode) {
-        playChildDayAnimation("tricky");
-        return;
-      }
-
-      setLevel("red");
-    });
+    elements.goodDayButton.addEventListener("click", () => setLevel("green"));
+    elements.trickyDayButton.addEventListener("click", () => setLevel("red"));
 
     elements.resetTodayButton.addEventListener("click", resetToday);
     elements.collectPrizeButton.addEventListener("click", collectPrize);
+
+    elements.childPlayGoodButton.addEventListener("click", () => playChildDayAnimation("good"));
+    elements.childPlayTrickyButton.addEventListener("click", () => playChildDayAnimation("tricky"));
 
     elements.childAnimationCloseButton.addEventListener("click", closeChildDayAnimation);
 

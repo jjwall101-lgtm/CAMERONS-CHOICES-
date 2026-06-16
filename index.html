@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=41" />
+  <link rel="stylesheet" href="style.css?v=42" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -164,6 +164,20 @@
         <div class="section-title">TODAY'S LEVEL</div>
 
         <div class="today-level-pill" id="todayLevelPill">AMBER</div>
+        <section class="child-day-play-panel child-mode-only" id="childDayPlayPanel">
+          <p class="child-day-play-message" id="childDayPlayMessage">Waiting for Parent Mode to log today.</p>
+
+          <button type="button" class="child-play-day-button child-play-good" id="childPlayGoodButton" hidden>
+            <span id="childPlayGoodIcon">⭐</span>
+            <strong>Play Good Day</strong>
+          </button>
+
+          <button type="button" class="child-play-day-button child-play-tricky" id="childPlayTrickyButton" hidden>
+            <span>uh-oh</span>
+            <strong>Try Again Tomorrow</strong>
+          </button>
+        </section>
+
 
         <label for="behaviourCategorySelect">Reason/category</label>
         <select id="behaviourCategorySelect"></select>
@@ -552,6 +566,6 @@
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=41" type="module"></script>
+  <script src="script.js?v=42" type="module"></script>
 </body>
 </html>
