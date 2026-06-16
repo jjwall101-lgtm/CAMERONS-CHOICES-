@@ -58,6 +58,16 @@ document.addEventListener("DOMContentLoaded", () => {
     { id: "reward-1000-prize", icon: "🎁", name: "Big prize", cost: 1000 }
   ];
 
+  const DEFAULT_FAMILY_MEMBERS = [
+    { id: "family-cameron", icon: "👦", relationship: "Me", name: "Cameron", branch: "Cameron", description: "This is me." },
+    { id: "family-mummy", icon: "👩", relationship: "Mummy", name: "Mummy", branch: "Parents", description: "Mummy loves me and helps me." },
+    { id: "family-daddy", icon: "👨", relationship: "Daddy", name: "Daddy", branch: "Parents", description: "Daddy loves me and helps me." },
+    { id: "family-joshua", icon: "👦", relationship: "Brother", name: "Joshua", branch: "Siblings", description: "My brother." },
+    { id: "family-harriet", icon: "👶", relationship: "Sister", name: "Harriet", branch: "Siblings", description: "My baby sister." },
+    { id: "family-nanny", icon: "👵", relationship: "Nanny", name: "Nanny", branch: "Other family", description: "My nanny." },
+    { id: "family-grandad", icon: "👴", relationship: "Grandad", name: "Grandad", branch: "Other family", description: "My grandad." }
+  ];
+
   const FEELINGS = [
     { id: "happy", label: "Happy", emoji: "😊", colour: "yellow" },
     { id: "sad", label: "Sad", emoji: "😢", colour: "blue" },
@@ -82,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let notificationsReady = false;
   let serviceWorkerRegistration = null;
   let editingNoteId = "";
+  let editingFamilyMemberId = "";
   let currentData = getLocalData();
   let selectedCalendarDate = getDateISO();
 
@@ -120,6 +131,16 @@ document.addEventListener("DOMContentLoaded", () => {
     calendarNoteInput: $("calendarNoteInput"),
     saveCalendarEntryButton: $("saveCalendarEntryButton"),
     deleteCalendarEntryButton: $("deleteCalendarEntryButton"),
+    familyTreeDisplay: $("familyTreeDisplay"),
+    familyTreeEditor: $("familyTreeEditor"),
+    familyRelationshipInput: $("familyRelationshipInput"),
+    familyNameInput: $("familyNameInput"),
+    familyIconInput: $("familyIconInput"),
+    familyBranchSelect: $("familyBranchSelect"),
+    familyDescriptionInput: $("familyDescriptionInput"),
+    addFamilyMemberButton: $("addFamilyMemberButton"),
+    cancelFamilyEditButton: $("cancelFamilyEditButton"),
+    familyMemberEditorList: $("familyMemberEditorList"),
     parentPageUnlockButton: $("parentPageUnlockButton"),
     settingsUnlockButton: $("settingsUnlockButton"),
     lockStatus: $("lockStatus"),
@@ -260,6 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
       rewardRequests: [],
       feelingLogs: [],
       familyCalendar: [],
+      familyTree: DEFAULT_FAMILY_MEMBERS,
       categories: DEFAULT_CATEGORIES,
       streak: {
         current: 0,
@@ -368,6 +390,23 @@ document.addEventListener("DOMContentLoaded", () => {
       .slice(0, 365);
   }
 
+  function normalizeFamilyTree(familyTree) {
+    const source = Array.isArray(familyTree) && familyTree.length ? familyTree : DEFAULT_FAMILY_MEMBERS;
+
+    return source
+      .filter(member => member && typeof member === "object")
+      .map(member => ({
+        id: member.id || `family-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        icon: String(member.icon || "⭐").slice(0, 8),
+        relationship: String(member.relationship || "Family").slice(0, 40),
+        name: String(member.name || "Family").slice(0, 60),
+        branch: String(member.branch || "Other family").slice(0, 40),
+        description: String(member.description || "").slice(0, 300)
+      }))
+      .filter(member => member.name.trim() && member.relationship.trim())
+      .slice(0, 80);
+  }
+
   function normalizeCategories(categories) {
     const list = Array.isArray(categories) && categories.length ? categories : DEFAULT_CATEGORIES;
     const clean = list
@@ -439,6 +478,7 @@ document.addEventListener("DOMContentLoaded", () => {
       rewardRequests: normalizeRewardRequests(data?.rewardRequests),
       feelingLogs: normalizeFeelingLogs(data?.feelingLogs),
       familyCalendar: normalizeFamilyCalendar(data?.familyCalendar),
+      familyTree: normalizeFamilyTree(data?.familyTree),
       categories: normalizeCategories(data?.categories),
       streak: {
         current: Math.max(0, Number(data?.streak?.current) || 0),
@@ -1356,6 +1396,265 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function branchSortValue(branch) {
+    const order = ["Cameron", "Parents", "Siblings", "Mum's side", "Dad's side", "Special people", "Other family"];
+    const index = order.indexOf(branch);
+    return index === -1 ? order.length : index;
+  }
+
+  function updateFamilyTree() {
+    const display = elements.familyTreeDisplay;
+
+    if (!display) {
+      return;
+    }
+
+    const members = normalizeFamilyTree(currentData.familyTree);
+    const cameron = members.find(member => member.branch === "Cameron") || {
+      icon: "👦",
+      relationship: "Me",
+      name: "Cameron",
+      description: "This is me."
+    };
+
+    const branches = {};
+    members
+      .filter(member => member.id !== cameron.id && member.branch !== "Cameron")
+      .forEach(member => {
+        const branch = member.branch || "Other family";
+        branches[branch] = branches[branch] || [];
+        branches[branch].push(member);
+      });
+
+    const branchNames = Object.keys(branches)
+      .sort((a, b) => branchSortValue(a) - branchSortValue(b) || a.localeCompare(b));
+
+    display.innerHTML = `
+      <div class="family-tree-root">
+        <div class="family-tree-person family-tree-main-person">
+          <div class="family-person-icon">${escapeAttr(cameron.icon)}</div>
+          <div>
+            <strong>${escapeAttr(cameron.name)}</strong>
+            <span>${escapeAttr(cameron.relationship)}</span>
+            <p>${escapeAttr(cameron.description || "This is me.")}</p>
+          </div>
+        </div>
+      </div>
+      <div class="family-tree-branches" id="familyTreeBranches"></div>
+    `;
+
+    const branchWrap = display.querySelector("#familyTreeBranches");
+
+    if (!branchNames.length) {
+      branchWrap.innerHTML = "<p class='empty-notes'>No family members added yet.</p>";
+    } else {
+      branchNames.forEach(branchName => {
+        const section = document.createElement("section");
+        section.className = "family-tree-branch";
+
+        const title = document.createElement("div");
+        title.className = "family-branch-title";
+        title.textContent = branchName;
+        section.appendChild(title);
+
+        branches[branchName].forEach(member => {
+          const card = document.createElement("article");
+          card.className = "family-tree-person";
+          card.innerHTML = `
+            <div class="family-person-icon">${escapeAttr(member.icon)}</div>
+            <div>
+              <strong>${escapeAttr(member.name)}</strong>
+              <span>${escapeAttr(member.relationship)}</span>
+              ${member.description ? `<p>${escapeAttr(member.description)}</p>` : ""}
+            </div>
+          `;
+          section.appendChild(card);
+        });
+
+        branchWrap.appendChild(section);
+      });
+    }
+
+    updateFamilyMemberEditor();
+  }
+
+  async function addOrUpdateFamilyMember() {
+    if (!await verifyParentPin("edit the family tree")) {
+      return;
+    }
+
+    const relationship = elements.familyRelationshipInput?.value.trim() || "";
+    const name = elements.familyNameInput?.value.trim() || "";
+    const icon = elements.familyIconInput?.value.trim() || "⭐";
+    const branch = elements.familyBranchSelect?.value || "Other family";
+    const description = elements.familyDescriptionInput?.value.trim() || "";
+
+    if (!relationship || !name) {
+      alert("Add a relationship and name first.");
+      return;
+    }
+
+    const data = await getLatestData();
+    const members = normalizeFamilyTree(data.familyTree);
+
+    if (editingFamilyMemberId) {
+      data.familyTree = members.map(member => {
+        if (member.id !== editingFamilyMemberId) {
+          return member;
+        }
+
+        return { ...member, relationship, name, icon, branch, description };
+      });
+    } else {
+      data.familyTree = [
+        ...members,
+        {
+          id: `family-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          relationship,
+          name,
+          icon,
+          branch,
+          description
+        }
+      ];
+    }
+
+    addHistoryEntry(data, {
+      type: "family",
+      level: "family",
+      category: "Family tree",
+      text: editingFamilyMemberId ? `Family tree updated: ${relationship} ${name}` : `Family member added: ${relationship} ${name}`,
+      coinChange: 0,
+      coinsAfter: data.coinTotal
+    });
+
+    clearFamilyForm();
+    await saveData(data);
+  }
+
+  function clearFamilyForm() {
+    editingFamilyMemberId = "";
+
+    if (elements.familyRelationshipInput) elements.familyRelationshipInput.value = "";
+    if (elements.familyNameInput) elements.familyNameInput.value = "";
+    if (elements.familyIconInput) elements.familyIconInput.value = "";
+    if (elements.familyBranchSelect) elements.familyBranchSelect.value = "Parents";
+    if (elements.familyDescriptionInput) elements.familyDescriptionInput.value = "";
+    if (elements.addFamilyMemberButton) elements.addFamilyMemberButton.textContent = "Add Family Member";
+    if (elements.cancelFamilyEditButton) elements.cancelFamilyEditButton.hidden = true;
+  }
+
+  async function editFamilyMember(memberId) {
+    if (!await verifyParentPin("edit this family member")) {
+      return;
+    }
+
+    const member = normalizeFamilyTree(currentData.familyTree).find(item => item.id === memberId);
+
+    if (!member) {
+      return;
+    }
+
+    editingFamilyMemberId = member.id;
+    elements.familyRelationshipInput.value = member.relationship;
+    elements.familyNameInput.value = member.name;
+    elements.familyIconInput.value = member.icon;
+    elements.familyBranchSelect.value = member.branch === "Cameron" ? "Parents" : member.branch;
+    elements.familyDescriptionInput.value = member.description || "";
+    elements.addFamilyMemberButton.textContent = "Save Family Member";
+    elements.cancelFamilyEditButton.hidden = false;
+    switchPage("family");
+  }
+
+  async function deleteFamilyMember(memberId) {
+    if (!await verifyParentPin("delete this family member")) {
+      return;
+    }
+
+    const member = normalizeFamilyTree(currentData.familyTree).find(item => item.id === memberId);
+
+    if (!member) {
+      return;
+    }
+
+    if (member.branch === "Cameron") {
+      alert("Keep Cameron as the middle of the family tree.");
+      return;
+    }
+
+    if (!confirm(`Delete ${member.name} from the family tree?`)) {
+      return;
+    }
+
+    const data = await getLatestData();
+    data.familyTree = normalizeFamilyTree(data.familyTree).filter(item => item.id !== memberId);
+
+    addHistoryEntry(data, {
+      type: "family",
+      level: "family",
+      category: "Family tree",
+      text: `Family member removed: ${member.relationship} ${member.name}`,
+      coinChange: 0,
+      coinsAfter: data.coinTotal
+    });
+
+    await saveData(data);
+  }
+
+  function updateFamilyMemberEditor() {
+    const list = elements.familyMemberEditorList;
+
+    if (!list) {
+      return;
+    }
+
+    if (!parentUnlocked) {
+      list.innerHTML = "<p class='empty-notes'>Unlock Parent Mode to edit family members.</p>";
+      return;
+    }
+
+    const members = normalizeFamilyTree(currentData.familyTree)
+      .sort((a, b) => branchSortValue(a.branch) - branchSortValue(b.branch) || a.relationship.localeCompare(b.relationship));
+
+    list.innerHTML = "";
+
+    members.forEach(member => {
+      const item = document.createElement("article");
+      item.className = "family-member-editor-item";
+
+      const info = document.createElement("div");
+      info.className = "family-member-editor-info";
+      info.innerHTML = `
+        <span class="family-member-editor-icon">${escapeAttr(member.icon)}</span>
+        <div>
+          <strong>${escapeAttr(member.relationship)} - ${escapeAttr(member.name)}</strong>
+          <span>${escapeAttr(member.branch)}</span>
+        </div>
+      `;
+
+      const actions = document.createElement("div");
+      actions.className = "family-member-editor-actions";
+
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.textContent = "Edit";
+      edit.addEventListener("click", () => editFamilyMember(member.id));
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.textContent = member.branch === "Cameron" ? "Main" : "Delete";
+      del.disabled = member.branch === "Cameron";
+      del.className = "delete-family-member-button";
+      del.addEventListener("click", () => deleteFamilyMember(member.id));
+
+      actions.appendChild(edit);
+      actions.appendChild(del);
+      item.appendChild(info);
+      item.appendChild(actions);
+      list.appendChild(item);
+    });
+  }
+
   function updateParentDashboard() {
     const grid = elements.parentDashboardGrid;
 
@@ -1989,7 +2288,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function switchPage(page) {
-    if (childMode && !["home", "feelings", "rewards", "calendar"].includes(page)) {
+    if (childMode && !["home", "feelings", "rewards", "calendar", "family"].includes(page)) {
       page = "home";
     }
 
@@ -2017,7 +2316,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     document.querySelectorAll(".nav-button").forEach(button => {
-      const parentOnlyPage = !["home", "feelings", "rewards", "calendar"].includes(button.dataset.page);
+      const parentOnlyPage = !["home", "feelings", "rewards", "calendar", "family"].includes(button.dataset.page);
       button.hidden = childMode && parentOnlyPage;
     });
 
@@ -2057,6 +2356,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateParentNotes();
     updateRewardEditor();
     updateCategoryList();
+    updateFamilyMemberEditor();
   }
 
   function updateParentOnlyButtons() {
@@ -2088,7 +2388,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (childMode) {
       const activePage = document.querySelector(".page.active");
-      if (activePage && !["page-home", "page-feelings", "page-rewards", "page-calendar"].includes(activePage.id)) {
+      if (activePage && !["page-home", "page-feelings", "page-rewards", "page-calendar", "page-family"].includes(activePage.id)) {
         switchPage("home");
       }
     }
@@ -2107,6 +2407,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateRewardRequests();
     updateParentDashboard();
     updateCalendar();
+    updateFamilyTree();
     updateParentNotes();
     updateRewardEditor();
     updateCategoryOptions();
@@ -2650,7 +2951,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      serviceWorkerRegistration = await navigator.serviceWorker.register("./sw.js?v=49");
+      serviceWorkerRegistration = await navigator.serviceWorker.register("./sw.js?v=50");
       await navigator.serviceWorker.ready;
       return serviceWorkerRegistration;
     } catch (error) {
@@ -2932,6 +3233,14 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.saveCalendarEntryButton.addEventListener("click", saveCalendarEntry);
     elements.deleteCalendarEntryButton.addEventListener("click", deleteCalendarEntry);
     elements.calendarDateInput.addEventListener("change", () => selectCalendarDay(elements.calendarDateInput.value));
+
+    if (elements.addFamilyMemberButton) {
+      elements.addFamilyMemberButton.addEventListener("click", addOrUpdateFamilyMember);
+    }
+
+    if (elements.cancelFamilyEditButton) {
+      elements.cancelFamilyEditButton.addEventListener("click", clearFamilyForm);
+    }
 
     elements.copyWeeklyReportButton.addEventListener("click", copyWeeklyReport);
 

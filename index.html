@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=49" />
+  <link rel="stylesheet" href="style.css?v=50" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -93,6 +93,7 @@
       <button type="button" class="nav-button" data-page="history">History</button>
       <button type="button" class="nav-button" data-page="reports">Reports</button>
       <button type="button" class="nav-button" data-page="calendar">Calendar</button>
+      <button type="button" class="nav-button" data-page="family">Family</button>
       <button type="button" class="nav-button" data-page="settings">Settings</button>
     </nav>
 
@@ -363,6 +364,7 @@
           <option value="reward">Rewards</option>
           <option value="feeling">Feelings</option>
           <option value="calendar">Calendar</option>
+          <option value="family">Family tree</option>
           <option value="note">Notes</option>
         </select>
 
@@ -442,6 +444,49 @@
             <button type="button" id="saveCalendarEntryButton">Save Day</button>
             <button type="button" id="deleteCalendarEntryButton">Clear Day</button>
           </div>
+        </section>
+      </section>
+    </section>
+
+
+
+    <section class="page" id="page-family">
+      <section class="family-tree-card">
+        <div class="section-title">MY FAMILY TREE</div>
+        <p class="family-tree-subtitle">A simple picture map of Cameron's family.</p>
+
+        <div class="family-tree-display" id="familyTreeDisplay"></div>
+
+        <section class="family-tree-editor parent-mode-only" id="familyTreeEditor">
+          <div class="panel-title">Edit Family Tree</div>
+          <p class="small-copy">Add people Cameron knows. Child Mode shows the family tree only, not the editor.</p>
+
+          <label for="familyRelationshipInput">Relationship</label>
+          <input type="text" id="familyRelationshipInput" placeholder="Daddy / Mummy / Nanny / Brother" maxlength="40" />
+
+          <label for="familyNameInput">Name shown to Cameron</label>
+          <input type="text" id="familyNameInput" placeholder="Daddy" maxlength="60" />
+
+          <label for="familyIconInput">Icon</label>
+          <input type="text" id="familyIconInput" placeholder="👨" maxlength="8" />
+
+          <label for="familyBranchSelect">Branch</label>
+          <select id="familyBranchSelect">
+            <option value="Parents">Parents</option>
+            <option value="Siblings">Siblings</option>
+            <option value="Mum's side">Mum's side</option>
+            <option value="Dad's side">Dad's side</option>
+            <option value="Special people">Special people</option>
+            <option value="Other family">Other family</option>
+          </select>
+
+          <label for="familyDescriptionInput">Description for Cameron</label>
+          <textarea id="familyDescriptionInput" rows="3" placeholder="Example: Daddy picks me up from school and I stay at Daddy's house."></textarea>
+
+          <button type="button" id="addFamilyMemberButton">Add Family Member</button>
+          <button type="button" id="cancelFamilyEditButton" class="cancel-family-edit-button" hidden>Cancel Edit</button>
+
+          <div class="family-member-editor-list" id="familyMemberEditorList"></div>
         </section>
       </section>
     </section>
@@ -560,6 +605,6 @@
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=49" type="module"></script>
+  <script src="script.js?v=50" type="module"></script>
 </body>
 </html>
