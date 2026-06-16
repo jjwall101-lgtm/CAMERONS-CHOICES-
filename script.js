@@ -223,7 +223,13 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   function getDateISO(date = new Date()) {
-    return date.toISOString().slice(0, 10);
+    // Use the phone's local date, not UTC.
+    // toISOString() can shift the app back a day after midnight in the UK,
+    // which made the calendar show one day while selecting another.
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
 
   function formatDateTime(date = new Date()) {
@@ -1536,7 +1542,6 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       button.addEventListener("click", chooseCalendarDay);
-      button.addEventListener("pointerup", chooseCalendarDay);
       grid.appendChild(button);
     }
 

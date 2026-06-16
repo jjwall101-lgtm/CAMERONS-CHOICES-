@@ -2785,3 +2785,13 @@ body.child-mode[data-active-page="calendar"] .child-today-card,
 body.child-mode[data-active-page="feelings"] .child-today-card {
   display: none !important;
 }
+
+
+/* CALENDAR FIX V48: keep Jay signature from covering calendar days */
+.jay-signature {
+  position: static;
+  width: fit-content;
+  margin: 14px 0 0 auto;
+  opacity: 0.9;
+  pointer-events: none;
+}
