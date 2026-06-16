@@ -159,6 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
     trickyDayIcon: $("trickyDayIcon"),
     childDayPlayPanel: $("childDayPlayPanel"),
     childDayPlayMessage: $("childDayPlayMessage"),
+    childDayWaitingMessage: $("childDayWaitingMessage"),
     childPlayGoodButton: $("childPlayGoodButton"),
     childPlayTrickyButton: $("childPlayTrickyButton"),
     childPlayGoodIcon: $("childPlayGoodIcon"),
@@ -799,8 +800,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const theme = getCurrentTheme();
 
-    elements.childAnimationStage.hidden = false;
-    elements.childAnimationStage.className = `child-animation-stage show ${theme}-${kind}-animation`;
+    elements.childAnimationStage.hidden = true;
+    elements.childAnimationStage.className = "child-animation-stage";
+    elements.animationWorld.innerHTML = "";
+
+    window.requestAnimationFrame(() => {
+      elements.childAnimationStage.hidden = false;
+      elements.childAnimationStage.className = `child-animation-stage show ${theme}-${kind}-animation`;
+    });
 
     if (kind === "tricky") {
       elements.animationMessage.textContent = "We’ll try again tomorrow";
@@ -2116,8 +2123,6 @@ document.addEventListener("DOMContentLoaded", () => {
       elements.add5Button,
       elements.add10Button,
       elements.add50Button,
-      elements.goodDayButton,
-      elements.trickyDayButton,
       elements.resetTodayButton,
       elements.clearHistoryButton,
       elements.resetCoinsButton,
@@ -2129,6 +2134,14 @@ document.addEventListener("DOMContentLoaded", () => {
         button.disabled = childMode || !parentUnlocked;
       }
     });
+
+    if (elements.goodDayButton) {
+      elements.goodDayButton.disabled = !childMode && !parentUnlocked;
+    }
+
+    if (elements.trickyDayButton) {
+      elements.trickyDayButton.disabled = !childMode && !parentUnlocked;
+    }
   }
 
   function updateDisplay() {
@@ -2249,26 +2262,52 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateChildDayPlayPanel() {
-    if (!elements.childPlayGoodButton || !elements.childPlayTrickyButton || !elements.childDayPlayMessage) {
+    if (!elements.goodDayButton || !elements.trickyDayButton) {
       return;
     }
 
     const level = currentData.today.level;
     const theme = getCurrentTheme();
+    const isChild = childMode;
 
     if (elements.childPlayGoodIcon) {
       elements.childPlayGoodIcon.textContent = theme === "space" ? "🚀" : theme === "minecraft" ? "💎" : "⭐";
     }
 
-    elements.childPlayGoodButton.hidden = level !== "green";
-    elements.childPlayTrickyButton.hidden = level !== "red";
+    if (elements.childDayWaitingMessage) {
+      elements.childDayWaitingMessage.hidden = !(isChild && level !== "green" && level !== "red");
+    }
 
-    if (level === "green") {
-      elements.childDayPlayMessage.textContent = "Good Day is ready. Tap to celebrate.";
-    } else if (level === "red") {
-      elements.childDayPlayMessage.textContent = "Tricky Day is ready. Tap for a kind reminder.";
-    } else {
-      elements.childDayPlayMessage.textContent = "Waiting for Parent Mode to log today.";
+    if (isChild) {
+      elements.goodDayButton.hidden = level !== "green";
+      elements.trickyDayButton.hidden = level !== "red";
+      elements.goodDayButton.disabled = false;
+      elements.trickyDayButton.disabled = false;
+
+      if (elements.goodDayButton.querySelector("small")) {
+        elements.goodDayButton.querySelector("small").textContent = "Tap to celebrate";
+      }
+
+      if (elements.trickyDayButton.querySelector("small")) {
+        elements.trickyDayButton.querySelector("small").textContent = "We’ll try again tomorrow";
+      }
+
+      return;
+    }
+
+    elements.goodDayButton.hidden = false;
+    elements.trickyDayButton.hidden = false;
+
+    if (elements.goodDayButton.querySelector("small")) {
+      elements.goodDayButton.querySelector("small").textContent = `+${currentData.settings.greenCoins} coins`;
+    }
+
+    if (elements.trickyDayButton.querySelector("small")) {
+      elements.trickyDayButton.querySelector("small").textContent = `-${currentData.settings.redCoins} coins`;
+    }
+
+    if (elements.childDayWaitingMessage) {
+      elements.childDayWaitingMessage.hidden = true;
     }
   }
 
@@ -2995,8 +3034,23 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.add10Button.addEventListener("click", () => adjustCoins(10));
     elements.add50Button.addEventListener("click", () => adjustCoins(50));
 
-    elements.goodDayButton.addEventListener("click", () => setLevel("green"));
-    elements.trickyDayButton.addEventListener("click", () => setLevel("red"));
+    elements.goodDayButton.addEventListener("click", () => {
+      if (childMode) {
+        playChildDayAnimation("good");
+        return;
+      }
+
+      setLevel("green");
+    });
+
+    elements.trickyDayButton.addEventListener("click", () => {
+      if (childMode) {
+        playChildDayAnimation("tricky");
+        return;
+      }
+
+      setLevel("red");
+    });
 
     elements.resetTodayButton.addEventListener("click", resetToday);
     elements.collectPrizeButton.addEventListener("click", collectPrize);

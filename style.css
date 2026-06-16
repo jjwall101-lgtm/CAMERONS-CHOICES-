@@ -3346,3 +3346,69 @@ body.child-mode .behaviour-card {
 body.child-mode .child-animation-stage.show {
   display: grid !important;
 }
+
+
+/* FINAL CHILD ANIMATION BUTTON FIX */
+
+body.child-mode .child-day-play-panel {
+  display: none !important;
+}
+
+.child-day-waiting-message {
+  margin: 14px 0 10px;
+  padding: 14px;
+  border: 5px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  border-radius: 22px;
+  background: rgba(255,255,255,0.76);
+  text-align: center;
+  font-weight: 950;
+}
+
+html[data-theme="space"] .child-day-waiting-message {
+  background: #10103e;
+}
+
+body.child-mode .day-choice-buttons {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  margin-top: 12px;
+}
+
+body.child-mode .day-choice-button[hidden],
+.day-choice-button[hidden] {
+  display: none !important;
+}
+
+body.child-mode .day-choice-button {
+  min-height: 136px;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+body.child-mode .day-choice-button:disabled {
+  opacity: 1 !important;
+  filter: none !important;
+  pointer-events: auto !important;
+}
+
+body.child-mode .day-choice-button small {
+  display: block !important;
+}
+
+body.child-mode .good-day-button:not([hidden]),
+body.child-mode .tricky-day-button:not([hidden]) {
+  display: grid !important;
+}
+
+body.parent-mode .day-choice-button[hidden] {
+  display: grid !important;
+}
+
+body.child-mode .child-animation-stage.show {
+  display: grid !important;
+}
+
+body.child-mode .section-title {
+  max-width: max-content;
+}
