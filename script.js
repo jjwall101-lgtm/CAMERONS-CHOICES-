@@ -968,7 +968,7 @@ document.addEventListener("DOMContentLoaded", () => {
       type: "feeling",
       level: "feeling",
       category: "Feeling",
-      text: `Cameron tapped: ${feeling.emoji} ${feeling.label}`,
+      text: `Feeling recorded: ${feeling.emoji} ${feeling.label}`,
       coinChange: 0,
       coinsAfter: data.coinTotal
     });
@@ -1975,6 +1975,8 @@ document.addEventListener("DOMContentLoaded", () => {
       section.classList.toggle("active", section.id === `page-${page}`);
     });
 
+    document.body.dataset.activePage = page;
+
     document.querySelectorAll(".nav-button").forEach(button => {
       button.classList.toggle("active", button.dataset.page === page);
     });
@@ -2057,6 +2059,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateDisplay() {
+    const currentActivePage = document.querySelector(".page.active");
+    if (currentActivePage) {
+      document.body.dataset.activePage = currentActivePage.id.replace("page-", "");
+    }
+
     if (childMode) {
       const activePage = document.querySelector(".page.active");
       if (activePage && !["page-home", "page-feelings", "page-rewards", "page-calendar"].includes(activePage.id)) {

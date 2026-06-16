@@ -2767,3 +2767,21 @@ html[data-theme="space"] .child-feeling-face {
     font-size: 48px;
   }
 }
+
+
+/* FEELINGS ONLY ON HOME + RECORDS */
+
+body.child-mode .child-today-card {
+  display: none !important;
+}
+
+body.child-mode[data-active-page="home"] .child-today-card {
+  display: block !important;
+}
+
+/* Do not show the Today I feel card on these tabs */
+body.child-mode[data-active-page="rewards"] .child-today-card,
+body.child-mode[data-active-page="calendar"] .child-today-card,
+body.child-mode[data-active-page="feelings"] .child-today-card {
+  display: none !important;
+}
