@@ -83,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let serviceWorkerRegistration = null;
   let editingNoteId = "";
   let currentData = getLocalData();
+  let selectedCalendarDate = getDateISO();
 
   const $ = id => document.getElementById(id);
 
@@ -1403,8 +1404,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function selectCalendarDay(dateISO) {
+    if (!dateISO) {
+      dateISO = getDateISO();
+    }
+
+    selectedCalendarDate = dateISO;
+
     const entry = getCalendarEntry(dateISO);
     const date = new Date(`${dateISO}T12:00:00`);
+
+    document.querySelectorAll(".family-calendar-day").forEach(dayButton => {
+      dayButton.classList.toggle("selected", dayButton.dataset.date === dateISO);
+      dayButton.setAttribute("aria-pressed", dayButton.dataset.date === dateISO ? "true" : "false");
+    });
 
     if (elements.calendarDateInput) {
       elements.calendarDateInput.value = dateISO;
@@ -1494,9 +1506,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const button = document.createElement("button");
       button.type = "button";
+      button.dataset.date = dateISO;
       button.className = "calendar-day family-calendar-day";
       button.classList.toggle("today", dateISO === todayISO);
+      button.classList.toggle("selected", dateISO === selectedCalendarDate);
       button.classList.toggle("has-plan", Boolean(entry));
+      button.setAttribute("aria-pressed", dateISO === selectedCalendarDate ? "true" : "false");
 
       const weekday = date.toLocaleDateString("en-GB", { weekday: "short" });
       const day = date.getDate();
@@ -1512,15 +1527,25 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
 
-      button.addEventListener("click", () => selectCalendarDay(dateISO));
+      button.addEventListener("click", event => {
+        event.preventDefault();
+        selectCalendarDay(dateISO);
+      });
       grid.appendChild(button);
     }
 
-    if (elements.calendarDateInput && !elements.calendarDateInput.value) {
-      elements.calendarDateInput.value = todayISO;
+    const visibleDates = [...grid.querySelectorAll(".family-calendar-day")]
+      .map(button => button.dataset.date);
+
+    if (!visibleDates.includes(selectedCalendarDate)) {
+      selectedCalendarDate = todayISO;
     }
 
-    selectCalendarDay(elements.calendarDateInput?.value || todayISO);
+    if (elements.calendarDateInput && !elements.calendarDateInput.value) {
+      elements.calendarDateInput.value = selectedCalendarDate;
+    }
+
+    selectCalendarDay(selectedCalendarDate || todayISO);
   }
 
   async function saveCalendarEntry() {
@@ -1566,7 +1591,9 @@ document.addEventListener("DOMContentLoaded", () => {
       coinsAfter: data.coinTotal
     });
 
+    selectedCalendarDate = dateISO;
     await saveData(data);
+    selectCalendarDay(dateISO);
   }
 
   async function deleteCalendarEntry() {
@@ -1600,7 +1627,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (elements.calendarWhoInput) elements.calendarWhoInput.value = "";
     if (elements.calendarNoteInput) elements.calendarNoteInput.value = "";
 
+    selectedCalendarDate = dateISO;
     await saveData(data);
+    selectCalendarDay(dateISO);
   }
 
   async function claimReward(rewardId) {

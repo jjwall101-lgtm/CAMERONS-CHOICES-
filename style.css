@@ -2475,3 +2475,44 @@ body.child-mode .family-calendar-day {
     min-height: 128px;
   }
 }
+
+
+/* CALENDAR DAY TAP FIX */
+
+.family-calendar-day {
+  touch-action: manipulation;
+  position: relative;
+}
+
+.family-calendar-day.selected {
+  outline: 5px solid var(--outline);
+  outline-offset: -7px;
+  transform: translateY(3px);
+  box-shadow: 1px 1px 0 var(--outline);
+}
+
+.family-calendar-day.selected::after {
+  content: "✓";
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--outline);
+  border-radius: 50%;
+  background: var(--theme-accent);
+  color: var(--theme-dark);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.family-calendar-day:active {
+  transform: translateY(3px) scale(0.98);
+}
+
+body.child-mode .family-calendar-day.selected {
+  outline: 5px solid var(--theme-accent);
+  outline-offset: -7px;
+}
