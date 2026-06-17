@@ -36,3 +36,11 @@ Refresh note:
 
 style.css?v=50
 script.js?v=50
+
+
+## v51 Timer update
+
+- Added a Timer tab.
+- Child Mode can use preset visual timers.
+- Parent Mode can set a custom timer up to 120 minutes.
+- Timer gives an on-screen alert, vibration where supported, and a notification when notifications are enabled.

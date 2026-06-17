@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const NOTE_AUTHOR_KEY = "cameronParentNoteAuthorV1";
   const LAST_NOTIFICATION_KEY = "cameronLastNotificationV2";
   const CHILD_MODE_KEY = "cameronChildModeV1";
+  const TIMER_STATE_KEY = "cameronVisualTimerV1";
   const DEFAULT_PIN = "1234";
 
   const DEFAULT_CATEGORIES = [
@@ -95,6 +96,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let editingFamilyMemberId = "";
   let currentData = getLocalData();
   let selectedCalendarDate = getDateISO();
+  let timerState = getLocalTimerState();
+  let timerInterval = null;
+  let timerFinishedAlertShown = false;
 
   const $ = id => document.getElementById(id);
 
@@ -141,6 +145,15 @@ document.addEventListener("DOMContentLoaded", () => {
     addFamilyMemberButton: $("addFamilyMemberButton"),
     cancelFamilyEditButton: $("cancelFamilyEditButton"),
     familyMemberEditorList: $("familyMemberEditorList"),
+    timerRing: $("timerRing"),
+    timerCharacter: $("timerCharacter"),
+    timerTime: $("timerTime"),
+    timerStatus: $("timerStatus"),
+    startTimerButton: $("startTimerButton"),
+    pauseTimerButton: $("pauseTimerButton"),
+    resetTimerButton: $("resetTimerButton"),
+    customTimerMinutes: $("customTimerMinutes"),
+    setCustomTimerButton: $("setCustomTimerButton"),
     parentPageUnlockButton: $("parentPageUnlockButton"),
     settingsUnlockButton: $("settingsUnlockButton"),
     lockStatus: $("lockStatus"),
@@ -646,6 +659,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateProgressCharacter();
     updatePrizeDetails();
+    updateTimerDisplay();
   }
 
   function applyDailyReset(data) {
@@ -2287,8 +2301,245 @@ document.addEventListener("DOMContentLoaded", () => {
     URL.revokeObjectURL(url);
   }
 
+ 
+  function getDefaultTimerState() {
+    return {
+      durationSeconds: 300,
+      remainingSeconds: 300,
+      running: false,
+      endTime: 0
+    };
+  }
+
+  function normalizeTimerState(state = {}) {
+    const duration = Math.max(60, Math.min(7200, Math.round(Number(state.durationSeconds) || 300)));
+    let remaining = Math.max(0, Math.min(duration, Math.round(Number(state.remainingSeconds) || duration)));
+    const running = Boolean(state.running);
+    const endTime = Math.max(0, Number(state.endTime) || 0);
+
+    if (running && endTime) {
+      remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+    }
+
+    return {
+      durationSeconds: duration,
+      remainingSeconds: Math.min(duration, remaining),
+      running: running && remaining > 0,
+      endTime: running && remaining > 0 ? endTime : 0
+    };
+  }
+
+  function getLocalTimerState() {
+    try {
+      const raw = localStorage.getItem(TIMER_STATE_KEY);
+      return normalizeTimerState(raw ? JSON.parse(raw) : getDefaultTimerState());
+    } catch (error) {
+      console.error(error);
+      return getDefaultTimerState();
+    }
+  }
+
+  function storeLocalTimerState() {
+    localStorage.setItem(TIMER_STATE_KEY, JSON.stringify(normalizeTimerState(timerState)));
+  }
+
+  function formatTimerTime(totalSeconds) {
+    const safeSeconds = Math.max(0, Math.round(Number(totalSeconds) || 0));
+    const minutes = Math.floor(safeSeconds / 60);
+    const seconds = safeSeconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  function getTimerCharacter() {
+    const theme = getCurrentTheme();
+    if (theme === "space") return "🚀";
+    if (theme === "minecraft") return "⛏️";
+    return "🍄";
+  }
+
+  function updateTimerFromClock() {
+    if (!timerState.running) {
+      return false;
+    }
+
+    const remaining = Math.max(0, Math.ceil((timerState.endTime - Date.now()) / 1000));
+    timerState.remainingSeconds = remaining;
+
+    if (remaining <= 0) {
+      timerState.running = false;
+      timerState.endTime = 0;
+      storeLocalTimerState();
+      return true;
+    }
+
+    storeLocalTimerState();
+    return false;
+  }
+
+  function updateTimerDisplay() {
+    if (!elements.timerTime || !elements.timerRing) {
+      return;
+    }
+
+    timerState = normalizeTimerState(timerState);
+
+    if (timerState.running) {
+      updateTimerFromClock();
+    }
+
+    const duration = Math.max(60, timerState.durationSeconds);
+    const remaining = Math.max(0, timerState.remainingSeconds);
+    const usedPercent = Math.max(0, Math.min(100, ((duration - remaining) / duration) * 100));
+    const leftPercent = Math.max(0, 100 - usedPercent);
+
+    elements.timerTime.textContent = formatTimerTime(remaining);
+    elements.timerRing.style.background = `conic-gradient(var(--theme-accent) 0 ${leftPercent}%, rgba(255,255,255,0.72) ${leftPercent}% 100%)`;
+
+    if (elements.timerCharacter) {
+      elements.timerCharacter.textContent = getTimerCharacter();
+    }
+
+    if (elements.timerStatus) {
+      if (timerState.running) {
+        elements.timerStatus.textContent = "Timer running";
+      } else if (remaining === 0) {
+        elements.timerStatus.textContent = "Finished";
+      } else if (remaining < duration) {
+        elements.timerStatus.textContent = "Paused";
+      } else {
+        elements.timerStatus.textContent = "Ready";
+      }
+    }
+
+    if (elements.startTimerButton) {
+      elements.startTimerButton.disabled = timerState.running;
+      elements.startTimerButton.textContent = remaining === 0 ? "Start Again" : "Start";
+    }
+
+    if (elements.pauseTimerButton) {
+      elements.pauseTimerButton.disabled = !timerState.running;
+    }
+
+    document.querySelectorAll("[data-timer-minutes]").forEach(button => {
+      const seconds = Math.round(Number(button.dataset.timerMinutes) * 60);
+      button.classList.toggle("active", seconds === duration && !timerState.running);
+    });
+  }
+
+  function startTimerTick() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+    }
+
+    timerInterval = window.setInterval(() => {
+      const finished = updateTimerFromClock();
+      updateTimerDisplay();
+
+      if (finished) {
+        finishTimer();
+      }
+    }, 500);
+  }
+
+  function stopTimerTick() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
+
+  function setTimerDuration(minutes) {
+    const duration = Math.max(60, Math.min(7200, Math.round(Number(minutes) * 60 || 300)));
+    timerState = {
+      durationSeconds: duration,
+      remainingSeconds: duration,
+      running: false,
+      endTime: 0
+    };
+    timerFinishedAlertShown = false;
+    stopTimerTick();
+    storeLocalTimerState();
+    updateTimerDisplay();
+  }
+
+  function startVisualTimer() {
+    timerState = normalizeTimerState(timerState);
+
+    if (timerState.remainingSeconds <= 0) {
+      timerState.remainingSeconds = timerState.durationSeconds;
+    }
+
+    timerState.running = true;
+    timerState.endTime = Date.now() + (timerState.remainingSeconds * 1000);
+    timerFinishedAlertShown = false;
+    storeLocalTimerState();
+    startTimerTick();
+    updateTimerDisplay();
+  }
+
+  function pauseVisualTimer() {
+    updateTimerFromClock();
+    timerState.running = false;
+    timerState.endTime = 0;
+    storeLocalTimerState();
+    stopTimerTick();
+    updateTimerDisplay();
+  }
+
+  function resetVisualTimer() {
+    timerState = normalizeTimerState(timerState);
+    timerState.running = false;
+    timerState.endTime = 0;
+    timerState.remainingSeconds = timerState.durationSeconds;
+    timerFinishedAlertShown = false;
+    storeLocalTimerState();
+    stopTimerTick();
+    updateTimerDisplay();
+  }
+
+  function finishTimer() {
+    stopTimerTick();
+    timerState = normalizeTimerState({
+      ...timerState,
+      remainingSeconds: 0,
+      running: false,
+      endTime: 0
+    });
+    storeLocalTimerState();
+    updateTimerDisplay();
+
+    if (navigator.vibrate) {
+      navigator.vibrate([250, 120, 250, 120, 450]);
+    }
+
+    showPhoneNotification("Timer finished", {
+      body: "Cameron's timer has finished.",
+      tag: "cameron-timer"
+    }).catch(console.error);
+
+    if (!timerFinishedAlertShown) {
+      timerFinishedAlertShown = true;
+      window.setTimeout(() => alert("Timer finished!"), 50);
+    }
+  }
+
+  function setCustomTimerDuration() {
+    const minutes = Math.round(Number(elements.customTimerMinutes?.value) || 0);
+
+    if (minutes < 1 || minutes > 120) {
+      alert("Choose between 1 and 120 minutes.");
+      return;
+    }
+
+    setTimerDuration(minutes);
+
+    if (elements.customTimerMinutes) {
+      elements.customTimerMinutes.value = "";
+    }
+  }
+
   function switchPage(page) {
-    if (childMode && !["home", "feelings", "rewards", "calendar", "family"].includes(page)) {
+    if (childMode && !["home", "feelings", "rewards", "calendar", "timer", "family"].includes(page)) {
       page = "home";
     }
 
@@ -2316,7 +2567,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     document.querySelectorAll(".nav-button").forEach(button => {
-      const parentOnlyPage = !["home", "feelings", "rewards", "calendar", "family"].includes(button.dataset.page);
+      const parentOnlyPage = !["home", "feelings", "rewards", "calendar", "timer", "family"].includes(button.dataset.page);
       button.hidden = childMode && parentOnlyPage;
     });
 
@@ -2388,7 +2639,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (childMode) {
       const activePage = document.querySelector(".page.active");
-      if (activePage && !["page-home", "page-feelings", "page-rewards", "page-calendar", "page-family"].includes(activePage.id)) {
+      if (activePage && !["page-home", "page-feelings", "page-rewards", "page-calendar", "page-timer", "page-family"].includes(activePage.id)) {
         switchPage("home");
       }
     }
@@ -2408,6 +2659,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateParentDashboard();
     updateCalendar();
     updateFamilyTree();
+    updateTimerDisplay();
     updateParentNotes();
     updateRewardEditor();
     updateCategoryOptions();
@@ -2951,7 +3203,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      serviceWorkerRegistration = await navigator.serviceWorker.register("./sw.js?v=50");
+      serviceWorkerRegistration = await navigator.serviceWorker.register("./sw.js?v=51");
       await navigator.serviceWorker.ready;
       return serviceWorkerRegistration;
     } catch (error) {
@@ -3242,6 +3494,26 @@ document.addEventListener("DOMContentLoaded", () => {
       elements.cancelFamilyEditButton.addEventListener("click", clearFamilyForm);
     }
 
+    document.querySelectorAll("[data-timer-minutes]").forEach(button => {
+      button.addEventListener("click", () => setTimerDuration(button.dataset.timerMinutes));
+    });
+
+    if (elements.startTimerButton) {
+      elements.startTimerButton.addEventListener("click", startVisualTimer);
+    }
+
+    if (elements.pauseTimerButton) {
+      elements.pauseTimerButton.addEventListener("click", pauseVisualTimer);
+    }
+
+    if (elements.resetTimerButton) {
+      elements.resetTimerButton.addEventListener("click", resetVisualTimer);
+    }
+
+    if (elements.setCustomTimerButton) {
+      elements.setCustomTimerButton.addEventListener("click", setCustomTimerDuration);
+    }
+
     elements.copyWeeklyReportButton.addEventListener("click", copyWeeklyReport);
 
     elements.saveCoinSettingsButton.addEventListener("click", saveCoinSettings);
@@ -3263,6 +3535,9 @@ document.addEventListener("DOMContentLoaded", () => {
   setTheme(getCurrentTheme());
   connectEvents();
   setupServiceWorker().finally(updateNotificationStatus);
+  if (timerState.running) {
+    startTimerTick();
+  }
   updateDisplay();
   initFirebase();
 });

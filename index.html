@@ -6,7 +6,7 @@
 
   <title>Cameron</title>
 
-  <link rel="stylesheet" href="style.css?v=50" />
+  <link rel="stylesheet" href="style.css?v=51" />
   <link rel="manifest" href="manifest.json" />
 
   <link rel="icon" href="icon.png" />
@@ -93,6 +93,7 @@
       <button type="button" class="nav-button" data-page="history">History</button>
       <button type="button" class="nav-button" data-page="reports">Reports</button>
       <button type="button" class="nav-button" data-page="calendar">Calendar</button>
+      <button type="button" class="nav-button" data-page="timer">Timer</button>
       <button type="button" class="nav-button" data-page="family">Family</button>
       <button type="button" class="nav-button" data-page="settings">Settings</button>
     </nav>
@@ -450,6 +451,46 @@
 
 
 
+    <section class="page" id="page-timer">
+      <section class="timer-card">
+        <div class="section-title">VISUAL TIMER</div>
+        <p class="timer-subtitle">Pick a time, then press start.</p>
+
+        <div class="timer-stage" aria-live="polite">
+          <div class="timer-ring" id="timerRing">
+            <span class="timer-character" id="timerCharacter">🍄</span>
+            <strong id="timerTime">05:00</strong>
+            <small>left</small>
+          </div>
+        </div>
+
+        <div class="timer-status" id="timerStatus">Ready</div>
+
+        <div class="timer-presets" aria-label="Timer presets">
+          <button type="button" data-timer-minutes="1">1 min</button>
+          <button type="button" data-timer-minutes="2">2 min</button>
+          <button type="button" data-timer-minutes="5">5 min</button>
+          <button type="button" data-timer-minutes="10">10 min</button>
+          <button type="button" data-timer-minutes="15">15 min</button>
+          <button type="button" data-timer-minutes="30">30 min</button>
+        </div>
+
+        <div class="timer-actions">
+          <button type="button" id="startTimerButton">Start</button>
+          <button type="button" id="pauseTimerButton">Pause</button>
+          <button type="button" id="resetTimerButton">Reset</button>
+        </div>
+
+        <section class="timer-custom parent-mode-only">
+          <div class="panel-title">Parent Custom Timer</div>
+          <label for="customTimerMinutes">Custom minutes</label>
+          <input type="number" inputmode="numeric" pattern="[0-9]*" id="customTimerMinutes" min="1" max="120" step="1" placeholder="20" />
+          <button type="button" id="setCustomTimerButton">Set Custom Timer</button>
+        </section>
+      </section>
+    </section>
+
+
     <section class="page" id="page-family">
       <section class="family-tree-card">
         <div class="section-title">MY FAMILY TREE</div>
@@ -605,6 +646,6 @@
     <div class="jay-signature">Designed and created by Jay</div>
   </main>
 
-  <script src="script.js?v=50" type="module"></script>
+  <script src="script.js?v=51" type="module"></script>
 </body>
 </html>

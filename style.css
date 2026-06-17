@@ -3095,3 +3095,197 @@ body.child-mode .family-tree-editor {
     max-width: 340px;
   }
 }
+
+/* VISUAL TIMER TAB */
+
+.timer-card {
+  border: 5px solid var(--outline);
+  box-shadow: 6px 6px 0 var(--outline);
+  border-radius: 28px;
+  background: var(--theme-card);
+  padding: 16px 12px 18px;
+  margin-bottom: 14px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+html[data-theme="space"] .timer-card {
+  color: white;
+  box-shadow: 6px 6px 0 #020316;
+}
+
+.timer-subtitle {
+  margin: 12px 0;
+  font-weight: 900;
+  text-align: center;
+}
+
+.timer-stage {
+  display: grid;
+  place-items: center;
+  margin: 14px auto;
+}
+
+.timer-ring {
+  width: min(78vw, 310px);
+  height: min(78vw, 310px);
+  display: grid;
+  grid-template-rows: 1fr auto auto 1fr;
+  align-items: center;
+  justify-items: center;
+  border: 7px solid var(--outline);
+  box-shadow: 7px 7px 0 var(--outline);
+  border-radius: 50%;
+  background: conic-gradient(var(--theme-accent) 0 100%, rgba(255,255,255,0.72) 100% 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.timer-ring::before {
+  content: "";
+  position: absolute;
+  inset: 24px;
+  border: 5px solid var(--outline);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.86);
+  z-index: 0;
+}
+
+html[data-theme="space"] .timer-ring::before {
+  background: #10103e;
+}
+
+.timer-character,
+.timer-ring strong,
+.timer-ring small {
+  position: relative;
+  z-index: 1;
+}
+
+.timer-character {
+  grid-row: 2;
+  font-size: 54px;
+  line-height: 1;
+  animation: timerCharacterBob 2.4s infinite ease-in-out;
+}
+
+.timer-ring strong {
+  grid-row: 3;
+  font-size: clamp(48px, 16vw, 76px);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.timer-ring small {
+  grid-row: 4;
+  align-self: start;
+  margin-top: 4px;
+  font-weight: 950;
+  font-size: 16px;
+}
+
+.timer-status {
+  display: inline-block;
+  margin: 4px auto 14px;
+  padding: 10px 16px;
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.82);
+  font-weight: 950;
+}
+
+html[data-theme="space"] .timer-status {
+  background: #10103e;
+}
+
+.timer-presets,
+.timer-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.timer-presets button,
+.timer-actions button,
+.timer-custom button {
+  border: 4px solid var(--outline);
+  box-shadow: 3px 3px 0 var(--outline);
+  border-radius: 16px;
+  background: white;
+  color: var(--outline);
+  padding: 13px 8px;
+  font-weight: 950;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.timer-presets button.active,
+.timer-actions button:first-child,
+.timer-custom button {
+  background: var(--theme-accent);
+  color: var(--theme-dark);
+}
+
+.timer-actions button:nth-child(2) {
+  background: #fff18a;
+}
+
+.timer-actions button:nth-child(3) {
+  background: #ffb2b0;
+}
+
+.timer-presets button:active,
+.timer-actions button:active,
+.timer-custom button:active {
+  transform: translateY(3px);
+  box-shadow: 1px 1px 0 var(--outline);
+}
+
+.timer-presets button:disabled,
+.timer-actions button:disabled,
+.timer-custom button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.timer-custom {
+  margin-top: 16px;
+  padding: 14px;
+  border: 4px solid var(--outline);
+  box-shadow: 4px 4px 0 var(--outline);
+  border-radius: 22px;
+  background: rgba(255,255,255,0.68);
+  text-align: left;
+}
+
+html[data-theme="space"] .timer-custom {
+  background: #10103e;
+}
+
+body.child-mode .nav-button[data-page="timer"] {
+  display: block;
+}
+
+body.child-mode .timer-custom {
+  display: none !important;
+}
+
+@keyframes timerCharacterBob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.05); }
+}
+
+@media (max-width: 390px) {
+  .timer-presets,
+  .timer-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .timer-ring {
+    width: min(82vw, 280px);
+    height: min(82vw, 280px);
+  }
+}
